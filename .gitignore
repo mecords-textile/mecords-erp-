@@ -1,0 +1,6 @@
+node_modules/ 
+.expo/ 
+dist/ 
+tmp_extract/ 
+.claude/ 
+index_local.html 
