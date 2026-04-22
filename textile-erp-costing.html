@@ -736,6 +736,22 @@
             /* Remarks card: print on page 2 if needed, keep intact */
             #mc-remarks-card { display: block !important; page-break-before: always; }
             #tab-machinerycosting .card { padding: 4px 6px !important; margin-bottom: 3px !important; box-shadow: none !important; border-radius: 2px !important; }
+
+            /* ── Liner Fabrics single-page print ── */
+            #sub-ic-liner .print-hd { display: block !important; }
+            #sub-ic-liner #li-table-wrap { overflow: visible !important; }
+            #sub-ic-liner .card { padding: 0 !important; margin-bottom: 2px !important; box-shadow: none !important; border-radius: 0 !important; }
+            #sub-ic-liner #li-table-wrap table { font-size: 6.5px !important; min-width: 0 !important; width: 100% !important; table-layout: fixed !important; }
+            #sub-ic-liner #li-table-wrap th,
+            #sub-ic-liner #li-table-wrap td { padding: 1px 3px !important; }
+            #sub-ic-liner #li-table-wrap th:first-child,
+            #sub-ic-liner #li-table-wrap td:first-child { width: 155px !important; }
+            #sub-ic-liner #li-table-wrap th:nth-child(2),
+            #sub-ic-liner #li-table-wrap td:nth-child(2) { width: 30px !important; }
+            #sub-ic-liner #li-table-wrap input { display: none !important; }
+            #sub-ic-liner #li-table-wrap select { display: none !important; }
+            #sub-ic-liner #li-table-wrap button { display: none !important; }
+            #sub-ic-liner #li-table-wrap .li-ph-det { display: none !important; }
         }
         /* Import Modals (Capro + RBI) */
         .cc-import-overlay { position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1998; }
@@ -1989,11 +2005,16 @@
 
             <!-- Print header -->
             <div class="print-hd">
-                <table style="width:100%;border-bottom:2px solid #1e293b;padding-bottom:10px;margin-bottom:14px;">
+                <table style="width:100%;border-bottom:2px solid #1e293b;padding-bottom:8px;margin-bottom:10px;">
                     <tr>
-                        <td><div id="li-print-title" style="font-size:18px;font-weight:800;color:#1e293b;">COSTING - LINER FABRICS</div></td>
-                        <td style="text-align:right;font-size:12px;color:#64748b;vertical-align:top;">
-                            <div>Quarter: <strong id="li-print-qperiod"></strong></div>
+                        <td>
+                            <div style="font-size:16px;font-weight:800;color:#1e293b;">COSTING — LINER FABRICS</div>
+                            <div style="font-size:11px;color:#64748b;margin-top:3px;">
+                                Customer: <strong id="li-print-party"></strong>
+                                &nbsp;&nbsp;|&nbsp;&nbsp; Quality: <strong id="li-print-quality"></strong>
+                            </div>
+                        </td>
+                        <td style="text-align:right;font-size:11px;color:#64748b;vertical-align:top;">
                             <div>Date: <strong id="li-print-date"></strong></div>
                         </td>
                     </tr>
@@ -2001,32 +2022,15 @@
             </div>
 
             <!-- Sheet Details -->
-            <div class="card">
+            <div class="card no-print">
                 <div class="card-title">Sheet Details</div>
                 <div class="form-row" style="margin-bottom:12px;">
-                    <div class="form-group">
-                        <label>Title</label>
-                        <input type="text" id="li-title" value="COSTING - LINER FABRICS" style="min-width:260px;" oninput="syncLinerHeader()">
-                    </div>
-                    <div class="form-group">
-                        <label>Quarter Period</label>
-                        <input type="text" id="li-qperiod" placeholder="e.g. Q4 FY25-26" oninput="syncLinerHeader()">
-                    </div>
                     <div class="form-group">
                         <label>Date</label>
                         <input type="date" id="li-date" oninput="syncLinerHeader()">
                     </div>
-                </div>
-                <div class="form-row" style="margin-bottom:12px;">
-                    <div class="form-group"><label>Party</label><input type="text" id="li-party" placeholder="Party name"></div>
-                    <div class="form-group"><label>Quality</label><input type="text" id="li-quality" placeholder="Quality"></div>
-                    <div class="form-group"><label>Yarn</label><input type="text" id="li-yarn" placeholder="Yarn type"></div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Enq. Date</label>
-                        <input type="date" id="li-enq-date" style="width:160px;">
-                    </div>
+                    <div class="form-group"><label>Customer</label><input type="text" id="li-party" placeholder="Customer name" oninput="syncLinerHeader()"></div>
+                    <div class="form-group"><label>Quality</label><input type="text" id="li-quality" placeholder="Quality" oninput="syncLinerHeader()"></div>
                     <div class="form-group">
                         <label>Qty (Mtrs.)</label>
                         <input type="number" id="li-qty-kgs" placeholder="0" min="0" step="0.01" style="width:130px;">
@@ -2036,7 +2040,7 @@
             </div>
 
             <!-- Fabric Construction -->
-            <div class="card">
+            <div class="card no-print">
                 <div class="card-title">Fabric Construction &amp; GSM</div>
                 <div class="form-row" style="margin-bottom:14px;">
                     <div class="form-group">
@@ -2060,21 +2064,41 @@
                         <input type="number" id="li-crimp" value="8" min="0" step="0.1" oninput="calcLinerGSM()">
                     </div>
                 </div>
-                <div class="divider"></div>
-                <div class="pc-sum-grid">
-                    <div class="pc-sum-item"><div class="lbl">Warp GSM</div><div class="val" id="li-gsm-warp">0.00</div><div class="unit">g/m²</div></div>
-                    <div class="pc-sum-item"><div class="lbl">Weft GSM</div><div class="val" id="li-gsm-weft">0.00</div><div class="unit">g/m²</div></div>
-                    <div class="pc-sum-item"><div class="lbl">Total GSM</div><div class="val" id="li-gsm-total">0.00</div><div class="unit">g/m²</div></div>
+                <div class="form-row" style="margin-bottom:14px;background:#f0fdf4;padding:10px 12px;border-radius:8px;border:1px solid #bbf7d0;">
+                    <div class="form-group">
+                        <label style="color:#065f46;font-weight:700;">Warp GSM <small style="color:#94a3b8;">(auto-calc or enter manually)</small></label>
+                        <input type="number" id="li-gsm-warp" value="0.00" min="0" step="0.01" placeholder="0.00" onchange="calcLinerGSMTotal();renderLinerTable()" style="width:120px;">
+                    </div>
+                    <div class="form-group">
+                        <label style="color:#065f46;font-weight:700;">Weft GSM <small style="color:#94a3b8;">(auto-calc or enter manually)</small></label>
+                        <input type="number" id="li-gsm-weft" value="0.00" min="0" step="0.01" placeholder="0.00" onchange="calcLinerGSMTotal();renderLinerTable()" style="width:120px;">
+                    </div>
+                    <div class="form-group">
+                        <label style="color:#065f46;font-weight:700;">Total GSM</label>
+                        <div style="font-size:22px;font-weight:800;color:#065f46;padding-top:4px;" id="li-gsm-total">0.00</div>
+                    </div>
                 </div>
             </div>
 
             <!-- Yarn & Cost Inputs -->
-            <div class="card">
+            <div class="card no-print">
                 <div class="card-title">Yarn Pricing &amp; Processing Costs</div>
                 <div class="form-row" style="margin-bottom:14px;">
                     <div class="form-group">
+                        <label>Yarn Description — Warp</label>
+                        <select id="li-yarn-desc-warp" style="min-width:200px;" onchange="onLinerYarnDescChange('li','warp')">
+                            <option value="">— Select from Yarn Master —</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
                         <label>Yarn Price — Warp (&#8377;/kg)</label>
                         <input type="number" id="li-yarn-price-warp" placeholder="0.00" min="0" step="0.01" oninput="renderLinerTable()">
+                    </div>
+                    <div class="form-group">
+                        <label>Yarn Description — Weft</label>
+                        <select id="li-yarn-desc-weft" style="min-width:200px;" onchange="onLinerYarnDescChange('li','weft')">
+                            <option value="">— Select from Yarn Master —</option>
+                        </select>
                     </div>
                     <div class="form-group">
                         <label>Yarn Price — Weft (&#8377;/kg)</label>
@@ -2123,7 +2147,7 @@
                         <input type="number" id="li-fabric-waste" value="3" min="0" step="0.1" style="width:110px;" oninput="renderLinerTable()">
                     </div>
                     <div class="form-group">
-                        <label>Finance Cost % <small style="color:#94a3b8;">of sub-total</small></label>
+                        <label>Finance Cost % <small style="color:#94a3b8;">of sub-total to Packing</small></label>
                         <input type="number" id="li-fin-cost" value="5" min="0" step="0.1" style="width:110px;" oninput="renderLinerTable()">
                     </div>
                 </div>
@@ -2443,7 +2467,19 @@
                     <div class="card">
                         <div class="card-title">Yarn Pricing &amp; Processing Costs</div>
                         <div class="form-row" style="margin-bottom:14px;">
+                            <div class="form-group">
+                                <label>Yarn Description &#8212; Warp</label>
+                                <select id="le-yarn-desc-warp" style="min-width:200px;" onchange="onLinerYarnDescChange('le','warp')">
+                                    <option value="">— Select from Yarn Master —</option>
+                                </select>
+                            </div>
                             <div class="form-group"><label>Yarn Price &#8212; Warp (&#8377;/kg)</label><input type="number" id="le-yarn-price-warp" placeholder="0.00" min="0" step="0.01" oninput="renderLETable()"></div>
+                            <div class="form-group">
+                                <label>Yarn Description &#8212; Weft</label>
+                                <select id="le-yarn-desc-weft" style="min-width:200px;" onchange="onLinerYarnDescChange('le','weft')">
+                                    <option value="">— Select from Yarn Master —</option>
+                                </select>
+                            </div>
                             <div class="form-group"><label>Yarn Price &#8212; Weft (&#8377;/kg)</label><input type="number" id="le-yarn-price-weft" placeholder="0.00" min="0" step="0.01" oninput="renderLETable()"></div>
                             <div class="form-group"><label>Yarn Wastage %</label><input type="number" id="le-yarn-wastage" value="8" min="0" step="0.1" oninput="renderLETable()"></div>
                         </div>
@@ -2476,7 +2512,7 @@
                                 <input type="number" id="le-fabric-waste" value="3" min="0" step="0.1" style="width:110px;" oninput="renderLETable()">
                             </div>
                             <div class="form-group">
-                                <label>Finance Cost % <small style="color:#94a3b8;">of sub-total</small></label>
+                                <label>Finance Cost % <small style="color:#94a3b8;">of sub-total to Packing</small></label>
                                 <input type="number" id="le-fin-cost" value="5" min="0" step="0.1" style="width:110px;" oninput="renderLETable()">
                             </div>
                         </div>
@@ -4427,6 +4463,16 @@ function renderICTable(ic) {
     </thead>
     <tbody>`;
 
+    html += `<tr style="background:#f0fdf4;">
+        <td style="${tdStyle}font-size:13px;color:#065f46;font-weight:600;">&#129525; Yarn Quality (from Yarn Master)</td>
+        <td style="${tdStyle}text-align:center;font-size:11px;color:#64748b;"></td>
+        ${pl.map(p => `<td style="${tdStyle}">
+            <select class="ic-yarn-sel" data-pid="${p.id}" onchange="fillICYarnRate(this)"
+                style="width:100%;font-size:11px;border:1px solid #cbd5e1;border-radius:4px;padding:3px 4px;">
+                ${yarnMasterOptions(p.yarnMasterName)}
+            </select>
+        </td>`).join('')}
+    </tr>`;
     html += inpRow('Flat Yarn Cost &mdash; Rate', 'INR', 'flatYarnCost');
     html += inpRow('Chemical Cost', 'INR', 'chemicalCost', CHEM);
     html += inpRow('Mfg. Cost', 'INR', 'mfgCost');
@@ -4445,7 +4491,12 @@ function renderICTable(ic) {
     html += row(esc(periodLabel), 'INR', () => pl.map(p => inp(p.id, 'currentPeriodPrice', p.currentPeriodPrice ?? 0)).join(''), GREEN);
     html += row('Discount Amount (₹)', '₹', () => pl.map(p => inp(p.id, 'discount', p.discount ?? 0)).join(''), GREEN);
     html += calcRow('After Discount —', '₹', 'afterDiscount', GREEN);
-    html += calcRow('Price Covered Upto Depr.', 'INR', 'uptoDepr', YELL);
+    html += `<tr style="background:#fffbeb;">
+        <td colspan="${2 + pl.length}" style="${tdStyle}padding:10px 14px;font-size:12px;line-height:1.9;background:#fffbeb;">
+            <span style="font-weight:700;color:#92400e;font-size:12px;">&#128196; Remarks &nbsp;&mdash;&nbsp;</span>
+            <span id="ic-remarks-text" style="color:#1e293b;"><em style="color:#94a3b8;">Enter period price to see coverage analysis.</em></span>
+        </td>
+    </tr>`;
 
     html += `</tbody></table>`;
     wrap.innerHTML = html;
@@ -4455,24 +4506,76 @@ function renderICTable(ic) {
 function calcICSheet() {
     const wrap = document.getElementById('ic-costing-table-wrap');
     if (!wrap) return;
+    const periodLbl = document.getElementById('ic-period-label')?.value || "Apr'26";
+    const remarks = [];
+
     wrap.querySelectorAll('.ic-pname').forEach(pnEl => {
-        const pid = pnEl.dataset.pid;
+        const pid       = pnEl.dataset.pid;
+        const plantName = pnEl.value || 'Plant';
         const gn = f => { const el = wrap.querySelector(`.ic-inp[data-pid="${pid}"][data-field="${f}"]`); return parseFloat(el?.value) || 0; };
         const setCalc = (f, v) => { const el = wrap.querySelector(`.ic-calc[data-pid="${pid}"][data-field="${f}"]`); if (el) el.textContent = v.toFixed(2); };
-        const sub1 = gn('flatYarnCost') + gn('chemicalCost') + gn('mfgCost') + gn('packing') + gn('transport');
-        const sub2 = sub1 + gn('admn') + gn('sellingExp');
-        const sub3 = sub2 + gn('finCost');
-        const sub4 = sub3 + gn('depreciation');
-        const grand = sub4 * (1 + gn('profitPct') / 100);
-        const afterDisc = gn('currentPeriodPrice') - gn('discount');
-        setCalc('subTotal1',   sub1);
-        setCalc('subTotal2',   sub2);
-        setCalc('subTotal3',   sub3);
-        setCalc('subTotal4',   sub4);
-        setCalc('grandTotal',  grand);
+
+        const sub1  = gn('flatYarnCost') + gn('chemicalCost') + gn('mfgCost') + gn('packing') + gn('transport');
+        const sub2  = sub1 + gn('admn') + gn('sellingExp');
+        const sub3  = sub2 + gn('finCost');
+        const sub4  = sub3 + gn('depreciation');
+        const grand = sub3 * (1 + gn('profitPct') / 100) + gn('depreciation');
+        const price = gn('currentPeriodPrice');
+        const afterDisc = price - gn('discount');
+
+        setCalc('subTotal1',    sub1);
+        setCalc('subTotal2',    sub2);
+        setCalc('subTotal3',    sub3);
+        setCalc('subTotal4',    sub4);
+        setCalc('grandTotal',   grand);
         setCalc('afterDiscount', afterDisc);
-        setCalc('uptoDepr',    sub4);
+
+        // ── Per-plant coverage remark ─────────────────────────────────────
+        if (price > 0 && grand > 0) {
+            let coverLabel, diffAmt, isShort;
+            if (price >= grand) {
+                coverLabel = 'Grand Total incl. Profit';
+                diffAmt    = price - grand;
+                isShort    = false;
+            } else if (price >= sub4) {
+                coverLabel = 'Depreciation';
+                diffAmt    = grand - price;
+                isShort    = true;
+            } else if (price >= sub3) {
+                coverLabel = 'Finance Cost';
+                diffAmt    = grand - price;
+                isShort    = true;
+            } else if (price >= sub2) {
+                coverLabel = 'Admin &amp; Selling Expenses';
+                diffAmt    = grand - price;
+                isShort    = true;
+            } else if (price >= sub1) {
+                coverLabel = 'Packing &amp; Transport';
+                diffAmt    = grand - price;
+                isShort    = true;
+            } else {
+                coverLabel = 'Basic Costs (partial)';
+                diffAmt    = grand - price;
+                isShort    = true;
+            }
+            const diffColor = isShort ? '#dc2626' : '#16a34a';
+            const diffText  = isShort
+                ? `short of Grand Total by <strong style="color:${diffColor};">&#8377;${diffAmt.toFixed(2)}</strong>`
+                : `surplus of <strong style="color:${diffColor};">&#8377;${diffAmt.toFixed(2)}</strong> over Grand Total`;
+            remarks.push(
+                `<strong>${esc(plantName)}</strong>: ${esc(periodLbl)} price ` +
+                `<strong style="color:#0369a1;">&#8377;${price.toFixed(2)}</strong> ` +
+                `covers up to <em>${coverLabel}</em> &mdash; ${diffText}.`
+            );
+        }
     });
+
+    const remarksEl = document.getElementById('ic-remarks-text');
+    if (remarksEl) {
+        remarksEl.innerHTML = remarks.length
+            ? remarks.join('&emsp;&#9646;&emsp;')
+            : '<em style="color:#94a3b8;">Enter period price to see coverage analysis.</em>';
+    }
 }
 
 function saveInternalCosting() {
@@ -4493,6 +4596,53 @@ function saveInternalCosting() {
     refreshICSel();
     document.getElementById('ic-sel').value = _icId;
     flash('Internal costing saved: ' + (ic.title || 'Unnamed'));
+}
+
+// ── Yarn Master Linking Helpers ───────────────────────────────────────────────
+
+function yarnMasterOptions(selectedName) {
+    const entries = db.rawMaterials || [];
+    let html = '<option value="">— Select from Yarn Master —</option>';
+    entries.forEach(r => {
+        const label = r.name + (r.supplier ? ' (' + r.supplier + ')' : '') + (r.month ? ' [' + r.month + ']' : '');
+        const sel = (selectedName && selectedName === r.name) ? ' selected' : '';
+        html += `<option value="${esc(r.name)}" data-price="${r.pricePerKg||0}"${sel}>${esc(label)}</option>`;
+    });
+    return html;
+}
+
+function populateLinerYarnSelects(prefix, s) {
+    ['warp', 'weft'].forEach(side => {
+        const sel = document.getElementById(`${prefix}-yarn-desc-${side}`);
+        if (!sel) return;
+        const savedName = s ? (side === 'warp' ? s.yarnDescWarp : s.yarnDescWeft) : '';
+        sel.innerHTML = yarnMasterOptions(savedName || '');
+    });
+}
+
+function onLinerYarnDescChange(prefix, side) {
+    const sel = document.getElementById(`${prefix}-yarn-desc-${side}`);
+    const priceInp = document.getElementById(`${prefix}-yarn-price-${side}`);
+    if (!sel || !priceInp) return;
+    const opt = sel.options[sel.selectedIndex];
+    if (opt) {
+        priceInp.value = opt.dataset.price || '';
+        if (prefix === 'li') renderLinerTable();
+        else renderLETable();
+    }
+}
+
+function fillICYarnRate(sel) {
+    const pid = sel.dataset.pid;
+    const opt = sel.options[sel.selectedIndex];
+    const price = parseFloat(opt?.dataset?.price) || 0;
+    const inp = document.querySelector(`.ic-inp[data-pid="${pid}"][data-field="flatYarnCost"]`);
+    if (inp) { inp.value = price; calcICSheet(); }
+    const ic = (db.internalProductCostings || []).find(p => p.id === _icId);
+    if (ic) {
+        const plant = (ic.plants || []).find(p => p.id === pid);
+        if (plant) { plant.yarnMasterName = opt?.value || ''; persist(); }
+    }
 }
 
 // ── LINER FABRIC COSTING ──────────────────────────────────────────────────────
@@ -4558,13 +4708,9 @@ function populateLinerForm(id) {
     if (!s.configs || !s.configs.length)
         s.configs = [newLinerConfig('Loom Width', 100), newLinerConfig('Customer Width 1', 160), newLinerConfig('Customer Width 2', 155)];
     const sv = (elId, val) => { const el = document.getElementById(elId); if (el) el.value = val ?? ''; };
-    sv('li-title',          s.title         || 'COSTING - LINER FABRICS');
-    sv('li-qperiod',        s.quarterPeriod || '');
     sv('li-date',           s.date          || '');
     sv('li-party',          s.party         || '');
     sv('li-quality',        s.quality       || '');
-    sv('li-yarn',           s.yarn          || '');
-    sv('li-enq-date',       s.enqDate       || '');
     sv('li-qty-kgs',        s.qtyKgs        || '');
     sv('li-party-code',     s.partyCode     || '');
     sv('li-epi',            s.epi           || '');
@@ -4575,6 +4721,7 @@ function populateLinerForm(id) {
     sv('li-yarn-price-warp',s.yarnPriceWarp || '');
     sv('li-yarn-price-weft',s.yarnPriceWeft || '');
     sv('li-yarn-wastage',   s.yarnWastagePct ?? 8);
+    populateLinerYarnSelects('li', s);
     sv('li-weaving',        s.weaving       ?? '');
     sv('li-proc-hs',        s.processingHS  ?? 4.75);
     sv('li-packing',        s.packing       ?? 3.50);
@@ -4587,19 +4734,23 @@ function populateLinerForm(id) {
     if (ecList) { ecList.innerHTML = ''; (s.extraCosts || []).forEach(ec => addLinerExtraCostRow(ec)); }
     syncLinerHeader();
     calcLinerGSM();
+    // Restore manually saved GSM values if present (override auto-calc)
+    if (s.warpGSM != null) { const el = document.getElementById('li-gsm-warp'); if (el) el.value = s.warpGSM; }
+    if (s.weftGSM != null) { const el = document.getElementById('li-gsm-weft'); if (el) el.value = s.weftGSM; }
+    calcLinerGSMTotal();
     renderLinerTable(s);
 }
 
 function clearLinerForm() { if (_liId) populateLinerForm(_liId); }
 
 function syncLinerHeader() {
-    const title = document.getElementById('li-title')?.value || 'COSTING - LINER FABRICS';
-    const qp    = document.getElementById('li-qperiod')?.value || '';
-    const dt    = document.getElementById('li-date')?.value || '';
+    const dt      = document.getElementById('li-date')?.value    || '';
+    const party   = document.getElementById('li-party')?.value   || '';
+    const quality = document.getElementById('li-quality')?.value || '';
     const e = id => document.getElementById(id);
-    if (e('li-print-title'))   e('li-print-title').textContent   = title;
-    if (e('li-print-qperiod')) e('li-print-qperiod').textContent = qp;
     if (e('li-print-date'))    e('li-print-date').textContent    = dt ? fmtDate(dt) : '';
+    if (e('li-print-party'))   e('li-print-party').textContent   = party;
+    if (e('li-print-quality')) e('li-print-quality').textContent = quality;
 }
 
 function calcLinerGSM() {
@@ -4608,15 +4759,23 @@ function calcLinerGSM() {
     const warpD = parseFloat(document.getElementById('li-warp-denier')?.value) || 0;
     const weftD = parseFloat(document.getElementById('li-weft-denier')?.value) || 0;
     const crimp = parseFloat(document.getElementById('li-crimp')?.value)       || 0;
-    // GSM = (count × denier × (1+crimp/100)) / 228.6
-    const warpGSM  = epi * warpD * (1 + crimp / 100) / 228.6;
-    const weftGSM  = ppi * weftD * (1 + crimp / 100) / 228.6;
-    const totalGSM = warpGSM + weftGSM;
-    const e = id => document.getElementById(id);
-    if (e('li-gsm-warp'))  e('li-gsm-warp').textContent  = warpGSM.toFixed(2);
-    if (e('li-gsm-weft'))  e('li-gsm-weft').textContent  = weftGSM.toFixed(2);
-    if (e('li-gsm-total')) e('li-gsm-total').textContent = totalGSM.toFixed(2);
+    // Only auto-calc if EPI/PPI/Denier are provided
+    if (epi > 0 || ppi > 0 || warpD > 0 || weftD > 0) {
+        const warpGSM  = epi * warpD * (1 + crimp / 100) / 228.6;
+        const weftGSM  = ppi * weftD * (1 + crimp / 100) / 228.6;
+        const e = id => document.getElementById(id);
+        if (e('li-gsm-warp')) e('li-gsm-warp').value = warpGSM.toFixed(2);
+        if (e('li-gsm-weft')) e('li-gsm-weft').value = weftGSM.toFixed(2);
+    }
+    calcLinerGSMTotal();
     renderLinerTable();
+}
+
+function calcLinerGSMTotal() {
+    const warpGSM = parseFloat(document.getElementById('li-gsm-warp')?.value) || 0;
+    const weftGSM = parseFloat(document.getElementById('li-gsm-weft')?.value) || 0;
+    const e = document.getElementById('li-gsm-total');
+    if (e) e.textContent = (warpGSM + weftGSM).toFixed(2);
 }
 
 function addOptProcess() {
@@ -4737,29 +4896,30 @@ function renderLinerTable(s) {
     });
     const extraTotal = extras.reduce((t, e) => t + e.value, 0);
 
-    // GSM
-    const warpGSM  = epi * warpD * (1 + crimp / 100) / 228.6;
-    const weftGSM  = ppi * weftD * (1 + crimp / 100) / 228.6;
+    // GSM — read from editable inputs (may be manually entered or auto-calc'd)
+    const warpGSM  = parseFloat(document.getElementById('li-gsm-warp')?.value)  || (epi * warpD * (1 + crimp / 100) / 228.6);
+    const weftGSM  = parseFloat(document.getElementById('li-gsm-weft')?.value)  || (ppi * weftD * (1 + crimp / 100) / 228.6);
     const totalGSM = warpGSM + weftGSM;
 
     // Per-config calcs
     const calcs = cl.map(cfg => {
         const w          = cfg.widthCms || 0;
-        const multiples  = w > 0 ? Math.ceil(160 / w) : 1;
+        const multiples  = w > 0 ? Math.floor(160 / w) : 1;
         const glmW       = warpGSM * w / 100;
         const glmF       = weftGSM * w / 100;
         const glmT       = glmW + glmF;
         const l          = cfg.length    || 0;
         const r          = cfg.noOfRolls || 0;
         const orderQty   = l * r * multiples;
-        const yarnCostWarp = (glmW * (1 + waste / 100) / 1000) * ypWarp;
-        const yarnCostWeft = (glmF * (1 + waste / 100) / 1000) * ypWeft;
-        const netYarn    = yarnCostWarp + yarnCostWeft;
-        const subTotal   = netYarn + weaving + procHS + packing + optTotal + extraTotal;
+        const yarnRateWarp = (glmW / 1000) * ypWarp;
+        const yarnRateWeft = (glmF / 1000) * ypWeft;
+        const netYarn    = (yarnRateWarp + yarnRateWeft) * (1 + waste / 100);
+        const packingSubTotal = netYarn + weaving + procHS + packing;
+        const subTotal   = packingSubTotal + optTotal + extraTotal;
         const fabricWasteCost = subTotal * fabWaste / 100;
-        const finCostAmt = subTotal * finCostPct / 100;
+        const finCostAmt = packingSubTotal * finCostPct / 100;
         const totalCost  = subTotal + fabricWasteCost + finCostAmt;
-        return { cfg, multiples, glmW, glmF, glmT, orderQty, netYarn, subTotal, fabricWasteCost, finCostAmt, totalCost };
+        return { cfg, multiples, glmW, glmF, glmT, orderQty, yarnRateWarp, yarnRateWeft, netYarn, subTotal, fabricWasteCost, finCostAmt, totalCost };
     });
 
     // Style helpers
@@ -4779,6 +4939,9 @@ function renderLinerTable(s) {
     const inpCell  = (cid, field, val) =>
         `<td style="${TDS}text-align:right;"><input type="number" class="li-inp" data-cid="${cid}" data-field="${field}"
             value="${esc(String(val ?? ''))}" min="0" step="0.01" style="${INPS}" oninput="renderLinerTable()"></td>`;
+    const inpCellChange = (cid, field, val) =>
+        `<td style="${TDS}text-align:right;"><input type="number" class="li-inp" data-cid="${cid}" data-field="${field}"
+            value="${esc(String(val ?? ''))}" min="0" step="0.1" style="${INPS}" onchange="renderLinerTable()"></td>`;
     const fixedCell = (val, style='') =>
         `<td style="${CALS}${style}">${(val || 0).toFixed(2)}</td>`;
     const roCell = (val) =>
@@ -4815,32 +4978,32 @@ function renderLinerTable(s) {
     <tbody>
     <!-- GSM block -->
     <tr><td colspan="${2 + cl.length}" style="${HDR}">&#9654; FABRIC GSM (from construction inputs)</td></tr>
-    ${row('Warp GSM', 'g/m²', () => cl.map(() => `<td style="${CALS}">${warpGSM.toFixed(2)}</td>`).join(''))}
-    ${row('Weft GSM', 'g/m²', () => cl.map(() => `<td style="${CALS}">${weftGSM.toFixed(2)}</td>`).join(''))}
+    <tr class="li-ph-det"><td style="${LBGS}">Warp GSM</td><td style="${UNS}">g/m²</td>${cl.map(() => `<td style="${CALS}">${warpGSM.toFixed(2)}</td>`).join('')}</tr>
+    <tr class="li-ph-det"><td style="${LBGS}">Weft GSM</td><td style="${UNS}">g/m²</td>${cl.map(() => `<td style="${CALS}">${weftGSM.toFixed(2)}</td>`).join('')}</tr>
     <tr style="${SUB}"><td style="${LBGS}${SUB}"><strong>Total GSM</strong></td><td style="${UNS}">g/m²</td>
         ${cl.map(() => `<td style="${CALS}${SUB}"><strong>${totalGSM.toFixed(2)}</strong></td>`).join('')}</tr>
 
     <!-- Width & Order block -->
     <tr><td colspan="${2 + cl.length}" style="${HDR}">&#9654; WIDTH &amp; ORDER DETAILS</td></tr>
-    ${row('Width', 'Cms.', () => cl.map(c => inpCell(c.id, 'widthCms', c.widthCms)).join(''))}
-    ${row('Width', 'Inches', () => calcs.map(x => `<td style="${CALS}">${((x.cfg.widthCms || 0) / 2.54).toFixed(2)}</td>`).join(''))}
-    <tr><td style="${LBGS}">Multiples <small style="color:#94a3b8;">(= ⌈160 ÷ width⌉)</small></td><td style="${UNS}"></td>
+    <tr class="li-ph-det"><td style="${LBGS}">Width</td><td style="${UNS}">Cms.</td>${cl.map(c => inpCellChange(c.id, 'widthCms', c.widthCms)).join('')}</tr>
+    <tr class="li-ph-det"><td style="${LBGS}">Width</td><td style="${UNS}">Inches</td>${calcs.map(x => `<td style="${CALS}">${((x.cfg.widthCms || 0) / 2.54).toFixed(2)}</td>`).join('')}</tr>
+    <tr class="li-ph-det"><td style="${LBGS}">Multiples <small style="color:#94a3b8;">(= ⌊160 ÷ width⌋)</small></td><td style="${UNS}"></td>
         ${calcs.map(x => roCell(x.multiples)).join('')}</tr>
-    <tr style="${SUB}"><td style="${LBGS}${SUB}">GLM — Warp</td><td style="${UNS}">g/Lmt</td>
+    <tr class="li-ph-det" style="${SUB}"><td style="${LBGS}${SUB}">GLM — Warp</td><td style="${UNS}">g/Lmt</td>
         ${calcs.map(x => fixedCell(x.glmW, SUB)).join('')}</tr>
-    <tr style="${SUB}"><td style="${LBGS}${SUB}">GLM — Weft</td><td style="${UNS}">g/Lmt</td>
+    <tr class="li-ph-det" style="${SUB}"><td style="${LBGS}${SUB}">GLM — Weft</td><td style="${UNS}">g/Lmt</td>
         ${calcs.map(x => fixedCell(x.glmF, SUB)).join('')}</tr>
     <tr style="${SUB}"><td style="${LBGS}${SUB}"><strong>Total GLM</strong></td><td style="${UNS}">g/Lmt</td>
         ${calcs.map(x => fixedCell(x.glmT, SUB)).join('')}</tr>
-    ${row('Length / Roll', 'Mtrs.', () => cl.map(c => inpCell(c.id, 'length', c.length)).join(''))}
-    ${row('No. of Rolls', '', () => cl.map(c => inpCell(c.id, 'noOfRolls', c.noOfRolls)).join(''))}
+    <tr class="li-ph-det"><td style="${LBGS}">Length / Roll</td><td style="${UNS}">Mtrs.</td>${cl.map(c => inpCell(c.id, 'length', c.length)).join('')}</tr>
+    <tr class="li-ph-det"><td style="${LBGS}">No. of Rolls</td><td style="${UNS}"></td>${cl.map(c => inpCell(c.id, 'noOfRolls', c.noOfRolls)).join('')}</tr>
     <tr style="${SUB}"><td style="${LBGS}${SUB}"><strong>Total Order Qty</strong></td><td style="${UNS}">Mtrs.</td>
         ${calcs.map(x => fixedCell(x.orderQty, SUB)).join('')}</tr>
 
     <!-- Cost block -->
     <tr><td colspan="${2 + cl.length}" style="${HDR}">&#9654; COST PER LINEAR METRE</td></tr>
-    ${row('Yarn Rate — Warp', '&#8377;/kg', () => cl.map(() => `<td style="${CALS}">${ypWarp.toFixed(2)}</td>`).join(''))}
-    ${row('Yarn Rate — Weft', '&#8377;/kg', () => cl.map(() => `<td style="${CALS}">${ypWeft.toFixed(2)}</td>`).join(''))}
+    ${row('Yarn Rate — Warp', '&#8377;/Lmt', () => calcs.map(x => `<td style="${CALS}">${x.yarnRateWarp.toFixed(2)}</td>`).join(''))}
+    ${row('Yarn Rate — Weft', '&#8377;/Lmt', () => calcs.map(x => `<td style="${CALS}">${x.yarnRateWeft.toFixed(2)}</td>`).join(''))}
     ${row('Yarn Wastage', '%', () => cl.map(() => `<td style="${CALS}">${waste}%</td>`).join(''))}
     <tr style="${SUB}"><td style="${LBGS}${SUB}"><strong>Net Yarn Price</strong></td><td style="${UNS}">&#8377;/Lmt</td>
         ${calcs.map(x => fixedCell(x.netYarn, SUB)).join('')}</tr>
@@ -4855,7 +5018,7 @@ function renderLinerTable(s) {
         ${calcs.map(x => fixedCell(x.subTotal, SUB)).join('')}</tr>
     <tr style="background:#fef3c7;"><td style="${LBGS}background:#fef3c7;">Fabric Waste (${fabWaste}%)</td><td style="${UNS}">&#8377;/Lmt</td>
         ${calcs.map(x => `<td style="${CALS}background:#fef3c7;">${x.fabricWasteCost.toFixed(2)}</td>`).join('')}</tr>
-    <tr style="background:#fce7f3;"><td style="${LBGS}background:#fce7f3;">Finance Cost (${finCostPct}%)</td><td style="${UNS}">&#8377;/Lmt</td>
+    <tr style="background:#fce7f3;"><td style="${LBGS}background:#fce7f3;">Finance Cost (${finCostPct}% on sub-total to Packing)</td><td style="${UNS}">&#8377;/Lmt</td>
         ${calcs.map(x => `<td style="${CALS}background:#fce7f3;">${x.finCostAmt.toFixed(2)}</td>`).join('')}</tr>
     <tr style="${GRAN}"><td style="${LBGS}${GRAN}"><strong>Total Cost / L.Mtr</strong></td><td style="${UNS}">&#8377;/Lmt</td>
         ${calcs.map(x => fixedCell(x.totalCost, GRAN)).join('')}</tr>
@@ -4874,13 +5037,9 @@ function saveLinerSheet() {
     if (!s) return;
     const gv = id => document.getElementById(id)?.value?.trim() || '';
     const gn = id => parseFloat(document.getElementById(id)?.value) || 0;
-    s.title         = gv('li-title') || 'COSTING - LINER FABRICS';
-    s.quarterPeriod = gv('li-qperiod');
     s.date          = gv('li-date');
     s.party         = gv('li-party');
     s.quality       = gv('li-quality');
-    s.yarn          = gv('li-yarn');
-    s.enqDate       = gv('li-enq-date');
     s.qtyKgs        = gv('li-qty-kgs');
     s.partyCode     = gv('li-party-code');
     s.epi           = gn('li-epi');
@@ -4888,8 +5047,12 @@ function saveLinerSheet() {
     s.warpDenier    = gn('li-warp-denier');
     s.weftDenier    = gn('li-weft-denier');
     s.crimpPct      = gn('li-crimp');
+    s.warpGSM       = gn('li-gsm-warp');
+    s.weftGSM       = gn('li-gsm-weft');
     s.yarnPriceWarp = gn('li-yarn-price-warp');
     s.yarnPriceWeft = gn('li-yarn-price-weft');
+    s.yarnDescWarp  = document.getElementById('li-yarn-desc-warp')?.value  || '';
+    s.yarnDescWeft  = document.getElementById('li-yarn-desc-weft')?.value  || '';
     s.yarnWastagePct= gn('li-yarn-wastage');
     s.weaving          = gn('li-weaving');
     s.processingHS     = gn('li-proc-hs');
@@ -4932,7 +5095,7 @@ function renderInternalComparison() {
             const s2 = s1 + (p.admn||0) + (p.sellingExp||0);
             const s3 = s2 + (p.finCost||0);
             const s4 = s3 + (p.depreciation||0);
-            return s4 * (1 + (p.profitPct||10) / 100);
+            return s3 * (1 + (p.profitPct||10) / 100) + (p.depreciation||0);
         }).filter(v => v > 0);
         const minGT = gts.length ? Math.min(...gts) : 0;
         const maxGT = gts.length ? Math.max(...gts) : 0;
@@ -6573,19 +6736,20 @@ function calcLinerSheetCosts(s) {
 
     return (s.configs || []).map(cfg => {
         const w          = cfg.widthCms  || 0;
-        const multiples  = w > 0 ? Math.ceil(160 / w) : 1;
+        const multiples  = w > 0 ? Math.floor(160 / w) : 1;
         const glmW       = warpGSM * w / 100;
         const glmF       = weftGSM * w / 100;
         const glmT       = glmW + glmF;
         const l          = cfg.length    || 0;
         const r          = cfg.noOfRolls || 0;
         const orderQty   = l * r * multiples;
-        const yarnCostWarp = (glmW * (1 + waste / 100) / 1000) * ypWarp;
-        const yarnCostWeft = (glmF * (1 + waste / 100) / 1000) * ypWeft;
-        const netYarn    = yarnCostWarp + yarnCostWeft;
-        const subTotal   = netYarn + weaving + procHS + packing + optTotal + extraTotal;
+        const yarnRateW  = (glmW / 1000) * ypWarp;
+        const yarnRateF  = (glmF / 1000) * ypWeft;
+        const netYarn    = (yarnRateW + yarnRateF) * (1 + waste / 100);
+        const packingSubTotal = netYarn + weaving + procHS + packing;
+        const subTotal   = packingSubTotal + optTotal + extraTotal;
         const fabricWasteCost = subTotal * fabWaste / 100;
-        const finCostAmt = subTotal * finCostPct / 100;
+        const finCostAmt = packingSubTotal * finCostPct / 100;
         const totalCostPerLmt = subTotal + fabricWasteCost + finCostAmt;
         return {
             configId: cfg.id, label: cfg.label, widthCms: w, glmT,
@@ -7402,6 +7566,7 @@ function populateLEForm(id) {
     sv('le-yarn-price-warp', s.yarnPriceWarp || '');
     sv('le-yarn-price-weft', s.yarnPriceWeft || '');
     sv('le-yarn-wastage',    s.yarnWastagePct ?? 8);
+    populateLinerYarnSelects('le', s);
     sv('le-weaving',         s.weaving       ?? '');
     sv('le-proc-hs',         s.processingHS  ?? 4.75);
     sv('le-packing',         s.packing       ?? 3.50);
@@ -7558,19 +7723,22 @@ function renderLETable(s) {
 
     const calcs = cl.map(cfg => {
         const w         = cfg.widthCms || 0;
-        const multiples = w > 0 ? Math.ceil(160 / w) : 1;
+        const multiples = w > 0 ? Math.floor(160 / w) : 1;
         const glmW      = warpGSM * w / 100;
         const glmF      = weftGSM * w / 100;
         const glmT      = glmW + glmF;
         const l         = cfg.length    || 0;
         const r         = cfg.noOfRolls || 0;
         const orderQty  = l * r * multiples;
-        const netYarn   = (glmW * (1 + waste/100)/1000) * ypWarp + (glmF * (1 + waste/100)/1000) * ypWeft;
-        const subTotal  = netYarn + weaving + procHS + packing + optTotal + extraTotal;
+        const yarnRateWarp = (glmW / 1000) * ypWarp;
+        const yarnRateWeft = (glmF / 1000) * ypWeft;
+        const netYarn   = (yarnRateWarp + yarnRateWeft) * (1 + waste/100);
+        const packingSubTotal = netYarn + weaving + procHS + packing;
+        const subTotal  = packingSubTotal + optTotal + extraTotal;
         const fabWasteC = subTotal * fabWaste / 100;
-        const finCostA  = subTotal * finCostPct / 100;
+        const finCostA  = packingSubTotal * finCostPct / 100;
         const totalCost = subTotal + fabWasteC + finCostA;
-        return { cfg, multiples, glmW, glmF, glmT, orderQty, netYarn, subTotal, fabWasteC, finCostA, totalCost };
+        return { cfg, multiples, glmW, glmF, glmT, orderQty, yarnRateWarp, yarnRateWeft, netYarn, subTotal, fabWasteC, finCostA, totalCost };
     });
 
     const TDS   = 'padding:7px 10px;border:1px solid #e2e8f0;';
@@ -7590,6 +7758,9 @@ function renderLETable(s) {
     const inpCell  = (cid, field, val) =>
         `<td style="${TDS}text-align:right;"><input type="number" class="le-inp" data-cid="${cid}" data-field="${field}"
             value="${esc(String(val ?? ''))}" min="0" step="0.01" style="${INPS}" oninput="renderLETable()"></td>`;
+    const inpCellChange = (cid, field, val) =>
+        `<td style="${TDS}text-align:right;"><input type="number" class="le-inp" data-cid="${cid}" data-field="${field}"
+            value="${esc(String(val ?? ''))}" min="0" step="0.1" style="${INPS}" onchange="renderLETable()"></td>`;
     const fixedCell = (val, style='') => `<td style="${CALS}${style}">${(val||0).toFixed(2)}</td>`;
     const roCell    = (val)           => `<td style="${CALRO}">${(val||0).toFixed(2)}</td>`;
     const row       = (lbl, unit, cellsFn, rStyle='') =>
@@ -7632,9 +7803,9 @@ function renderLETable(s) {
     <tr style="${SUB}"><td style="${LBGS}${SUB}"><strong>Total GSM</strong></td><td style="${UNS}">g/m&#178;</td>
         ${cl.map(()=>`<td style="${CALS}${SUB}"><strong>${totalGSM.toFixed(2)}</strong></td>`).join('')}</tr>
     <tr><td colspan="${2+cl.length}" style="${HDR}">&#9654; WIDTH &amp; ORDER DETAILS</td></tr>
-    ${row('Width','Cms.',() => cl.map(c => inpCell(c.id,'widthCms',c.widthCms)).join(''))}
+    ${row('Width','Cms.',() => cl.map(c => inpCellChange(c.id,'widthCms',c.widthCms)).join(''))}
     ${row('Width','Inches',() => calcs.map(x=>`<td style="${CALS}">${((x.cfg.widthCms||0)/2.54).toFixed(2)}</td>`).join(''))}
-    <tr><td style="${LBGS}">Multiples <small style="color:#94a3b8;">(= &#8968;160 &#247; width&#8969;)</small></td><td style="${UNS}"></td>
+    <tr><td style="${LBGS}">Multiples <small style="color:#94a3b8;">(= &#8970;160 &#247; width&#8971;)</small></td><td style="${UNS}"></td>
         ${calcs.map(x=>roCell(x.multiples)).join('')}</tr>
     <tr style="${SUB}"><td style="${LBGS}${SUB}">GLM &#8212; Warp</td><td style="${UNS}">g/Lmt</td>${calcs.map(x=>fixedCell(x.glmW,SUB)).join('')}</tr>
     <tr style="${SUB}"><td style="${LBGS}${SUB}">GLM &#8212; Weft</td><td style="${UNS}">g/Lmt</td>${calcs.map(x=>fixedCell(x.glmF,SUB)).join('')}</tr>
@@ -7644,8 +7815,8 @@ function renderLETable(s) {
     <tr style="${SUB}"><td style="${LBGS}${SUB}"><strong>Total Order Qty</strong></td><td style="${UNS}">Mtrs.</td>
         ${calcs.map(x=>fixedCell(x.orderQty,SUB)).join('')}</tr>
     <tr><td colspan="${2+cl.length}" style="${HDR}">&#9654; COST PER LINEAR METRE</td></tr>
-    ${row('Yarn Rate &#8212; Warp','&#8377;/kg',() => cl.map(()=>`<td style="${CALS}">${ypWarp.toFixed(2)}</td>`).join(''))}
-    ${row('Yarn Rate &#8212; Weft','&#8377;/kg',() => cl.map(()=>`<td style="${CALS}">${ypWeft.toFixed(2)}</td>`).join(''))}
+    ${row('Yarn Rate &#8212; Warp','&#8377;/Lmt',() => calcs.map(x=>`<td style="${CALS}">${x.yarnRateWarp.toFixed(2)}</td>`).join(''))}
+    ${row('Yarn Rate &#8212; Weft','&#8377;/Lmt',() => calcs.map(x=>`<td style="${CALS}">${x.yarnRateWeft.toFixed(2)}</td>`).join(''))}
     ${row('Yarn Wastage','%',() => cl.map(()=>`<td style="${CALS}">${waste}%</td>`).join(''))}
     <tr style="${SUB}"><td style="${LBGS}${SUB}"><strong>Net Yarn Price</strong></td><td style="${UNS}">&#8377;/Lmt</td>
         ${calcs.map(x=>fixedCell(x.netYarn,SUB)).join('')}</tr>
@@ -7660,7 +7831,7 @@ function renderLETable(s) {
         ${calcs.map(x=>fixedCell(x.subTotal,SUB)).join('')}</tr>
     <tr style="background:#fef3c7;"><td style="${LBGS}background:#fef3c7;">Fabric Waste (${fabWaste}%)</td><td style="${UNS}">&#8377;/Lmt</td>
         ${calcs.map(x=>`<td style="${CALS}background:#fef3c7;">${x.fabWasteC.toFixed(2)}</td>`).join('')}</tr>
-    <tr style="background:#fce7f3;"><td style="${LBGS}background:#fce7f3;">Finance Cost (${finCostPct}%)</td><td style="${UNS}">&#8377;/Lmt</td>
+    <tr style="background:#fce7f3;"><td style="${LBGS}background:#fce7f3;">Finance Cost (${finCostPct}% on sub-total to Packing)</td><td style="${UNS}">&#8377;/Lmt</td>
         ${calcs.map(x=>`<td style="${CALS}background:#fce7f3;">${x.finCostA.toFixed(2)}</td>`).join('')}</tr>
     <tr style="${GRAN}"><td style="${LBGS}${GRAN}"><strong>Total Cost / L.Mtr</strong></td><td style="${UNS}">&#8377;/Lmt</td>
         ${calcs.map(x=>fixedCell(x.totalCost,GRAN)).join('')}</tr>
@@ -7693,6 +7864,8 @@ function saveLESheet() {
     s.crimpPct        = gn('le-crimp')          || 8;
     s.yarnPriceWarp   = gn('le-yarn-price-warp');
     s.yarnPriceWeft   = gn('le-yarn-price-weft');
+    s.yarnDescWarp    = document.getElementById('le-yarn-desc-warp')?.value || '';
+    s.yarnDescWeft    = document.getElementById('le-yarn-desc-weft')?.value || '';
     s.yarnWastagePct  = gn('le-yarn-wastage')   || 8;
     s.weaving         = gn('le-weaving');
     s.processingHS    = gn('le-proc-hs');
@@ -7760,8 +7933,8 @@ function renderDashboard() {
 
     // ── Compute internal costing plant grand totals ───────────────────────────
     const calcICGrand = p => {
-        const s4 = (p.flatYarnCost||0)+(p.chemicalCost||0)+(p.mfgCost||0)+(p.packing||0)+(p.transport||0)+(p.admn||0)+(p.sellingExp||0)+(p.finCost||0)+(p.depreciation||0);
-        return s4 * (1 + (p.profitPct||10)/100);
+        const s3 = (p.flatYarnCost||0)+(p.chemicalCost||0)+(p.mfgCost||0)+(p.packing||0)+(p.transport||0)+(p.admn||0)+(p.sellingExp||0)+(p.finCost||0);
+        return s3 * (1 + (p.profitPct||10)/100) + (p.depreciation||0);
     };
     const internalSummary = internalSheets.map(ic => {
         const gts = (ic.plants||[]).map(p => ({ p, gt: calcICGrand(p) }));
