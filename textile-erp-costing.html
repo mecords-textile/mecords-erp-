@@ -914,7 +914,7 @@
 
         <div class="card" style="border-left:4px solid #7c3aed;">
             <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
-                <span>Raw Material Master List</span>
+                <span>Yarn Master List</span>
                 <div style="display:flex;gap:8px;align-items:center;">
                     <label style="font-size:12px;font-weight:600;color:var(--muted);">Filter by Month:</label>
                     <select id="rm-filter-month" onchange="renderRawMaterials()" style="min-width:150px;">
@@ -4117,7 +4117,7 @@ function refreshPCPowerLinkOpts(prodMap) {
     });
 }
 
-// ─────────────────────────────────────────────────────── Raw Material Master
+// ─────────────────────────────────────────────────────── Yarn Master
 
 function saveRawMaterial() {
     const name  = document.getElementById('rm-name').value.trim();
@@ -8830,10 +8830,10 @@ function applyChipsToMaster(sid, stype) {
     const existing = db.rawMaterials.find(r => r.name === qName && r.month === yw.month && r.supplier === sup.name);
     if (existing) {
         existing.pricePerKg = parseFloat(net.toFixed(2));
-        flash(`Updated: ${qName} (${sup.name}) in Raw Material Master.`);
+        flash(`Updated: ${qName} (${sup.name}) in Yarn Master.`);
     } else {
         db.rawMaterials.push({ id: nid(), name: qName, count: '', supplier: sup.name, month: yw.month, pricePerKg: parseFloat(net.toFixed(2)) });
-        flash(`Added: ${qName} (${sup.name}) to Raw Material Master.`);
+        flash(`Added: ${qName} (${sup.name}) to Yarn Master.`);
     }
     persist();
 }
@@ -8945,6 +8945,68 @@ function removeChemDomSupplier(sid) {
     renderYarnSheet();
 }
 
+function addChemYarnSupplier() {
+    const yw = db.yarnPriceWorkings.find(y => y.id === _ywId);
+    if (!yw) return;
+    saveYarnSheet();
+    yw.yarnSuppliers = yw.yarnSuppliers || [];
+    yw.yarnSuppliers.push(newChemDomSupplier('Supplier ' + (yw.yarnSuppliers.length + 1)));
+    persist();
+    renderYarnSheet();
+}
+
+function removeChemYarnSupplier(sid) {
+    const yw = db.yarnPriceWorkings.find(y => y.id === _ywId);
+    if (!yw || (yw.yarnSuppliers || []).length <= 1) return alert('At least one yarn supplier is required.');
+    saveYarnSheet();
+    yw.yarnSuppliers = yw.yarnSuppliers.filter(s => s.id !== sid);
+    persist();
+    renderYarnSheet();
+}
+
+function calcChemYarnSupplier(sid) {
+    const v = id => parseFloat((document.getElementById(id)||{}).value) || 0;
+    const basicPrice     = v(`yw-${sid}-basic`);
+    const gstPct         = v(`yw-${sid}-gst-pct`);
+    const transportation = v(`yw-${sid}-transport`);
+
+    const gst       = basicPrice * gstPct / 100;
+    const sub1      = basicPrice + gst;
+    const sub2      = sub1 + transportation;
+    const netLanded = sub2 - gst;
+
+    const f2 = n => (n||0).toFixed(2);
+    const sr = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
+    sr(`yw-${sid}-r-gst`,  `\u20B9 ${f2(gst)}`);
+    sr(`yw-${sid}-r-sub1`, `\u20B9 ${f2(sub1)}`);
+    sr(`yw-${sid}-r-sub2`, `\u20B9 ${f2(sub2)}`);
+    sr(`yw-${sid}-r-lgst`, `\u20B9 ${f2(gst)}`);
+    sr(`yw-${sid}-r-net`,  `\u20B9 ${f2(netLanded)}`);
+}
+
+function applyChemYarnToMaster(sid) {
+    const yw = db.yarnPriceWorkings.find(y => y.id === _ywId);
+    if (!yw) return;
+    const sup = (yw.yarnSuppliers || []).find(s => s.id === sid);
+    if (!sup) return;
+    const netEl = document.getElementById(`yw-${sid}-r-net`);
+    const net = netEl ? parseFloat(netEl.textContent.replace(/[^\d.]/g,'')) : 0;
+    if (!net) return alert('Net Landed Cost is zero — please fill in values first.');
+    const qName = yw.name || prompt('Enter yarn quality name for the master list:');
+    if (!qName) return;
+    const existing = db.rawMaterials.find(r => r.name === qName && r.month === yw.month && r.supplier === sup.name);
+    if (existing) {
+        existing.pricePerKg = parseFloat(net.toFixed(2));
+        existing.supplier   = sup.name;
+        flash(`Updated: ${qName} (${sup.name}) in Yarn Master.`);
+    } else {
+        db.rawMaterials.push({ id: nid(), name: qName, supplier: sup.name, month: yw.month, pricePerKg: parseFloat(net.toFixed(2)), count: '' });
+        flash(`Added: ${qName} (${sup.name}) to Yarn Master.`);
+    }
+    persist();
+    renderRawMaterials();
+}
+
 function applyChemToMaster(sid, stype) {
     const yw = db.yarnPriceWorkings.find(y => y.id === _ywId);
     if (!yw) return;
@@ -8970,9 +9032,10 @@ function applyChemToMaster(sid, stype) {
 }
 
 function renderChemicalTable(yw) {
-    const impSups = yw.impSuppliers || [];
-    const domSups = yw.domSuppliers || [];
-    const ni = impSups.length, nd = domSups.length;
+    const impSups  = yw.impSuppliers  || [];
+    const domSups  = yw.domSuppliers  || [];
+    const yarnSups = yw.yarnSuppliers || [];
+    const ni = impSups.length, nd = domSups.length, ny = yarnSups.length;
 
     const inpI = (sid, field, val, step) =>
         `<td class="yw-inp"><input type="number" id="yw-${sid}-${field}" value="${val||''}" placeholder="0" step="${step||'0.01'}" oninput="calcChemImpSupplier('${sid}');saveYarnSheet()"></td>`;
@@ -9162,10 +9225,76 @@ function renderChemicalTable(yw) {
           </td>
         </tr>
       </tbody>
+    </table>
+
+    <!-- ── DOMESTIC YARN SUPPLIERS ── -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;margin-top:24px;border-top:2px dashed #d1fae5;padding-top:20px;">
+        <div style="font-weight:700;font-size:14px;color:#065f46;">&#129525; Domestic Yarn Suppliers</div>
+        <button class="btn btn-outline btn-sm" onclick="addChemYarnSupplier()" style="border-color:#065f46;color:#065f46;">+ Add Yarn Supplier</button>
+    </div>
+    <table class="yw-table">
+      <thead><tr>
+        <th style="width:26px;">#</th>
+        <th class="yw-th-desc">Name of the Party / Description</th>
+        <th class="yw-th-pct">%</th>
+        ${yarnSups.map(s => `
+            <th class="yw-th-sup">
+                <input class="yw-sup-name-inp" type="text" id="yw-${s.id}-name" value="${esc(s.name)}" placeholder="Supplier name" oninput="saveYarnSheet()">
+                <button class="yw-rem-btn" onclick="removeChemYarnSupplier('${s.id}')">&#10005; Remove</button>
+            </th>`).join('')}
+      </tr></thead>
+      <tbody>
+        <tr>
+          <td class="yw-sn">1</td><td class="yw-lbl">Basic Price<small>&#8377;/kg (direct/ex-works)</small></td><td class="yw-pct">&#8377;/kg</td>
+          ${yarnSups.map(s => `<td class="yw-inp"><input type="number" id="yw-${s.id}-basic" value="${s.basicPrice||''}" placeholder="0" step="0.01" oninput="calcChemYarnSupplier('${s.id}');saveYarnSheet()"></td>`).join('')}
+        </tr>
+        <tr>
+          <td class="yw-sn">2</td><td class="yw-lbl">G.S.T (MDVT)<small>on Basic Price</small></td><td class="yw-pct">%</td>
+          ${yarnSups.map(s => `<td class="yw-inp"><input type="number" id="yw-${s.id}-gst-pct" value="${s.gstPct||''}" placeholder="0" step="0.1" min="0" max="100" oninput="calcChemYarnSupplier('${s.id}');saveYarnSheet()"></td>`).join('')}
+        </tr>
+        <tr class="yw-amt-row">
+          <td class="yw-sn"></td><td class="yw-lbl">GST Amount<small>&#8377;/kg</small></td><td class="yw-pct"></td>
+          ${yarnSups.map(s => `<td class="yw-val" style="color:#64748b;"><span id="yw-${s.id}-r-gst">—</span></td>`).join('')}
+        </tr>
+        <tr class="yw-sub-row">
+          <td class="yw-sn">=</td><td class="yw-lbl">SUB TOTAL</td><td class="yw-pct" style="font-size:10px;color:#94a3b8;">&#8377;/kg</td>
+          ${yarnSups.map(s => `<td class="yw-val"><span id="yw-${s.id}-r-sub1">—</span></td>`).join('')}
+        </tr>
+        <tr>
+          <td class="yw-sn">3</td><td class="yw-lbl">Transportation<small>&#8377;/kg</small></td><td class="yw-pct">&#8377;/kg</td>
+          ${yarnSups.map(s => `<td class="yw-inp"><input type="number" id="yw-${s.id}-transport" value="${s.transportation||''}" placeholder="0" step="0.01" oninput="calcChemYarnSupplier('${s.id}');saveYarnSheet()"></td>`).join('')}
+        </tr>
+        <tr class="yw-sub-row">
+          <td class="yw-sn">=</td><td class="yw-lbl">SUB TOTAL<small>incl. Transport</small></td><td class="yw-pct" style="font-size:10px;color:#94a3b8;">&#8377;/kg</td>
+          ${yarnSups.map(s => `<td class="yw-val"><span id="yw-${s.id}-r-sub2">—</span></td>`).join('')}
+        </tr>
+        <tr class="yw-discount-row">
+          <td class="yw-sn">&#8722;</td>
+          <td class="yw-lbl">Less: G.S.T (ITC)<small>GST input credit</small></td>
+          <td class="yw-pct"></td>
+          ${yarnSups.map(s => `<td class="yw-val" style="color:#b45309;"><span id="yw-${s.id}-r-lgst">—</span></td>`).join('')}
+        </tr>
+        <tr class="yw-net-row">
+          <td class="yw-sn">=</td><td class="yw-lbl">NET LANDED ITCED PRICE</td><td class="yw-pct" style="color:#94a3b8;font-size:10px;">&#8377;/kg</td>
+          ${yarnSups.map(s => `<td class="yw-val" style="color:#86efac;font-size:14px;"><span id="yw-${s.id}-r-net">—</span></td>`).join('')}
+        </tr>
+        <tr style="background:#f1f5f9;">
+          <td class="yw-sn" style="font-size:10px;color:#64748b;">TMS</td>
+          <td class="yw-lbl" style="color:#475569;">Payment Terms<small>e.g. DA 75, LC 90</small></td>
+          <td class="yw-pct"></td>
+          ${yarnSups.map(s => `<td class="yw-inp"><input type="text" id="yw-${s.id}-payterms" value="${esc(s.paymentTerms||'')}" placeholder="e.g. DA 75" oninput="saveYarnSheet()" style="width:100%;"></td>`).join('')}
+        </tr>
+        <tr>
+          <td colspan="${3+ny}" style="text-align:center;padding:10px;background:#f0fdf4;">
+            ${yarnSups.map(s => `<button class="btn btn-sm" style="background:#065f46;color:white;margin:2px 4px;" onclick="applyChemYarnToMaster('${s.id}')">&#128190; Push <em>${esc(s.name)}</em> to Yarn Master</button>`).join('')}
+          </td>
+        </tr>
+      </tbody>
     </table>`;
 
     impSups.forEach(s => calcChemImpSupplier(s.id));
     domSups.forEach(s => calcChemDomSupplier(s.id));
+    yarnSups.forEach(s => calcChemYarnSupplier(s.id));
 }
 
 function onYWTypeChange() {
@@ -9184,8 +9313,9 @@ function onYWTypeChange() {
         yw.impSuppliers = [newChipsImpSupplier('Supplier 1')];
         delete yw.suppliers;
     } else if (newType === 'chemical') {
-        yw.impSuppliers = [newChemImpSupplier('Supplier 1')];
-        yw.domSuppliers = [newChemDomSupplier('Supplier 1')];
+        yw.impSuppliers  = [newChemImpSupplier('Supplier 1')];
+        yw.domSuppliers  = [newChemDomSupplier('Supplier 1')];
+        yw.yarnSuppliers = [newChemDomSupplier('Supplier 1')];
         delete yw.suppliers;
     } else {
         const count = (yw.suppliers || []).length || 1;
@@ -9253,11 +9383,19 @@ function saveYarnSheet() {
         });
         (yw.domSuppliers || []).forEach(sup => {
             const sid = sup.id;
-            sup.name         = s(`yw-${sid}-name`);
-            sup.basicPrice   = v(`yw-${sid}-basic`);
-            sup.gstPct       = v(`yw-${sid}-gst-pct`);
-            sup.transportation= v(`yw-${sid}-transport`);
-            sup.paymentTerms = s(`yw-${sid}-payterms`);
+            sup.name          = s(`yw-${sid}-name`);
+            sup.basicPrice    = v(`yw-${sid}-basic`);
+            sup.gstPct        = v(`yw-${sid}-gst-pct`);
+            sup.transportation = v(`yw-${sid}-transport`);
+            sup.paymentTerms  = s(`yw-${sid}-payterms`);
+        });
+        (yw.yarnSuppliers || []).forEach(sup => {
+            const sid = sup.id;
+            sup.name          = s(`yw-${sid}-name`);
+            sup.basicPrice    = v(`yw-${sid}-basic`);
+            sup.gstPct        = v(`yw-${sid}-gst-pct`);
+            sup.transportation = v(`yw-${sid}-transport`);
+            sup.paymentTerms  = s(`yw-${sid}-payterms`);
         });
         persist();
         refreshYWSel();
@@ -9382,10 +9520,10 @@ function applyYarnToMaster(sid) {
     const existing = db.rawMaterials.find(r => r.name === qName && r.month === yw.month && r.supplier === sup.name);
     if (existing) {
         existing.pricePerKg = parseFloat(net.toFixed(2));
-        flash(`Updated: ${qName} (${sup.name}) in Raw Material Master.`);
+        flash(`Updated: ${qName} (${sup.name}) in Yarn Master.`);
     } else {
         db.rawMaterials.push({ id: nid(), name: qName, count: '', supplier: sup.name, month: yw.month, pricePerKg: parseFloat(net.toFixed(2)) });
-        flash(`Added: ${qName} (${sup.name}) to Raw Material Master.`);
+        flash(`Added: ${qName} (${sup.name}) to Yarn Master.`);
     }
     persist();
 }
@@ -9490,7 +9628,7 @@ function renderDomesticTable(yw, sups) {
         </tr>
         <tr>
           <td colspan="${3+n}" style="text-align:center;padding:10px;background:#f8fafc;">
-            ${sups.map(s => `<button class="btn btn-sm" style="background:#7c3aed;color:white;margin:2px 4px;" onclick="applyYarnToMaster('${s.id}')">&#128190; Push <em>${esc(s.name)}</em> to Raw Material Master</button>`).join('')}
+            ${sups.map(s => `<button class="btn btn-sm" style="background:#7c3aed;color:white;margin:2px 4px;" onclick="applyYarnToMaster('${s.id}')">&#128190; Push <em>${esc(s.name)}</em> to Yarn Master</button>`).join('')}
           </td>
         </tr>
       </tbody>
@@ -9606,7 +9744,7 @@ function renderChipsTable(yw) {
         </tr>
         <tr>
           <td colspan="${3+nd}" style="text-align:center;padding:10px;background:#f8fafc;">
-            ${domSups.map(s => `<button class="btn btn-sm" style="background:#7c3aed;color:white;margin:2px 4px;" onclick="applyChipsToMaster('${s.id}','dom')">&#128190; Push <em>${esc(s.name)}</em> to Raw Material Master</button>`).join('')}
+            ${domSups.map(s => `<button class="btn btn-sm" style="background:#7c3aed;color:white;margin:2px 4px;" onclick="applyChipsToMaster('${s.id}','dom')">&#128190; Push <em>${esc(s.name)}</em> to Yarn Master</button>`).join('')}
           </td>
         </tr>
       </tbody>
@@ -9709,7 +9847,7 @@ function renderChipsTable(yw) {
         </tr>
         <tr>
           <td colspan="${3+ni}" style="text-align:center;padding:10px;background:#f8fafc;">
-            ${impSups.map(s => `<button class="btn btn-sm" style="background:#2563eb;color:white;margin:2px 4px;" onclick="applyChipsToMaster('${s.id}','imp')">&#128190; Push <em>${esc(s.name)}</em> to Raw Material Master</button>`).join('')}
+            ${impSups.map(s => `<button class="btn btn-sm" style="background:#2563eb;color:white;margin:2px 4px;" onclick="applyChipsToMaster('${s.id}','imp')">&#128190; Push <em>${esc(s.name)}</em> to Yarn Master</button>`).join('')}
           </td>
         </tr>
       </tbody>
@@ -9860,7 +9998,7 @@ function renderYarnSheet() {
         </tr>
         <tr>
           <td colspan="${3+n}" style="text-align:center;padding:10px;background:#f8fafc;">
-            ${sups.map(s => `<button class="btn btn-sm" style="background:#7c3aed;color:white;margin:2px 4px;" onclick="applyYarnToMaster('${s.id}')">&#128190; Push <em>${esc(s.name)}</em> to Raw Material Master</button>`).join('')}
+            ${sups.map(s => `<button class="btn btn-sm" style="background:#7c3aed;color:white;margin:2px 4px;" onclick="applyYarnToMaster('${s.id}')">&#128190; Push <em>${esc(s.name)}</em> to Yarn Master</button>`).join('')}
           </td>
         </tr>
       </tbody>
