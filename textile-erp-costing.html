@@ -806,6 +806,12 @@
         <h1>&#127981; Mecords Textile ERP</h1>
     </div>
     <div class="header-actions">
+        <!-- Firebase sync status -->
+        <div style="display:flex;align-items:center;gap:6px;padding:4px 10px;background:rgba(255,255,255,.12);border-radius:20px;font-size:11px;color:white;">
+            <span id="fb-status-dot" style="width:8px;height:8px;border-radius:50%;background:#94a3b8;flex-shrink:0;"></span>
+            <span id="fb-status-text">Local only</span>
+        </div>
+        <button class="btn-header" onclick="reloadFromFirebase()" title="Pull latest data from cloud">&#8635; Sync</button>
         <button class="btn-header" onclick="exportData()" title="Download all data as a backup file">&#11015; Export Data</button>
         <label class="btn-header" style="cursor:pointer;" title="Load data from a backup file">
             &#11014; Import Data
@@ -813,6 +819,19 @@
         </label>
         <button class="btn-header" onclick="openSettings()">&#9881; Settings</button>
     </div>
+</div>
+
+<!-- Firebase sync banner — shown when another user saves remotely -->
+<div id="fb-sync-banner" style="display:none;position:fixed;bottom:24px;right:24px;z-index:9999;
+     background:#1e293b;color:white;padding:12px 18px;border-radius:10px;
+     box-shadow:0 4px 20px rgba(0,0,0,.35);font-size:13px;align-items:center;gap:12px;">
+    <span>&#128225; New data saved by another user</span>
+    <button onclick="reloadFromFirebase()"
+        style="background:#2563eb;color:white;border:none;border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer;font-weight:600;">
+        Sync Now
+    </button>
+    <button onclick="document.getElementById('fb-sync-banner').style.display='none'"
+        style="background:transparent;color:#94a3b8;border:none;font-size:16px;cursor:pointer;line-height:1;">&#215;</button>
 </div>
 
 <!-- ── Password Prompt Modal ── -->
@@ -2769,7 +2788,108 @@
     z-index:9999; white-space:nowrap;
 "></div>
 
+<!-- Firebase Realtime Database SDK (compat v9) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
 <script>
+// ══════════════════════════════════════════════════════════════════════════════
+//  FIREBASE SYNC CONFIGURATION
+//  Setup (one-time, ~5 minutes):
+//  1. Go to https://console.firebase.google.com → "Add project"
+//  2. Inside the project: "Add app" → Web (</>) → copy the config below
+//  3. Build → Realtime Database → "Create database" → Start in test mode
+//  4. Rules tab → replace with: { "rules": { ".read": true, ".write": true } }
+//  5. Fill in the values below and push to GitHub — both users pick it up automatically
+// ══════════════════════════════════════════════════════════════════════════════
+const FIREBASE_CONFIG = {
+    apiKey:            'PASTE_YOUR_API_KEY',
+    authDomain:        'PASTE_YOUR_PROJECT_ID.firebaseapp.com',
+    databaseURL:       'https://PASTE_YOUR_PROJECT_ID-default-rtdb.firebaseio.com',
+    projectId:         'PASTE_YOUR_PROJECT_ID',
+    storageBucket:     'PASTE_YOUR_PROJECT_ID.appspot.com',
+    messagingSenderId: 'PASTE_YOUR_SENDER_ID',
+    appId:             'PASTE_YOUR_APP_ID'
+};
+// Automatically disabled until the config above is filled in
+const FIREBASE_ENABLED = FIREBASE_CONFIG.apiKey !== 'PASTE_YOUR_API_KEY';
+const _FB_PATH = 'erpData';
+let _fbDB = null, _ignoreNextFBSnap = false;
+
+function _fbInit() {
+    if (!FIREBASE_ENABLED || typeof firebase === 'undefined') return false;
+    try {
+        if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+        _fbDB = firebase.database();
+        return true;
+    } catch(e) { console.warn('Firebase init failed:', e); return false; }
+}
+
+function _fbSetStatus(state) {
+    const dot  = document.getElementById('fb-status-dot');
+    const text = document.getElementById('fb-status-text');
+    if (!dot || !text) return;
+    const S = {
+        syncing: ['#f59e0b', 'Syncing…'],
+        synced:  ['#16a34a', 'Cloud ✓'],
+        offline: ['#dc2626', 'Offline'],
+        local:   ['#94a3b8', 'Local only']
+    };
+    const [col, lbl] = S[state] || S.local;
+    dot.style.background  = col;
+    text.textContent      = lbl;
+}
+
+async function _fbLoad() {
+    if (!_fbDB) return false;
+    try {
+        const snap = await _fbDB.ref(_FB_PATH).get();
+        if (snap.exists()) {
+            db = snap.val();
+            localStorage.setItem('textile-erp-v1', JSON.stringify(db));
+            return true;
+        }
+        return false;  // nothing in Firebase yet
+    } catch(e) { console.warn('Firebase load failed:', e); return false; }
+}
+
+function _fbPush() {
+    if (!_fbDB) return;
+    _ignoreNextFBSnap = true;
+    _fbSetStatus('syncing');
+    _fbDB.ref(_FB_PATH).set(db)
+        .then(() => _fbSetStatus('synced'))
+        .catch(err => { console.warn('Firebase push failed:', err); _fbSetStatus('offline'); });
+}
+
+function _fbListen() {
+    if (!_fbDB) return;
+    _fbDB.ref(_FB_PATH).on('value', () => {
+        if (_ignoreNextFBSnap) { _ignoreNextFBSnap = false; return; }
+        const banner = document.getElementById('fb-sync-banner');
+        if (banner) banner.style.display = 'flex';
+    });
+}
+
+function reloadFromFirebase() {
+    if (!_fbDB) return;
+    const banner = document.getElementById('fb-sync-banner');
+    if (banner) banner.style.display = 'none';
+    _fbSetStatus('syncing');
+    _fbDB.ref(_FB_PATH).get().then(snap => {
+        if (!snap.exists()) return;
+        db = snap.val();
+        _ensureDBStructure();
+        localStorage.setItem('textile-erp-v1', JSON.stringify(db));
+        _fbSetStatus('synced');
+        // Refresh visible data
+        renderChemicals(); renderRawMaterials(); renderRecipes();
+        if (typeof _icId !== 'undefined' && _icId) { const _ic = (db.internalProductCostings||[]).find(p => p.id === _icId); if (_ic) renderICTable(_ic); }
+        if (typeof _liId !== 'undefined' && _liId) populateLinerForm(_liId);
+        flash('📡 Synced latest data from cloud.');
+    }).catch(() => _fbSetStatus('offline'));
+}
+
 // ─────────────────────────────────────────────────────── State & persistence
 let db = { chemicals: [], recipes: [] };
 
@@ -2779,6 +2899,7 @@ function persist() {
     } catch(e) {
         console.warn('localStorage unavailable – data saved in memory only.', e);
     }
+    _fbPush();
 }
 
 function exportData() {
@@ -2810,8 +2931,16 @@ function importData(input) {
         try {
             const parsed = JSON.parse(e.target.result);
             localStorage.setItem('textile-erp-v1', JSON.stringify(parsed));
-            flash('Data imported! Reloading…');
-            setTimeout(() => location.reload(), 800);
+            // Also push to Firebase so all users get the imported data
+            if (_fbDB) {
+                _ignoreNextFBSnap = true;
+                _fbDB.ref(_FB_PATH).set(parsed)
+                    .then(() => { flash('Data imported & synced to cloud! Reloading…'); setTimeout(() => location.reload(), 900); })
+                    .catch(() => { flash('Data imported (local only). Reloading…'); setTimeout(() => location.reload(), 900); });
+            } else {
+                flash('Data imported! Reloading…');
+                setTimeout(() => location.reload(), 800);
+            }
         } catch(err) {
             alert('Import failed — invalid file. Please use a valid Mecords ERP backup JSON file.');
         }
@@ -2819,13 +2948,8 @@ function importData(input) {
     };
     reader.readAsText(file);
 }
-function hydrate() {
-    try {
-        const raw = localStorage.getItem('textile-erp-v1');
-        if (raw) db = JSON.parse(raw);
-    } catch(e) { /* ignore */ }
 
-    // Always ensure all arrays exist (defensive guard)
+function _ensureDBStructure() {
     if (!Array.isArray(db.chemicals))        db.chemicals        = [];
     if (!Array.isArray(db.recipes))          db.recipes          = [];
     if (!Array.isArray(db.productCostings))   db.productCostings   = [];
@@ -2843,6 +2967,30 @@ function hydrate() {
     if (!Array.isArray(db.linerExportCostings))      db.linerExportCostings     = [];
     if (!db.tabPasswords)                    db.tabPasswords      = { rawmaterials: '', batchprocessing: '', factorycosting: '', internalcosting: '', custcosting: '', machinerycosting: '', dashboard: '' };
     if (!('dashboard' in db.tabPasswords))   db.tabPasswords.dashboard = '';
+}
+
+async function hydrate() {
+    const fbOk = _fbInit();
+
+    if (fbOk) {
+        // ── Firebase path ───────────────────────────────────────────────
+        _fbSetStatus('syncing');
+        const loadedFromCloud = await _fbLoad();
+        if (loadedFromCloud) {
+            _fbSetStatus('synced');
+        } else {
+            // Firebase is empty — load from localStorage and migrate up
+            try { const raw = localStorage.getItem('textile-erp-v1'); if (raw) db = JSON.parse(raw); } catch(e) {}
+            _fbPush();   // first-time migration: push local data to Firebase
+        }
+        _fbListen();     // watch for changes from other users
+    } else {
+        // ── Local-only path ─────────────────────────────────────────────
+        _fbSetStatus('local');
+        try { const raw = localStorage.getItem('textile-erp-v1'); if (raw) db = JSON.parse(raw); } catch(e) {}
+    }
+
+    _ensureDBStructure();
 
     // Seed demo chemicals on first load
     if (db.chemicals.length === 0) {
@@ -2856,7 +3004,6 @@ function hydrate() {
         ];
         persist();
     } else if (!db.chemicals.some(c => c.name === 'DM Water')) {
-        // Migration: add DM Water if it was missing from an older saved list
         db.chemicals.push({ id: nid(), name: 'DM Water', pricePerKg: 2, unit: 'kg' });
         persist();
     }
@@ -10379,11 +10526,13 @@ function renderChemSheet() {
 }
 
 // ─────────────────────────────────────────────────────── Boot
-hydrate();
-renderChemicals();
-renderRawMaterials();
-renderRecipes();
-updateTabLockIcons();
+(async () => {
+    await hydrate();
+    renderChemicals();
+    renderRawMaterials();
+    renderRecipes();
+    updateTabLockIcons();
+})();
 </script>
 
 <!-- RBI Exchange Rate Import Modal -->
