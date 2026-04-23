@@ -2600,7 +2600,7 @@
             <div class="print-hd">
                 <div class="mc-ph-wrap">
                     <div class="mc-ph-left">
-                        H.S. Code: <strong id="mc-print-hs"></strong>
+                        HSN Code: <strong id="mc-print-hs"></strong>
                         <div style="margin-top:5px;font-size:11px;font-weight:800;color:#1e293b;" id="mc-print-party"></div>
                     </div>
                     <div class="mc-ph-center">
@@ -2619,7 +2619,7 @@
                 <div class="card-title">Sheet Details</div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label>H.S. Code</label>
+                        <label>HSN Code</label>
                         <input type="text" id="mc-hscode" placeholder="e.g. 8445.00.00" style="width:140px;" oninput="syncMCPrintHeader()">
                     </div>
                     <div class="form-group">
@@ -2758,7 +2758,7 @@
                 <table id="mcc-table">
                     <thead>
                         <tr>
-                            <th>#</th><th>Title</th><th>H.S. Code</th><th>Party</th><th>Date</th>
+                            <th>#</th><th>Title</th><th>HSN Code</th><th>Party</th><th>Date</th>
                             <th class="num">Machines</th>
                             <th class="num">Min Net Landed (&#8377;)</th>
                             <th class="num">Max Net Landed (&#8377;)</th>
@@ -5477,7 +5477,7 @@ function renderMCTable(s) {
     </thead>
     <tbody>
     <!-- Machine Info -->
-    ${row('<strong>H.S. Code</strong>', '', () => ml.map(m=>`<td style="${tdS}text-align:right;">
+    ${row('<strong>HSN Code</strong>', '', () => ml.map(m=>`<td style="${tdS}text-align:right;">
         <input type="text" class="mc-inp" data-pid="${m.id}" data-field="hsCode2" value="" placeholder="—"
             style="${inpS}" oninput="calcMCSheet()"></td>`).join(''), 'background:#f8fafc;')}
     ${row('Description / Model', '', () => ml.map(m=>`<td style="${tdS}">
@@ -5800,7 +5800,7 @@ function renderMCMachineComparison() {
         ${cheapest ? `<div class="pc-sum-item"><div class="lbl">Lowest Net Cost</div>
             <div class="val" style="color:#16a34a;">\u20B9\u00A0${cheapest.totalNet.toFixed(2)}</div>
             <div class="unit">${esc(cheapest.m.name)}</div></div>` : ''}
-        <div class="pc-sum-item"><div class="lbl">H.S. Code</div>
+        <div class="pc-sum-item"><div class="lbl">HSN Code</div>
             <div class="val" style="font-size:15px;">${esc(sheet.hsCode||'—')}</div>
             <div class="unit">${esc(sheet.party||'')}</div></div>`;
 
