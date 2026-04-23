@@ -5518,11 +5518,9 @@ function renderMCTable(s) {
     ${calcRow('&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CLC Amount &nbsp;<small>(% of Basic Value in &#8377;)</small>', '&#8377;', 'clgAmt')}
     ${row('19. Transport / Freight In', '&#8377;', () => ml.map(m=>inp(m.id,'transport',m.transport)).join(''))}
     ${row('20. Installation / Erection', '&#8377;', () => ml.map(m=>inp(m.id,'installation',m.installation)).join(''))}
-    ${calcRow('17. Total Landed Cost', '&#8377;', 'totalLanded', SUB)}
+    ${calcRow('17. Total Landed Cost', '&#8377;', 'totalLanded', GRAND)}
     ${calcRow('&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Less: GST ITC (Recoverable)', '&#8377;', 'lessIGST')}
     ${calcRow('18. Net Landed Cost (Excl. GST)', '&#8377;', 'netLanded', NET)}
-    ${calcRow('21. <strong>Total Landed Cost</strong>', '&#8377;', 'totalNetCost', GRAND)}
-    ${calcRow('22. <strong>Net Landed Cost</strong> &nbsp;<small style="color:#64748b;">(21 &minus; Sr.14 GST)</small>', '&#8377;', 'netLandedFinal', NET)}
 
 
     </tbody></table>`;
@@ -5573,16 +5571,13 @@ function calcMCSheet() {
         // GST zeroed for EPCG only
         const igstAmt        = isEPCG ? 0 : igstBase * 18 / 100;
         const clg            = basicINR * gn('clgCharges') / 100;
-        // Loom Duty Free: BCD & SWS waived — only GST + CLC added to Basic Value in landed cost
-        const totalLanded    = isLoomDF
-            ? basicINR + igstAmt + clg
-            : assessable + totalDuty + igstAmt + clg;
-        const netLanded      = totalLanded - igstAmt;
+        // Sr 17 Total Landed Cost: sum of all above rows incl. Transport & Installation
         const transport      = gn('transport')    * formulaQty;
         const installation   = gn('installation') * formulaQty;
-        const totalNetCost   = netLanded + transport + installation;
-        // Sr 22: Net Landed Cost = Total Landed Cost − GST (for all schemes; EPCG igstAmt=0 so no change)
-        const netLandedFinal = totalNetCost - igstAmt;
+        const totalLanded    = isLoomDF
+            ? basicINR + igstAmt + clg + transport + installation
+            : assessable + totalDuty + igstAmt + clg + transport + installation;
+        const netLanded      = totalLanded - igstAmt;
 
         set('basicValCurr', basicValCurr);
         set('basicINR',     basicINR);
@@ -5595,8 +5590,6 @@ function calcMCSheet() {
         set('totalLanded', totalLanded);
         set('lessIGST',    igstAmt);
         set('netLanded',   netLanded);
-        set('totalNetCost',   totalNetCost);
-        set('netLandedFinal', netLandedFinal);
 
     });
 
@@ -5615,7 +5608,7 @@ function updateMCComparison() {
     const cols = mnames.map(el => {
         const pid  = el.dataset.pid;
         const name = el.querySelector('input')?.value || el.textContent.trim() || 'Machine';
-        const valEl = wrap.querySelector(`.mc-calc[data-pid="${pid}"][data-field="netLandedFinal"]`);
+        const valEl = wrap.querySelector(`.mc-calc[data-pid="${pid}"][data-field="netLanded"]`);
         const val  = parseFloat(valEl?.textContent) || 0;
         return { name, val };
     });
@@ -5745,11 +5738,11 @@ function calcMCCosts(m) {
     const igst         = isEPCG ? 0 : igstBase * 18 / 100;
     const clg          = basicINR * (m.clgCharges||0) / 100;
     const totalLanded  = isLoomDF
-        ? basicINR + igst + clg
-        : av + duty + igst + clg;
-    const netLanded    = totalLanded - igst;
-    const totalNet        = netLanded + (m.transport||0) * formulaQty + (m.installation||0) * formulaQty;
-    const netLandedFinal  = totalNet - igst;
+        ? basicINR + igst + clg + (m.transport||0) * formulaQty + (m.installation||0) * formulaQty
+        : av + duty + igst + clg + (m.transport||0) * formulaQty + (m.installation||0) * formulaQty;
+    const netLanded      = totalLanded - igst;
+    const totalNet       = totalLanded;   // alias — used in comparison view
+    const netLandedFinal = netLanded;     // alias — used in comparison view
     return { basicINR, insAmt, av, bcd, sws, duty, igst, totalLanded, netLanded, totalNet, netLandedFinal };
 }
 
