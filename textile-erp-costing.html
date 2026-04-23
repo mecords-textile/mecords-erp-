@@ -688,6 +688,7 @@
             #tab-machinerycosting .print-hd .mc-ph-center { flex: 1 !important; text-align: center !important; }
             #tab-machinerycosting #mc-print-title { font-size: 14px !important; }
             #tab-machinerycosting #mc-print-sub   { font-size: 9px !important; margin-top: 1px !important; }
+            #tab-machinerycosting #mc-print-party { font-size: 10px !important; font-weight: 800 !important; color: #1e293b !important; }
 
             /* Main costing table */
             #mc-table-wrap { overflow: visible !important; }
@@ -2600,6 +2601,7 @@
                 <div class="mc-ph-wrap">
                     <div class="mc-ph-left">
                         H.S. Code: <strong id="mc-print-hs"></strong>
+                        <div style="margin-top:5px;font-size:11px;font-weight:800;color:#1e293b;" id="mc-print-party"></div>
                     </div>
                     <div class="mc-ph-center">
                         <div style="font-size:11px;font-weight:600;color:#64748b;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Machinery Cost Sheet</div>
@@ -5366,8 +5368,9 @@ function syncMCPrintHeader() {
     const dt    = document.getElementById('mc-date')?.value || '';
     const e = id => document.getElementById(id);
     if (e('mc-print-title'))  e('mc-print-title').textContent  = title;
-    if (e('mc-print-sub'))    e('mc-print-sub').textContent    = document.getElementById('mc-party')?.value || '';
+    if (e('mc-print-sub'))    e('mc-print-sub').textContent    = document.getElementById('mc-period')?.value || '';
     if (e('mc-print-hs'))     e('mc-print-hs').textContent     = hs;
+    if (e('mc-print-party'))  e('mc-print-party').textContent  = document.getElementById('mc-party')?.value || '';
     if (e('mc-print-date'))   e('mc-print-date').textContent   = dt ? fmtDate(dt) : '';
     if (e('mc-table-ttl'))    e('mc-table-ttl').textContent    = title || 'Machinery Cost Comparison';
 }
