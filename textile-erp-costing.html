@@ -5516,15 +5516,11 @@ function renderMCTable(s) {
         </select></td>`).join(''), 'background:#eff6ff;border-top:2px solid #3b82f6;')}
     ${row('16. Customs Clearance Charges', '%', () => ml.map(m=>inp(m.id,'clgCharges',m.clgCharges)).join(''))}
     ${calcRow('&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CLC Amount &nbsp;<small>(% of Basic Value in &#8377;)</small>', '&#8377;', 'clgAmt')}
+    ${row('19. Transport / Freight In', '&#8377;', () => ml.map(m=>inp(m.id,'transport',m.transport)).join(''))}
+    ${row('20. Installation / Erection', '&#8377;', () => ml.map(m=>inp(m.id,'installation',m.installation)).join(''))}
     ${calcRow('17. Total Landed Cost', '&#8377;', 'totalLanded', SUB)}
     ${calcRow('&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Less: GST ITC (Recoverable)', '&#8377;', 'lessIGST')}
     ${calcRow('18. Net Landed Cost (Excl. GST)', '&#8377;', 'netLanded', NET)}
-
-    <!-- Other Charges -->
-    <tr style="${HDR}"><td colspan="${2+ml.length}" style="padding:7px 12px;font-size:12px;letter-spacing:.5px;">&#9654; OTHER CHARGES</td></tr>
-
-    ${row('19. Transport / Freight In', '&#8377;', () => ml.map(m=>inp(m.id,'transport',m.transport)).join(''))}
-    ${row('20. Installation / Erection', '&#8377;', () => ml.map(m=>inp(m.id,'installation',m.installation)).join(''))}
     ${calcRow('21. <strong>Total Landed Cost</strong>', '&#8377;', 'totalNetCost', GRAND)}
     ${calcRow('22. <strong>Net Landed Cost</strong> &nbsp;<small style="color:#64748b;">(21 &minus; Sr.14 GST)</small>', '&#8377;', 'netLandedFinal', NET)}
 
