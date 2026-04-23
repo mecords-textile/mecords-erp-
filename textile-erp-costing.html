@@ -5516,11 +5516,11 @@ function renderMCTable(s) {
         </select></td>`).join(''), 'background:#eff6ff;border-top:2px solid #3b82f6;')}
     ${row('16. Customs Clearance Charges', '%', () => ml.map(m=>inp(m.id,'clgCharges',m.clgCharges)).join(''))}
     ${calcRow('&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CLC Amount &nbsp;<small>(% of Basic Value in &#8377;)</small>', '&#8377;', 'clgAmt')}
-    ${row('19. Transport / Freight In', '&#8377;', () => ml.map(m=>inp(m.id,'transport',m.transport)).join(''))}
-    ${row('20. Installation / Erection', '&#8377;', () => ml.map(m=>inp(m.id,'installation',m.installation)).join(''))}
-    ${calcRow('17. Total Landed Cost', '&#8377;', 'totalLanded', GRAND)}
+    ${row('17. Transport / Freight In', '&#8377;', () => ml.map(m=>inp(m.id,'transport',m.transport)).join(''))}
+    ${row('18. Installation / Erection', '&#8377;', () => ml.map(m=>inp(m.id,'installation',m.installation)).join(''))}
+    ${calcRow('19. Total Landed Cost', '&#8377;', 'totalLanded', GRAND)}
     ${calcRow('&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Less: GST ITC (Recoverable)', '&#8377;', 'lessIGST')}
-    ${calcRow('18. Net Landed Cost (Excl. GST)', '&#8377;', 'netLanded', NET)}
+    ${calcRow('20. Net Landed Cost (Excl. GST)', '&#8377;', 'netLanded', NET)}
 
 
     </tbody></table>`;
