@@ -767,11 +767,11 @@
             #sub-ic-liner #li-table-wrap button { display: none !important; }
             #sub-ic-liner #li-table-wrap .li-ph-det { display: none !important; }
 
-            /* Chafer Fabrics: plant name — dark bold text on light background for print */
+            /* Chafer Fabrics: plant name — black bold text on orange background for print */
             #ic-costing-table-wrap .ic-pname {
-                color: #1e293b !important;
-                background: #fef9c3 !important;
-                border: 1.5px solid #ca8a04 !important;
+                color: #000000 !important;
+                background: #f97316 !important;
+                border: 1.5px solid #ea580c !important;
                 font-weight: 900 !important;
                 font-size: 9px !important;
                 padding: 2px 4px !important;
@@ -4611,7 +4611,7 @@ function renderICTable(ic) {
             <th style="padding:10px 6px;text-align:center;font-size:12px;">Unit</th>
             ${pl.map(p => `<th style="padding:8px;">
                 <input type="text" class="ic-pname" data-pid="${p.id}" value="${esc(p.name)}" placeholder="Plant Name"
-                    style="background:rgba(255,255,255,0.18);border:2px solid rgba(255,255,255,.6);color:#ffffff;width:100%;
+                    style="background:#f97316;border:2px solid #ea580c;color:#000000;width:100%;
                            text-align:center;border-radius:4px;padding:4px 6px;font-weight:900;font-size:13px;letter-spacing:.3px;" oninput="calcICSheet()">
                 <button class="btn btn-sm no-print" style="margin-top:5px;font-size:10px;background:rgba(255,255,255,.15);
                     color:white;border:1px solid rgba(255,255,255,.3);" onclick="removeICPlant('${p.id}')">&#10005; Remove</button>
