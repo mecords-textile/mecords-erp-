@@ -2682,6 +2682,7 @@
                             <thead>
                                 <tr style="background:#f1f5f9;">
                                     <th style="padding:8px 12px;text-align:left;border:1px solid #e2e8f0;color:#475569;font-weight:600;">Machine</th>
+                                    <th style="padding:8px 12px;text-align:center;border:1px solid #e2e8f0;color:#475569;font-weight:600;">Qty</th>
                                     <th style="padding:8px 12px;text-align:right;border:1px solid #e2e8f0;color:#475569;font-weight:600;">Net Landed Cost (&#8377;)</th>
                                     <th style="padding:8px 12px;text-align:right;border:1px solid #e2e8f0;color:#475569;font-weight:600;">Difference vs Base (&#8377;)</th>
                                     <th style="padding:8px 12px;text-align:right;border:1px solid #e2e8f0;color:#475569;font-weight:600;">Difference (%)</th>
@@ -5625,9 +5626,11 @@ function updateMCComparison() {
         const pid     = el.dataset.pid;
         const descEl  = wrap.querySelector(`.mc-inp[data-pid="${pid}"][data-field="description"]`);
         const name    = descEl?.value?.trim() || el.value?.trim() || 'Machine';
+        const qtyEl   = wrap.querySelector(`.mc-inp[data-pid="${pid}"][data-field="qty"]`);
+        const qty     = parseInt(qtyEl?.value) || 1;
         const valEl   = wrap.querySelector(`.mc-calc[data-pid="${pid}"][data-field="netLanded"]`);
         const val     = parseFloat(valEl?.textContent) || 0;
-        return { name, val };
+        return { name, qty, val };
     });
 
     // Show the remarks card whenever a sheet is loaded
@@ -5664,6 +5667,7 @@ function updateMCComparison() {
 
         return `<tr style="background:${isBase ? '#f8fafc' : '#fff'};">
             <td style="padding:9px 12px;border:1px solid #e2e8f0;font-weight:${isBase?'700':'500'};color:#1e293b;">${col.name}</td>
+            <td style="padding:9px 12px;border:1px solid #e2e8f0;text-align:center;font-weight:600;color:#1e293b;">${col.qty}</td>
             <td style="padding:9px 12px;border:1px solid #e2e8f0;text-align:right;font-weight:600;color:#1e293b;">&#8377; ${fmt2(col.val)}</td>
             <td style="padding:9px 12px;border:1px solid #e2e8f0;text-align:right;font-weight:600;${diffColor}">${diffStr === '—' ? '—' : '&#8377; ' + diffStr}</td>
             <td style="padding:9px 12px;border:1px solid #e2e8f0;text-align:right;font-weight:600;${diffColor}">${diffPctStr}</td>
