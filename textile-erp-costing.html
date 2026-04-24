@@ -5625,7 +5625,7 @@ function updateMCComparison() {
     const cols = mnames.map(el => {
         const pid     = el.dataset.pid;
         const descEl  = wrap.querySelector(`.mc-inp[data-pid="${pid}"][data-field="description"]`);
-        const name    = descEl?.value?.trim() || el.value?.trim() || 'Machine';
+        const name    = el.value?.trim() || descEl?.value?.trim() || 'Machine';
         const qtyEl   = wrap.querySelector(`.mc-inp[data-pid="${pid}"][data-field="qty"]`);
         const qty     = parseInt(qtyEl?.value) || 1;
         const valEl   = wrap.querySelector(`.mc-calc[data-pid="${pid}"][data-field="netLanded"]`);
