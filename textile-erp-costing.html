@@ -690,63 +690,66 @@
             #tab-machinerycosting #mc-print-sub   { font-size: 9px !important; margin-top: 1px !important; }
             #tab-machinerycosting #mc-print-party { font-size: 10px !important; font-weight: 800 !important; color: #1e293b !important; }
 
-            /* Main costing table */
+            /* ── MC table: single-page landscape ── */
             #mc-table-wrap { overflow: visible !important; }
             #mc-table-wrap table {
-                font-size: 7.5px !important; width: 100% !important;
+                font-size: 6.5px !important; width: 100% !important;
                 border-collapse: collapse !important;
                 min-width: 0 !important;
                 table-layout: fixed !important;
             }
-            #mc-table-wrap td, #mc-table-wrap th { padding: 2px 4px !important; font-size: 7.5px !important; line-height: 1.3 !important; }
-            #mc-table-wrap small { font-size: 6.5px !important; }
+            #mc-table-wrap td, #mc-table-wrap th { padding: 1px 3px !important; font-size: 6.5px !important; line-height: 1.25 !important; }
+            #mc-table-wrap small { font-size: 5.5px !important; }
 
-            /* Description col: wider; Unit col: narrow; Machine cols: compact + centred */
+            /* Description col; Unit col; Machine cols */
             #mc-table-wrap th:first-child,
-            #mc-table-wrap td:first-child { width: 190px !important; }
+            #mc-table-wrap td:first-child { width: 165px !important; }
             #mc-table-wrap th:nth-child(2),
-            #mc-table-wrap td:nth-child(2) { width: 32px !important; font-size: 6.5px !important; }
+            #mc-table-wrap td:nth-child(2) { width: 28px !important; font-size: 5.5px !important; }
             #mc-table-wrap th:nth-child(n+3),
-            #mc-table-wrap td:nth-child(n+3) {
-                width: 80px !important;
-                text-align: center !important;
-            }
+            #mc-table-wrap td:nth-child(n+3) { width: 75px !important; text-align: center !important; }
 
-            /* Machine column header name input */
+            /* Section header rows */
+            #mc-table-wrap tr[style*="f97316"] td,
+            #mc-table-wrap tr[style*="f97316"] th { padding: 2px 6px !important; font-size: 7px !important; }
+
+            /* Table thead */
+            #mc-table-wrap thead tr th { padding: 2px 4px !important; font-size: 6.5px !important; }
+
+            /* Machine name input in header */
             #mc-table-wrap .mc-mname {
-                font-size: 7.5px !important; text-align: center !important;
+                font-size: 6.5px !important; text-align: center !important;
                 width: 100% !important; border: none !important;
                 background: transparent !important; color: white !important;
                 font-weight: 700 !important;
             }
 
             /* Calculated value cells */
-            #mc-table-wrap .mc-calc { text-align: center !important; font-size: 7.5px !important; }
+            #mc-table-wrap .mc-calc { text-align: center !important; font-size: 6.5px !important; }
 
             /* Input fields: plain text, centred */
             #mc-table-wrap input[type=number],
             #mc-table-wrap input[type=text] {
-                font-size: 7.5px !important; padding: 0 !important;
+                font-size: 6.5px !important; padding: 0 !important;
                 border: none !important; background: transparent !important;
                 box-shadow: none !important; width: 100% !important;
                 text-align: center !important;
             }
             /* Scheme dropdown */
-            #mc-table-wrap select { font-size: 7px !important; padding: 0 !important; border: none !important; background: transparent !important; text-align: center !important; }
+            #mc-table-wrap select { font-size: 6px !important; padding: 0 !important; border: none !important; background: transparent !important; text-align: center !important; }
 
-            /* Currency pill: compact in print */
-            #mc-table-wrap .mc-currency-row td { padding: 1px 3px !important; }
-            #mc-table-wrap .mc-currency-row span { font-size: 7px !important; padding: 1px 5px !important; border-radius: 6px !important; letter-spacing: 0 !important; border-width: 1px !important; }
+            /* Currency row: hide in print (currency already shown in column header) */
+            #mc-table-wrap .mc-currency-row { display: none !important; }
 
-            /* Remarks card: keep on same page as costing */
-            #mc-remarks-card { display: block !important; page-break-before: avoid !important; page-break-inside: avoid !important; margin-top: 3px !important; }
+            /* Remarks card: keep on same page */
+            #mc-remarks-card { display: block !important; page-break-before: avoid !important; page-break-inside: avoid !important; margin-top: 2px !important; }
             /* Comparison table: compact */
-            #mc-comp-table th, #mc-comp-table td { font-size: 7px !important; padding: 2px 5px !important; }
-            /* Textarea: print as plain text block */
-            #mc-remarks-card textarea { font-size: 7px !important; border: none !important; resize: none !important; padding: 0 !important; height: auto !important; min-height: 0 !important; overflow: visible !important; box-shadow: none !important; background: transparent !important; }
+            #mc-comp-table th, #mc-comp-table td { font-size: 6.5px !important; padding: 1px 4px !important; }
+            /* Textarea: plain text */
+            #mc-remarks-card textarea { font-size: 6.5px !important; border: none !important; resize: none !important; padding: 0 !important; height: auto !important; min-height: 0 !important; overflow: visible !important; box-shadow: none !important; background: transparent !important; }
             /* Remarks label */
-            #mc-remarks-card label { font-size: 7px !important; margin-bottom: 2px !important; }
-            #tab-machinerycosting .card { padding: 4px 6px !important; margin-bottom: 3px !important; box-shadow: none !important; border-radius: 2px !important; }
+            #mc-remarks-card label { font-size: 6.5px !important; margin-bottom: 1px !important; }
+            #tab-machinerycosting .card { padding: 3px 5px !important; margin-bottom: 2px !important; box-shadow: none !important; border-radius: 2px !important; }
 
             /* ── Liner Fabrics single-page print ── */
             #sub-ic-liner .print-hd { display: block !important; }
