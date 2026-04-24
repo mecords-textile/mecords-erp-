@@ -767,15 +767,37 @@
             #sub-ic-liner #li-table-wrap button { display: none !important; }
             #sub-ic-liner #li-table-wrap .li-ph-det { display: none !important; }
 
-            /* Chafer Fabrics: plant name — black bold text on orange background for print */
+            /* ── Chafer Fabrics: single-page portrait print ── */
+            #sub-ic-chafer #ic-costing-table-wrap { overflow: visible !important; }
+            #sub-ic-chafer .card { padding: 3px 5px !important; margin-bottom: 2px !important; box-shadow: none !important; border-radius: 2px !important; }
+            #sub-ic-chafer #ic-costing-table-wrap table { font-size: 7px !important; width: 100% !important; border-collapse: collapse !important; min-width: 0 !important; table-layout: fixed !important; }
+            #sub-ic-chafer #ic-costing-table-wrap td, #sub-ic-chafer #ic-costing-table-wrap th { padding: 1px 4px !important; font-size: 7px !important; line-height: 1.25 !important; }
+            #sub-ic-chafer #ic-costing-table-wrap th:first-child,
+            #sub-ic-chafer #ic-costing-table-wrap td:first-child { width: 160px !important; }
+            #sub-ic-chafer #ic-costing-table-wrap th:nth-child(2),
+            #sub-ic-chafer #ic-costing-table-wrap td:nth-child(2) { width: 24px !important; font-size: 6px !important; }
+            #sub-ic-chafer #ic-costing-table-wrap th:nth-child(n+3),
+            #sub-ic-chafer #ic-costing-table-wrap td:nth-child(n+3) { width: 80px !important; text-align: center !important; }
+            /* Hide detail rows */
+            #sub-ic-chafer #ic-costing-table-wrap .ic-ph-detail { display: none !important; }
+            /* Hide Sub-Total 2 and Sub-Total 4 */
+            #sub-ic-chafer #ic-costing-table-wrap .ic-ph-sub-hidden { display: none !important; }
+            /* Input fields: plain text */
+            #sub-ic-chafer #ic-costing-table-wrap input { font-size: 7px !important; padding: 0 !important; border: none !important; background: transparent !important; box-shadow: none !important; width: 100% !important; text-align: center !important; }
+            /* Buttons and selects: hidden */
+            #sub-ic-chafer #ic-costing-table-wrap button { display: none !important; }
+            #sub-ic-chafer #ic-costing-table-wrap select { display: none !important; }
+            /* Plant name: orange + black */
             #ic-costing-table-wrap .ic-pname {
                 color: #000000 !important;
                 background: #f97316 !important;
                 border: 1.5px solid #ea580c !important;
                 font-weight: 900 !important;
-                font-size: 9px !important;
+                font-size: 8px !important;
                 padding: 2px 4px !important;
             }
+            /* Remarks row: compact */
+            #sub-ic-chafer #ic-costing-table-wrap tr:last-child td { font-size: 6.5px !important; padding: 3px 6px !important; line-height: 1.5 !important; }
         }
         /* Import Modals (Capro + RBI) */
         .cc-import-overlay { position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1998; }
@@ -4617,7 +4639,7 @@ function renderICTable(ic) {
                     color:white;border:1px solid rgba(255,255,255,.3);" onclick="removeICPlant('${p.id}')">&#10005; Remove</button>
             </th>`).join('')}
         </tr>
-        <tr style="background:#f8fafc;">
+        <tr class="ic-ph-detail" style="background:#f8fafc;">
             <td style="${tdStyle}font-size:12px;color:#64748b;">Eng. Date</td>
             <td style="${tdStyle}"></td>
             ${pl.map(p => `<td style="${tdStyle}text-align:right;">
@@ -4625,7 +4647,7 @@ function renderICTable(ic) {
                     style="width:128px;font-size:11px;" oninput="calcICSheet()">
             </td>`).join('')}
         </tr>
-        <tr style="background:#f8fafc;">
+        <tr class="ic-ph-detail" style="background:#f8fafc;">
             <td style="${tdStyle}font-size:12px;color:#64748b;">Qty (Kgs.)</td>
             <td style="${tdStyle}"></td>
             ${pl.map(p => `<td style="${tdStyle}text-align:right;">
@@ -4636,7 +4658,7 @@ function renderICTable(ic) {
     </thead>
     <tbody>`;
 
-    html += `<tr style="background:#f0fdf4;">
+    html += `<tr class="ic-ph-detail" style="background:#f0fdf4;">
         <td style="${tdStyle}font-size:13px;color:#065f46;font-weight:600;">&#129525; Yarn Quality (from Yarn Master)</td>
         <td style="${tdStyle}text-align:center;font-size:11px;color:#64748b;"></td>
         ${pl.map(p => `<td style="${tdStyle}">
@@ -4654,11 +4676,11 @@ function renderICTable(ic) {
     html += calcRow('Sub Total —', 'INR', 'subTotal1', SUB);
     html += inpRow('Admn', 'INR', 'admn');
     html += inpRow('Selling Exp', 'INR', 'sellingExp');
-    html += calcRow('Sub Total —', 'INR', 'subTotal2', SUB);
+    html += `<tr class="ic-ph-sub-hidden" style="${SUB}">${lbl('Sub Total —', SUB)}${unit('INR')}${pl.map(p => calc(p.id, 'subTotal2')).join('')}</tr>`;
     html += inpRow('Fin. Cost', 'INR', 'finCost');
     html += calcRow('Sub Total —', 'INR', 'subTotal3', SUB);
     html += inpRow('Depreciation', 'INR', 'depreciation');
-    html += calcRow('Sub Total —', 'INR', 'subTotal4', SUB);
+    html += `<tr class="ic-ph-sub-hidden" style="${SUB}">${lbl('Sub Total —', SUB)}${unit('INR')}${pl.map(p => calc(p.id, 'subTotal4')).join('')}</tr>`;
     html += row('Profit %', '%', () => pl.map(p => inp(p.id, 'profitPct', p.profitPct ?? 10)).join(''));
     html += calcRow('Grand Total (Selling Price)', 'INR', 'grandTotal', GRAND);
     html += row(esc(periodLabel), 'INR', () => pl.map(p => inp(p.id, 'currentPeriodPrice', p.currentPeriodPrice ?? 0)).join(''), GREEN);
@@ -6706,6 +6728,19 @@ function buildCCPrintTable() {
 window.addEventListener('beforeprint', function() {
     buildCCPrintTable();
     buildLQPrintBlock();
+    // Switch @page orientation based on active sub-tab
+    const chaferPanel = document.getElementById('sub-ic-chafer');
+    const isIC = document.getElementById('tab-internalcosting')?.classList.contains('active');
+    if (isIC && chaferPanel && chaferPanel.style.display !== 'none') {
+        const s = document.createElement('style');
+        s.id = '_ic_page_style';
+        s.textContent = '@page { size: A4 portrait; margin: 8mm 10mm; }';
+        document.head.appendChild(s);
+    }
+});
+window.addEventListener('afterprint', function() {
+    const s = document.getElementById('_ic_page_style');
+    if (s) s.remove();
 });
 
 // ══════════════════════════════════════════════════════════════════════════════
