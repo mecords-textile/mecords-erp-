@@ -2180,7 +2180,7 @@
                         <input type="number" id="li-fabric-waste" value="3" min="0" step="0.1" style="width:110px;" oninput="renderLinerTable()">
                     </div>
                     <div class="form-group">
-                        <label>Finance Cost % <small style="color:#94a3b8;">of sub-total to Packing</small></label>
+                        <label>Finance Cost % <small style="color:#94a3b8;">of Sub-Total + Fabric Waste</small></label>
                         <input type="number" id="li-fin-cost" value="5" min="0" step="0.1" style="width:110px;" oninput="renderLinerTable()">
                     </div>
                 </div>
@@ -2545,7 +2545,7 @@
                                 <input type="number" id="le-fabric-waste" value="3" min="0" step="0.1" style="width:110px;" oninput="renderLETable()">
                             </div>
                             <div class="form-group">
-                                <label>Finance Cost % <small style="color:#94a3b8;">of sub-total to Packing</small></label>
+                                <label>Finance Cost % <small style="color:#94a3b8;">of Sub-Total + Fabric Waste</small></label>
                                 <input type="number" id="le-fin-cost" value="5" min="0" step="0.1" style="width:110px;" oninput="renderLETable()">
                             </div>
                         </div>
@@ -5080,7 +5080,7 @@ function renderLinerTable(s) {
         const packingSubTotal = netYarn + weaving + procHS + packing;
         const subTotal   = packingSubTotal + optTotal + extraTotal;
         const fabricWasteCost = subTotal * fabWaste / 100;
-        const finCostAmt = packingSubTotal * finCostPct / 100;
+        const finCostAmt = (subTotal + fabricWasteCost) * finCostPct / 100;
         const totalCost  = subTotal + fabricWasteCost + finCostAmt;
         return { cfg, multiples, glmW, glmF, glmT, orderQty, yarnRateWarp, yarnRateWeft, netYarn, subTotal, fabricWasteCost, finCostAmt, totalCost };
     });
@@ -5181,7 +5181,7 @@ function renderLinerTable(s) {
         ${calcs.map(x => fixedCell(x.subTotal, SUB)).join('')}</tr>
     <tr style="background:#fef3c7;"><td style="${LBGS}background:#fef3c7;">Fabric Waste (${fabWaste}%)</td><td style="${UNS}">&#8377;/Lmt</td>
         ${calcs.map(x => `<td style="${CALS}background:#fef3c7;">${x.fabricWasteCost.toFixed(2)}</td>`).join('')}</tr>
-    <tr style="background:#fce7f3;"><td style="${LBGS}background:#fce7f3;">Finance Cost (${finCostPct}% on sub-total to Packing)</td><td style="${UNS}">&#8377;/Lmt</td>
+    <tr style="background:#fce7f3;"><td style="${LBGS}background:#fce7f3;">Finance Cost (${finCostPct}% on Sub-Total + Fabric Waste)</td><td style="${UNS}">&#8377;/Lmt</td>
         ${calcs.map(x => `<td style="${CALS}background:#fce7f3;">${x.finCostAmt.toFixed(2)}</td>`).join('')}</tr>
     <tr style="${GRAN}"><td style="${LBGS}${GRAN}"><strong>Total Cost / L.Mtr</strong></td><td style="${UNS}">&#8377;/Lmt</td>
         ${calcs.map(x => fixedCell(x.totalCost, GRAN)).join('')}</tr>
@@ -6894,7 +6894,7 @@ function calcLinerSheetCosts(s) {
         const packingSubTotal = netYarn + weaving + procHS + packing;
         const subTotal   = packingSubTotal + optTotal + extraTotal;
         const fabricWasteCost = subTotal * fabWaste / 100;
-        const finCostAmt = packingSubTotal * finCostPct / 100;
+        const finCostAmt = (subTotal + fabricWasteCost) * finCostPct / 100;
         const totalCostPerLmt = subTotal + fabricWasteCost + finCostAmt;
         return {
             configId: cfg.id, label: cfg.label, widthCms: w, glmT,
@@ -7881,7 +7881,7 @@ function renderLETable(s) {
         const packingSubTotal = netYarn + weaving + procHS + packing;
         const subTotal  = packingSubTotal + optTotal + extraTotal;
         const fabWasteC = subTotal * fabWaste / 100;
-        const finCostA  = packingSubTotal * finCostPct / 100;
+        const finCostA  = (subTotal + fabWasteC) * finCostPct / 100;
         const totalCost = subTotal + fabWasteC + finCostA;
         return { cfg, multiples, glmW, glmF, glmT, orderQty, yarnRateWarp, yarnRateWeft, netYarn, subTotal, fabWasteC, finCostA, totalCost };
     });
@@ -7976,7 +7976,7 @@ function renderLETable(s) {
         ${calcs.map(x=>fixedCell(x.subTotal,SUB)).join('')}</tr>
     <tr style="background:#fef3c7;"><td style="${LBGS}background:#fef3c7;">Fabric Waste (${fabWaste}%)</td><td style="${UNS}">&#8377;/Lmt</td>
         ${calcs.map(x=>`<td style="${CALS}background:#fef3c7;">${x.fabWasteC.toFixed(2)}</td>`).join('')}</tr>
-    <tr style="background:#fce7f3;"><td style="${LBGS}background:#fce7f3;">Finance Cost (${finCostPct}% on sub-total to Packing)</td><td style="${UNS}">&#8377;/Lmt</td>
+    <tr style="background:#fce7f3;"><td style="${LBGS}background:#fce7f3;">Finance Cost (${finCostPct}% on Sub-Total + Fabric Waste)</td><td style="${UNS}">&#8377;/Lmt</td>
         ${calcs.map(x=>`<td style="${CALS}background:#fce7f3;">${x.finCostA.toFixed(2)}</td>`).join('')}</tr>
     <tr style="${GRAN}"><td style="${LBGS}${GRAN}"><strong>Total Cost / L.Mtr</strong></td><td style="${UNS}">&#8377;/Lmt</td>
         ${calcs.map(x=>fixedCell(x.totalCost,GRAN)).join('')}</tr>
