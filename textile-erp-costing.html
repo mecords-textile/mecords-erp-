@@ -949,6 +949,7 @@
     </div>
 
     <button class="tab-btn" data-tab="salesdispatch">&#128666; Sales &amp; Dispatch</button>
+    <button class="tab-btn" data-tab="rminventory">&#129523; Yarn &amp; RM Inventory</button>
     <button class="tab-btn" data-tab="dashboard">&#128202; Cost Dashboard</button>
     <button class="tab-btn" data-tab="batchprocessing">&#128203; Chemical Batch Processing</button>
 </div>
@@ -3050,6 +3051,306 @@
         </div>
     </div><!-- /tab-salesdispatch -->
 
+    <!-- ══════════════════════════════════════════ YARN & RM INVENTORY -->
+    <div id="tab-rminventory" class="tab-panel">
+        <div class="sub-tabs">
+            <button class="sub-tab-btn active" data-sub="rm-master"  onclick="switchSubTab('rm-master')">&#128218; Material Master</button>
+            <button class="sub-tab-btn"        data-sub="rm-inward"  onclick="switchSubTab('rm-inward')">&#128229; GRN / Inward</button>
+            <button class="sub-tab-btn"        data-sub="rm-outward" onclick="switchSubTab('rm-outward')">&#128228; Issue / Outward</button>
+            <button class="sub-tab-btn"        data-sub="rm-stock"   onclick="switchSubTab('rm-stock')">&#128202; Stock Summary</button>
+        </div>
+
+        <!-- ── SUB 1: Material Master ── -->
+        <div id="sub-rm-master" class="sub-panel active">
+            <div class="card">
+                <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+                    <span id="rmat-form-title">New Material</span>
+                    <button class="btn btn-outline btn-sm" onclick="newRMMaterial()">+ New Material</button>
+                </div>
+                <input type="hidden" id="rmat-id">
+                <div class="form-row" style="flex-wrap:wrap;gap:14px;margin-bottom:12px;">
+                    <div class="form-group">
+                        <label>Material Code</label>
+                        <input type="text" id="rmat-code" placeholder="e.g. NY840D" style="min-width:110px;">
+                    </div>
+                    <div class="form-group">
+                        <label>Material Name *</label>
+                        <input type="text" id="rmat-name" placeholder="e.g. 840D Nylon Yarn" style="min-width:240px;">
+                    </div>
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select id="rmat-category" style="min-width:170px;font-size:13px;border:1px solid #cbd5e1;border-radius:6px;padding:6px 10px;">
+                            <option>Nylon Yarn</option>
+                            <option>Polyester Yarn</option>
+                            <option>PET Yarn</option>
+                            <option>Rayon Yarn</option>
+                            <option>Aramid Yarn</option>
+                            <option>Chemicals</option>
+                            <option>Sizing Agent</option>
+                            <option>Dipping Chemical</option>
+                            <option>Packing Material</option>
+                            <option>Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Unit</label>
+                        <select id="rmat-unit" style="min-width:90px;font-size:13px;border:1px solid #cbd5e1;border-radius:6px;padding:6px 10px;">
+                            <option>KGS</option>
+                            <option>MT</option>
+                            <option>Litres</option>
+                            <option>Bags</option>
+                            <option>Rolls</option>
+                            <option>Nos</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Opening Qty</label>
+                        <input type="number" id="rmat-open-qty" value="0" min="0" step="0.001" style="width:110px;">
+                    </div>
+                    <div class="form-group">
+                        <label>Opening Rate (&#8377;)</label>
+                        <input type="number" id="rmat-open-rate" value="0" min="0" step="0.01" style="width:120px;">
+                    </div>
+                    <div class="form-group">
+                        <label>Reorder Level</label>
+                        <input type="number" id="rmat-reorder" value="0" min="0" step="0.001" style="width:110px;">
+                    </div>
+                    <div class="form-group">
+                        <label>Supplier</label>
+                        <input type="text" id="rmat-supplier" placeholder="Primary supplier" style="min-width:180px;">
+                    </div>
+                </div>
+                <div class="form-group" style="margin-bottom:12px;">
+                    <label>Notes / Specifications</label>
+                    <input type="text" id="rmat-notes" placeholder="Denier, grade, specifications..." style="width:100%;box-sizing:border-box;">
+                </div>
+                <div class="form-row">
+                    <button class="btn btn-success" onclick="saveRMMaterial()">&#128190; Save Material</button>
+                    <button class="btn btn-outline" onclick="clearRMMasterForm()">&#10005; Clear</button>
+                    <button class="btn btn-danger btn-sm" id="rmat-del-btn" onclick="deleteRMMaterial()" style="display:none;">&#128465; Delete</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+                    <span>All Materials</span>
+                    <input type="text" id="rmat-filter" placeholder="Search by name or category..." style="font-size:12px;padding:5px 10px;border:1px solid #cbd5e1;border-radius:6px;width:220px;" oninput="renderRMMasterList()">
+                </div>
+                <div style="overflow-x:auto;">
+                    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                        <thead><tr style="background:#1e293b;color:white;">
+                            <th style="padding:9px 12px;text-align:left;">Code</th>
+                            <th style="padding:9px 12px;text-align:left;">Name</th>
+                            <th style="padding:9px 12px;text-align:left;">Category</th>
+                            <th style="padding:9px 12px;text-align:center;">Unit</th>
+                            <th style="padding:9px 12px;text-align:right;">Opening Qty</th>
+                            <th style="padding:9px 12px;text-align:right;">Reorder Level</th>
+                            <th style="padding:9px 12px;text-align:left;">Supplier</th>
+                            <th style="padding:9px 12px;text-align:center;">Action</th>
+                        </tr></thead>
+                        <tbody id="rmat-list-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div><!-- /sub-rm-master -->
+
+        <!-- ── SUB 2: GRN / Inward ── -->
+        <div id="sub-rm-inward" class="sub-panel">
+            <div class="form-row" style="margin-bottom:16px;">
+                <select id="rmgrn-sel" onchange="onRMGRNSelect()" style="min-width:280px;font-size:14px;">
+                    <option value="">-- Select a GRN --</option>
+                </select>
+                <button class="btn btn-primary" onclick="newRMGRN()">+ New GRN</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteRMGRN()">Delete</button>
+            </div>
+
+            <div id="rmgrn-form" style="display:none;">
+                <div class="card">
+                    <div class="card-title">Goods Receipt Note (GRN)</div>
+                    <input type="hidden" id="rmgrn-id">
+                    <div class="form-row" style="flex-wrap:wrap;gap:14px;margin-bottom:0;">
+                        <div class="form-group">
+                            <label>GRN Number</label>
+                            <input type="text" id="rmgrn-no" readonly style="background:#f1f5f9;font-weight:700;min-width:160px;">
+                        </div>
+                        <div class="form-group">
+                            <label>Date *</label>
+                            <input type="date" id="rmgrn-date">
+                        </div>
+                        <div class="form-group">
+                            <label>Material *</label>
+                            <select id="rmgrn-material" onchange="onRMGRNMatChange()" style="min-width:240px;font-size:13px;border:1px solid #cbd5e1;border-radius:6px;padding:6px 10px;">
+                                <option value="">-- Select Material --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Qty (<span id="rmgrn-unit-lbl">KGS</span>)</label>
+                            <input type="number" id="rmgrn-qty" min="0" step="0.001" placeholder="0.000" style="width:120px;" oninput="calcRMGRNValue()">
+                        </div>
+                        <div class="form-group">
+                            <label>Rate (&#8377;/<span id="rmgrn-unit-lbl2">KGS</span>)</label>
+                            <input type="number" id="rmgrn-rate" min="0" step="0.01" placeholder="0.00" style="width:130px;" oninput="calcRMGRNValue()">
+                        </div>
+                        <div class="form-group">
+                            <label>Value (&#8377;)</label>
+                            <input type="text" id="rmgrn-value" readonly style="background:#f1f5f9;font-weight:700;width:150px;">
+                        </div>
+                        <div class="form-group">
+                            <label>Supplier</label>
+                            <input type="text" id="rmgrn-supplier" placeholder="Supplier name" style="min-width:180px;">
+                        </div>
+                        <div class="form-group">
+                            <label>Invoice / DC No.</label>
+                            <input type="text" id="rmgrn-invoice" placeholder="Invoice or DC number" style="min-width:160px;">
+                        </div>
+                        <div class="form-group" style="flex:1;min-width:200px;">
+                            <label>Remarks</label>
+                            <input type="text" id="rmgrn-remarks" placeholder="Any remarks...">
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row" style="margin-bottom:24px;">
+                    <button class="btn btn-success" onclick="saveRMGRN()">&#128190; Save GRN</button>
+                    <button class="btn btn-outline" onclick="clearRMGRNForm()">&#10005; Clear</button>
+                </div>
+            </div>
+
+            <div class="card" id="rmgrn-list-card">
+                <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+                    <span>GRN Register</span>
+                    <input type="text" id="rmgrn-filter" placeholder="Search by material or supplier..." style="font-size:12px;padding:5px 10px;border:1px solid #cbd5e1;border-radius:6px;width:240px;" oninput="renderRMInwardList()">
+                </div>
+                <div style="overflow-x:auto;">
+                    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                        <thead><tr style="background:#1e293b;color:white;">
+                            <th style="padding:9px 12px;text-align:left;">GRN No.</th>
+                            <th style="padding:9px 12px;text-align:left;">Date</th>
+                            <th style="padding:9px 12px;text-align:left;">Material</th>
+                            <th style="padding:9px 12px;text-align:center;">Unit</th>
+                            <th style="padding:9px 12px;text-align:right;">Qty</th>
+                            <th style="padding:9px 12px;text-align:right;">Rate (&#8377;)</th>
+                            <th style="padding:9px 12px;text-align:right;">Value (&#8377;)</th>
+                            <th style="padding:9px 12px;text-align:left;">Supplier</th>
+                            <th style="padding:9px 12px;text-align:left;">Invoice/DC</th>
+                            <th style="padding:9px 12px;text-align:center;">Action</th>
+                        </tr></thead>
+                        <tbody id="rmgrn-list-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div><!-- /sub-rm-inward -->
+
+        <!-- ── SUB 3: Issue / Outward ── -->
+        <div id="sub-rm-outward" class="sub-panel">
+            <div class="form-row" style="margin-bottom:16px;">
+                <select id="rmiss-sel" onchange="onRMISSSelect()" style="min-width:280px;font-size:14px;">
+                    <option value="">-- Select an Issue --</option>
+                </select>
+                <button class="btn btn-primary" onclick="newRMIssue()">+ New Issue</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteRMIssue()">Delete</button>
+            </div>
+
+            <div id="rmiss-form" style="display:none;">
+                <div class="card">
+                    <div class="card-title">Material Issue Slip</div>
+                    <input type="hidden" id="rmiss-id">
+                    <div class="form-row" style="flex-wrap:wrap;gap:14px;margin-bottom:0;">
+                        <div class="form-group">
+                            <label>Issue Number</label>
+                            <input type="text" id="rmiss-no" readonly style="background:#f1f5f9;font-weight:700;min-width:160px;">
+                        </div>
+                        <div class="form-group">
+                            <label>Date *</label>
+                            <input type="date" id="rmiss-date">
+                        </div>
+                        <div class="form-group">
+                            <label>Material *</label>
+                            <select id="rmiss-material" onchange="onRMISSMatChange()" style="min-width:240px;font-size:13px;border:1px solid #cbd5e1;border-radius:6px;padding:6px 10px;">
+                                <option value="">-- Select Material --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Qty (<span id="rmiss-unit-lbl">KGS</span>)</label>
+                            <input type="number" id="rmiss-qty" min="0" step="0.001" placeholder="0.000" style="width:120px;">
+                        </div>
+                        <div class="form-group">
+                            <label>Available Stock</label>
+                            <input type="text" id="rmiss-avail" readonly style="background:#f0fdf4;font-weight:700;width:140px;color:#16a34a;">
+                        </div>
+                        <div class="form-group">
+                            <label>Issued To</label>
+                            <input type="text" id="rmiss-issued-to" placeholder="e.g. Production, Lab, QC" style="min-width:180px;">
+                        </div>
+                        <div class="form-group" style="flex:1;min-width:200px;">
+                            <label>Remarks</label>
+                            <input type="text" id="rmiss-remarks" placeholder="Any remarks...">
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row" style="margin-bottom:24px;">
+                    <button class="btn btn-success" onclick="saveRMIssue()">&#128190; Save Issue</button>
+                    <button class="btn btn-outline" onclick="clearRMIssueForm()">&#10005; Clear</button>
+                </div>
+            </div>
+
+            <div class="card" id="rmiss-list-card">
+                <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+                    <span>Issue Register</span>
+                    <input type="text" id="rmiss-filter" placeholder="Search by material or issued to..." style="font-size:12px;padding:5px 10px;border:1px solid #cbd5e1;border-radius:6px;width:240px;" oninput="renderRMOutwardList()">
+                </div>
+                <div style="overflow-x:auto;">
+                    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                        <thead><tr style="background:#1e293b;color:white;">
+                            <th style="padding:9px 12px;text-align:left;">Issue No.</th>
+                            <th style="padding:9px 12px;text-align:left;">Date</th>
+                            <th style="padding:9px 12px;text-align:left;">Material</th>
+                            <th style="padding:9px 12px;text-align:center;">Unit</th>
+                            <th style="padding:9px 12px;text-align:right;">Qty Issued</th>
+                            <th style="padding:9px 12px;text-align:left;">Issued To</th>
+                            <th style="padding:9px 12px;text-align:left;">Remarks</th>
+                            <th style="padding:9px 12px;text-align:center;">Action</th>
+                        </tr></thead>
+                        <tbody id="rmiss-list-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div><!-- /sub-rm-outward -->
+
+        <!-- ── SUB 4: Stock Summary ── -->
+        <div id="sub-rm-stock" class="sub-panel">
+            <div class="card">
+                <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+                    <span>&#128202; Stock Summary</span>
+                    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                        <select id="rm-stock-cat" onchange="renderRMStockSummary()" style="font-size:12px;padding:5px 10px;border:1px solid #cbd5e1;border-radius:6px;">
+                            <option value="">All Categories</option>
+                            <option>Nylon Yarn</option>
+                            <option>Polyester Yarn</option>
+                            <option>PET Yarn</option>
+                            <option>Rayon Yarn</option>
+                            <option>Aramid Yarn</option>
+                            <option>Chemicals</option>
+                            <option>Sizing Agent</option>
+                            <option>Dipping Chemical</option>
+                            <option>Packing Material</option>
+                            <option>Other</option>
+                        </select>
+                        <select id="rm-stock-status" onchange="renderRMStockSummary()" style="font-size:12px;padding:5px 10px;border:1px solid #cbd5e1;border-radius:6px;">
+                            <option value="">All Stock Levels</option>
+                            <option value="low">Low / Critical</option>
+                            <option value="ok">OK</option>
+                        </select>
+                        <button class="btn btn-outline btn-sm" onclick="renderRMStockSummary()">&#8635; Refresh</button>
+                    </div>
+                </div>
+                <div id="rm-stock-wrap">
+                    <div style="color:#94a3b8;font-size:13px;padding:20px;">No materials defined. Add materials in Material Master first.</div>
+                </div>
+            </div>
+        </div><!-- /sub-rm-stock -->
+
+    </div><!-- /tab-rminventory -->
+
     <!-- ══════════════════════════════════════════ COST DASHBOARD -->
     <div id="tab-dashboard" class="tab-panel">
         <div id="dash-content" class="dash-wrap">
@@ -3246,9 +3547,13 @@ function _ensureDBStructure() {
     if (!Array.isArray(db.linerExportCostings))      db.linerExportCostings     = [];
     if (!Array.isArray(db.salesOrders))      db.salesOrders       = [];
     if (!Array.isArray(db.dispatches))       db.dispatches        = [];
-    if (!db.tabPasswords)                    db.tabPasswords      = { rawmaterials: '', batchprocessing: '', factorycosting: '', internalcosting: '', custcosting: '', machinerycosting: '', dashboard: '', salesdispatch: '' };
+    if (!Array.isArray(db.rmMaterials))      db.rmMaterials       = [];
+    if (!Array.isArray(db.rmInward))         db.rmInward          = [];
+    if (!Array.isArray(db.rmOutward))        db.rmOutward         = [];
+    if (!db.tabPasswords)                    db.tabPasswords      = { rawmaterials: '', batchprocessing: '', factorycosting: '', internalcosting: '', custcosting: '', machinerycosting: '', dashboard: '', salesdispatch: '', rminventory: '' };
     if (!('dashboard' in db.tabPasswords))   db.tabPasswords.dashboard = '';
     if (!('salesdispatch' in db.tabPasswords)) db.tabPasswords.salesdispatch = '';
+    if (!('rminventory' in db.tabPasswords)) db.tabPasswords.rminventory = '';
 }
 
 async function hydrate() {
@@ -3443,6 +3748,10 @@ function switchSubTab(sub) {
     if (sub === 'sd-orders')    renderSOList();
     if (sub === 'sd-dispatch')  renderDispList();
     if (sub === 'sd-summary')   renderSDSummary();
+    if (sub === 'rm-master')    renderRMMasterList();
+    if (sub === 'rm-inward')    { _refreshRMMatDropdowns(); renderRMInwardList(); }
+    if (sub === 'rm-outward')   { _refreshRMMatDropdowns(); renderRMOutwardList(); }
+    if (sub === 'rm-stock')     renderRMStockSummary();
 }
 
 function gotoTab(name) {
@@ -6389,6 +6698,460 @@ function renderSDSummary() {
                 ${i===0 ? `<td style="padding:7px 10px;border:1px solid #e2e8f0;text-align:center;" rowspan="${(s.lineItems||[]).length}">${soStatusBadge(s.status||'Confirmed')}</td>` : ''}
             </tr>`;
         });
+    });
+    html += '</tbody></table>';
+    wrap.innerHTML = html;
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// YARN & RM INVENTORY
+// ══════════════════════════════════════════════════════════════════════
+let _rmGrnId = null, _rmIssId = null;
+
+function _rmFY() {
+    const now = new Date(), m = now.getMonth() + 1, y = now.getFullYear();
+    return m >= 4 ? String(y).slice(2) + String(y+1).slice(2) : String(y-1).slice(2) + String(y).slice(2);
+}
+function genGRNNo() {
+    const pre = 'GRN/' + _rmFY() + '/';
+    const ex  = (db.rmInward||[]).filter(r=>(r.grnNo||'').startsWith(pre));
+    return pre + String(ex.length + 1).padStart(3,'0');
+}
+function genIssueNo() {
+    const pre = 'ISS/' + _rmFY() + '/';
+    const ex  = (db.rmOutward||[]).filter(r=>(r.issueNo||'').startsWith(pre));
+    return pre + String(ex.length + 1).padStart(3,'0');
+}
+
+// ── Stock calculation ──────────────────────────────────────────────────
+function getRMStockData(mid) {
+    const mat      = (db.rmMaterials||[]).find(m=>m.id===mid);
+    if (!mat) return { totalIn:0, totalOut:0, currentQty:0, avgRate:0, stockValue:0, openQty:0, openRate:0 };
+    const openQty  = parseFloat(mat.openingQty)  || 0;
+    const openRate = parseFloat(mat.openingRate) || 0;
+    const inRows   = (db.rmInward||[]).filter(r=>r.materialId===mid);
+    const outRows  = (db.rmOutward||[]).filter(r=>r.materialId===mid);
+    const totalIn  = inRows.reduce((s,r)=>s+(parseFloat(r.qty)||0), 0);
+    const totalOut = outRows.reduce((s,r)=>s+(parseFloat(r.qty)||0), 0);
+    const totalInVal  = inRows.reduce((s,r)=>s+(parseFloat(r.qty)||0)*(parseFloat(r.rate)||0), 0);
+    const totalQtyIn  = openQty + totalIn;
+    const avgRate     = totalQtyIn > 0 ? (openQty*openRate + totalInVal) / totalQtyIn : 0;
+    const currentQty  = openQty + totalIn - totalOut;
+    const stockValue  = Math.max(0, currentQty) * avgRate;
+    return { totalIn, totalOut, currentQty, avgRate, stockValue, openQty, openRate };
+}
+
+// ── Material Master ────────────────────────────────────────────────────
+function clearRMMasterForm() {
+    document.getElementById('rmat-id').value          = '';
+    document.getElementById('rmat-code').value         = '';
+    document.getElementById('rmat-name').value         = '';
+    document.getElementById('rmat-category').value     = 'Nylon Yarn';
+    document.getElementById('rmat-unit').value         = 'KGS';
+    document.getElementById('rmat-open-qty').value     = '0';
+    document.getElementById('rmat-open-rate').value    = '0';
+    document.getElementById('rmat-reorder').value      = '0';
+    document.getElementById('rmat-supplier').value     = '';
+    document.getElementById('rmat-notes').value        = '';
+    document.getElementById('rmat-form-title').textContent = 'New Material';
+    document.getElementById('rmat-del-btn').style.display  = 'none';
+}
+function newRMMaterial() { clearRMMasterForm(); }
+
+function openRMMaterial(id) {
+    const m = (db.rmMaterials||[]).find(x=>x.id===id);
+    if (!m) return;
+    document.getElementById('rmat-id').value          = m.id;
+    document.getElementById('rmat-code').value         = m.code||'';
+    document.getElementById('rmat-name').value         = m.name||'';
+    document.getElementById('rmat-category').value     = m.category||'Nylon Yarn';
+    document.getElementById('rmat-unit').value         = m.unit||'KGS';
+    document.getElementById('rmat-open-qty').value     = m.openingQty||0;
+    document.getElementById('rmat-open-rate').value    = m.openingRate||0;
+    document.getElementById('rmat-reorder').value      = m.reorderQty||0;
+    document.getElementById('rmat-supplier').value     = m.supplier||'';
+    document.getElementById('rmat-notes').value        = m.notes||'';
+    document.getElementById('rmat-form-title').textContent = 'Edit: ' + (m.name||'');
+    document.getElementById('rmat-del-btn').style.display  = '';
+    window.scrollTo({ top:0, behavior:'smooth' });
+}
+
+function saveRMMaterial() {
+    const name = document.getElementById('rmat-name').value.trim();
+    if (!name) { showToast('Material name is required'); return; }
+    const eid = document.getElementById('rmat-id').value;
+    const mat = {
+        id:          eid || nid(),
+        code:        document.getElementById('rmat-code').value.trim(),
+        name,
+        category:    document.getElementById('rmat-category').value,
+        unit:        document.getElementById('rmat-unit').value,
+        openingQty:  parseFloat(document.getElementById('rmat-open-qty').value)||0,
+        openingRate: parseFloat(document.getElementById('rmat-open-rate').value)||0,
+        reorderQty:  parseFloat(document.getElementById('rmat-reorder').value)||0,
+        supplier:    document.getElementById('rmat-supplier').value.trim(),
+        notes:       document.getElementById('rmat-notes').value.trim(),
+    };
+    if (eid) {
+        const idx = (db.rmMaterials||[]).findIndex(m=>m.id===eid);
+        if (idx>=0) db.rmMaterials[idx] = mat; else (db.rmMaterials=db.rmMaterials||[]).push(mat);
+    } else {
+        (db.rmMaterials = db.rmMaterials||[]).push(mat);
+    }
+    persist(); showToast('Material saved');
+    clearRMMasterForm(); renderRMMasterList(); _refreshRMMatDropdowns();
+}
+
+function deleteRMMaterial() {
+    const eid = document.getElementById('rmat-id').value;
+    if (!eid) return;
+    if ((db.rmInward||[]).some(r=>r.materialId===eid) || (db.rmOutward||[]).some(r=>r.materialId===eid)) {
+        showToast('Cannot delete — material has GRN/Issue records'); return;
+    }
+    if (!confirm('Delete this material?')) return;
+    db.rmMaterials = (db.rmMaterials||[]).filter(m=>m.id!==eid);
+    persist(); showToast('Material deleted');
+    clearRMMasterForm(); renderRMMasterList(); _refreshRMMatDropdowns();
+}
+
+function renderRMMasterList() {
+    const tbody = document.getElementById('rmat-list-body');
+    if (!tbody) return;
+    const q = (document.getElementById('rmat-filter')?.value||'').toLowerCase();
+    let list = db.rmMaterials || [];
+    if (q) list = list.filter(m=>((m.name||'')+(m.category||'')+(m.code||'')).toLowerCase().includes(q));
+    if (!list.length) {
+        tbody.innerHTML = '<tr><td colspan="8" style="padding:20px;text-align:center;color:#94a3b8;">No materials defined. Add one above.</td></tr>';
+        return;
+    }
+    tbody.innerHTML = list.map(m => {
+        const sd  = getRMStockData(m.id);
+        const low = (m.reorderQty||0) > 0 && sd.currentQty <= (m.reorderQty||0);
+        return `<tr style="border-bottom:1px solid #f1f5f9;${low?'background:#fff7ed;':''}">
+            <td style="padding:8px 12px;font-family:monospace;font-size:12px;">${esc(m.code||'—')}</td>
+            <td style="padding:8px 12px;font-weight:600;">${esc(m.name)}</td>
+            <td style="padding:8px 12px;">${esc(m.category||'')}</td>
+            <td style="padding:8px 12px;text-align:center;">${esc(m.unit||'KGS')}</td>
+            <td style="padding:8px 12px;text-align:right;">${(m.openingQty||0).toFixed(3)}</td>
+            <td style="padding:8px 12px;text-align:right;${low?'color:#dc2626;font-weight:700;':''}">${(m.reorderQty||0).toFixed(3)}${low?' ⚠':''}</td>
+            <td style="padding:8px 12px;">${esc(m.supplier||'—')}</td>
+            <td style="padding:8px 12px;text-align:center;"><button class="btn btn-sm btn-outline" onclick="openRMMaterial('${m.id}')">&#9998; Edit</button></td>
+        </tr>`;
+    }).join('');
+}
+
+// ── Material dropdown refresh ──────────────────────────────────────────
+function _refreshRMMatDropdowns() {
+    ['rmgrn-material','rmiss-material'].forEach(selId => {
+        const sel = document.getElementById(selId);
+        if (!sel) return;
+        const cur = sel.value;
+        sel.innerHTML = '<option value="">-- Select Material --</option>';
+        (db.rmMaterials||[]).forEach(m => {
+            const label = (m.code ? m.code + ' — ' : '') + m.name + ' (' + (m.unit||'KGS') + ')';
+            sel.innerHTML += `<option value="${m.id}"${m.id===cur?' selected':''}>${esc(label)}</option>`;
+        });
+    });
+}
+
+// ── GRN / Inward ───────────────────────────────────────────────────────
+function refreshRMGRNSel() {
+    const sel = document.getElementById('rmgrn-sel');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">-- Select a GRN --</option>';
+    (db.rmInward||[]).slice().reverse().forEach(r => {
+        const m = (db.rmMaterials||[]).find(x=>x.id===r.materialId);
+        sel.innerHTML += `<option value="${r.id}"${r.id===_rmGrnId?' selected':''}>${esc(r.grnNo||'GRN')} — ${esc(m?m.name:'Unknown')} — ${r.date||''}</option>`;
+    });
+}
+function onRMGRNSelect() {
+    const id = document.getElementById('rmgrn-sel').value;
+    if (!id) { document.getElementById('rmgrn-form').style.display='none'; _rmGrnId=null; return; }
+    openRMGRN(id);
+}
+function newRMGRN() {
+    _rmGrnId = null;
+    clearRMGRNForm();
+    _refreshRMMatDropdowns();
+    document.getElementById('rmgrn-no').value   = genGRNNo();
+    document.getElementById('rmgrn-date').value = new Date().toISOString().slice(0,10);
+    document.getElementById('rmgrn-form').style.display = '';
+}
+function openRMGRN(id) {
+    const r = (db.rmInward||[]).find(x=>x.id===id);
+    if (!r) return;
+    _rmGrnId = id;
+    _refreshRMMatDropdowns();
+    document.getElementById('rmgrn-id').value      = r.id;
+    document.getElementById('rmgrn-no').value       = r.grnNo||'';
+    document.getElementById('rmgrn-date').value     = r.date||'';
+    document.getElementById('rmgrn-material').value = r.materialId||'';
+    document.getElementById('rmgrn-qty').value      = r.qty||'';
+    document.getElementById('rmgrn-rate').value     = r.rate||'';
+    document.getElementById('rmgrn-supplier').value = r.supplier||'';
+    document.getElementById('rmgrn-invoice').value  = r.invoiceNo||'';
+    document.getElementById('rmgrn-remarks').value  = r.remarks||'';
+    onRMGRNMatChange(); calcRMGRNValue();
+    document.getElementById('rmgrn-form').style.display = '';
+    refreshRMGRNSel();
+}
+function clearRMGRNForm() {
+    ['rmgrn-id','rmgrn-no','rmgrn-date','rmgrn-qty','rmgrn-rate','rmgrn-value','rmgrn-supplier','rmgrn-invoice','rmgrn-remarks'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+    const ms=document.getElementById('rmgrn-material'); if(ms) ms.value='';
+    ['rmgrn-unit-lbl','rmgrn-unit-lbl2'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent='KGS';});
+}
+function onRMGRNMatChange() {
+    const mid = document.getElementById('rmgrn-material')?.value;
+    const mat = (db.rmMaterials||[]).find(m=>m.id===mid);
+    const unit = mat ? (mat.unit||'KGS') : 'KGS';
+    ['rmgrn-unit-lbl','rmgrn-unit-lbl2'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=unit;});
+    if (mat?.supplier) document.getElementById('rmgrn-supplier').value = mat.supplier;
+    calcRMGRNValue();
+}
+function calcRMGRNValue() {
+    const qty  = parseFloat(document.getElementById('rmgrn-qty')?.value)||0;
+    const rate = parseFloat(document.getElementById('rmgrn-rate')?.value)||0;
+    const el   = document.getElementById('rmgrn-value');
+    if (el) el.value = '\u20b9 ' + (qty*rate).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function saveRMGRN() {
+    const materialId = document.getElementById('rmgrn-material').value;
+    const qty        = parseFloat(document.getElementById('rmgrn-qty').value)||0;
+    const rate       = parseFloat(document.getElementById('rmgrn-rate').value)||0;
+    const date       = document.getElementById('rmgrn-date').value;
+    if (!materialId) { showToast('Please select a material'); return; }
+    if (!qty)        { showToast('Qty is required'); return; }
+    if (!date)       { showToast('Date is required'); return; }
+    const eid = document.getElementById('rmgrn-id').value;
+    const rec = {
+        id: eid||nid(), grnNo: document.getElementById('rmgrn-no').value,
+        date, materialId, qty, rate,
+        supplier:  document.getElementById('rmgrn-supplier').value.trim(),
+        invoiceNo: document.getElementById('rmgrn-invoice').value.trim(),
+        remarks:   document.getElementById('rmgrn-remarks').value.trim(),
+    };
+    if (eid) { const i=(db.rmInward||[]).findIndex(r=>r.id===eid); if(i>=0) db.rmInward[i]=rec; else (db.rmInward=db.rmInward||[]).push(rec); }
+    else     { (db.rmInward=db.rmInward||[]).push(rec); }
+    persist(); showToast('GRN saved');
+    document.getElementById('rmgrn-form').style.display='none'; _rmGrnId=null;
+    renderRMInwardList();
+}
+function deleteRMGRN() {
+    if (!_rmGrnId) { showToast('Select a GRN first'); return; }
+    if (!confirm('Delete this GRN record?')) return;
+    db.rmInward = (db.rmInward||[]).filter(r=>r.id!==_rmGrnId);
+    persist(); _rmGrnId=null;
+    document.getElementById('rmgrn-form').style.display='none';
+    showToast('GRN deleted'); renderRMInwardList();
+}
+function renderRMInwardList() {
+    refreshRMGRNSel();
+    const tbody = document.getElementById('rmgrn-list-body');
+    if (!tbody) return;
+    const q = (document.getElementById('rmgrn-filter')?.value||'').toLowerCase();
+    let list = (db.rmInward||[]).slice().reverse();
+    if (q) list = list.filter(r=>{ const m=(db.rmMaterials||[]).find(x=>x.id===r.materialId); return ((m?m.name:'')+(r.supplier||'')+(r.grnNo||'')).toLowerCase().includes(q); });
+    if (!list.length) { tbody.innerHTML='<tr><td colspan="10" style="padding:20px;text-align:center;color:#94a3b8;">No GRN records found.</td></tr>'; return; }
+    tbody.innerHTML = list.map(r => {
+        const m   = (db.rmMaterials||[]).find(x=>x.id===r.materialId);
+        const val = (parseFloat(r.qty)||0)*(parseFloat(r.rate)||0);
+        return `<tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:8px 12px;font-weight:600;font-family:monospace;font-size:12px;">${esc(r.grnNo||'—')}</td>
+            <td style="padding:8px 12px;">${r.date||'—'}</td>
+            <td style="padding:8px 12px;">${esc(m?m.name:'Unknown')}</td>
+            <td style="padding:8px 12px;text-align:center;">${esc(m?m.unit:'—')}</td>
+            <td style="padding:8px 12px;text-align:right;">${(parseFloat(r.qty)||0).toFixed(3)}</td>
+            <td style="padding:8px 12px;text-align:right;">&#8377;${(parseFloat(r.rate)||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+            <td style="padding:8px 12px;text-align:right;font-weight:600;">&#8377;${val.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+            <td style="padding:8px 12px;">${esc(r.supplier||'—')}</td>
+            <td style="padding:8px 12px;">${esc(r.invoiceNo||'—')}</td>
+            <td style="padding:8px 12px;text-align:center;"><button class="btn btn-sm btn-outline" onclick="openRMGRN('${r.id}')">&#9998; Edit</button></td>
+        </tr>`;
+    }).join('');
+}
+
+// ── Issue / Outward ────────────────────────────────────────────────────
+function refreshRMIssSel() {
+    const sel = document.getElementById('rmiss-sel');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">-- Select an Issue --</option>';
+    (db.rmOutward||[]).slice().reverse().forEach(r => {
+        const m = (db.rmMaterials||[]).find(x=>x.id===r.materialId);
+        sel.innerHTML += `<option value="${r.id}"${r.id===_rmIssId?' selected':''}>${esc(r.issueNo||'ISS')} — ${esc(m?m.name:'Unknown')} — ${r.date||''}</option>`;
+    });
+}
+function onRMISSSelect() {
+    const id = document.getElementById('rmiss-sel').value;
+    if (!id) { document.getElementById('rmiss-form').style.display='none'; _rmIssId=null; return; }
+    openRMIssue(id);
+}
+function newRMIssue() {
+    _rmIssId = null;
+    clearRMIssueForm();
+    _refreshRMMatDropdowns();
+    document.getElementById('rmiss-no').value   = genIssueNo();
+    document.getElementById('rmiss-date').value = new Date().toISOString().slice(0,10);
+    document.getElementById('rmiss-form').style.display = '';
+}
+function openRMIssue(id) {
+    const r = (db.rmOutward||[]).find(x=>x.id===id);
+    if (!r) return;
+    _rmIssId = id;
+    _refreshRMMatDropdowns();
+    document.getElementById('rmiss-id').value       = r.id;
+    document.getElementById('rmiss-no').value        = r.issueNo||'';
+    document.getElementById('rmiss-date').value      = r.date||'';
+    document.getElementById('rmiss-material').value  = r.materialId||'';
+    document.getElementById('rmiss-qty').value       = r.qty||'';
+    document.getElementById('rmiss-issued-to').value = r.issuedTo||'';
+    document.getElementById('rmiss-remarks').value   = r.remarks||'';
+    onRMISSMatChange();
+    document.getElementById('rmiss-form').style.display = '';
+    refreshRMIssSel();
+}
+function clearRMIssueForm() {
+    ['rmiss-id','rmiss-no','rmiss-date','rmiss-qty','rmiss-issued-to','rmiss-remarks','rmiss-avail'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+    const ms=document.getElementById('rmiss-material'); if(ms) ms.value='';
+    const el=document.getElementById('rmiss-unit-lbl'); if(el) el.textContent='KGS';
+}
+function onRMISSMatChange() {
+    const mid = document.getElementById('rmiss-material')?.value;
+    const mat = (db.rmMaterials||[]).find(m=>m.id===mid);
+    const unit = mat ? (mat.unit||'KGS') : 'KGS';
+    const el = document.getElementById('rmiss-unit-lbl'); if(el) el.textContent=unit;
+    const avEl = document.getElementById('rmiss-avail');
+    if (avEl && mat) {
+        // Exclude current issue qty from available when editing
+        const sd = getRMStockData(mid);
+        const editQty = _rmIssId ? (parseFloat((db.rmOutward||[]).find(r=>r.id===_rmIssId)?.qty)||0) : 0;
+        const avail = sd.currentQty + editQty;
+        avEl.value = avail.toFixed(3) + ' ' + unit;
+        avEl.style.color = avail <= 0 ? '#dc2626' : '#16a34a';
+    } else if (avEl) { avEl.value=''; }
+}
+function saveRMIssue() {
+    const materialId = document.getElementById('rmiss-material').value;
+    const qty        = parseFloat(document.getElementById('rmiss-qty').value)||0;
+    const date       = document.getElementById('rmiss-date').value;
+    if (!materialId) { showToast('Please select a material'); return; }
+    if (!qty)        { showToast('Qty is required'); return; }
+    if (!date)       { showToast('Date is required'); return; }
+    const sd = getRMStockData(materialId);
+    const editQty = _rmIssId ? (parseFloat((db.rmOutward||[]).find(r=>r.id===_rmIssId)?.qty)||0) : 0;
+    if (qty > sd.currentQty + editQty) {
+        showToast('Insufficient stock! Available: ' + (sd.currentQty+editQty).toFixed(3)); return;
+    }
+    const eid = document.getElementById('rmiss-id').value;
+    const rec = {
+        id: eid||nid(), issueNo: document.getElementById('rmiss-no').value,
+        date, materialId, qty,
+        issuedTo: document.getElementById('rmiss-issued-to').value.trim(),
+        remarks:  document.getElementById('rmiss-remarks').value.trim(),
+    };
+    if (eid) { const i=(db.rmOutward||[]).findIndex(r=>r.id===eid); if(i>=0) db.rmOutward[i]=rec; else (db.rmOutward=db.rmOutward||[]).push(rec); }
+    else     { (db.rmOutward=db.rmOutward||[]).push(rec); }
+    persist(); showToast('Issue saved');
+    document.getElementById('rmiss-form').style.display='none'; _rmIssId=null;
+    renderRMOutwardList();
+}
+function deleteRMIssue() {
+    if (!_rmIssId) { showToast('Select an issue record first'); return; }
+    if (!confirm('Delete this issue record?')) return;
+    db.rmOutward = (db.rmOutward||[]).filter(r=>r.id!==_rmIssId);
+    persist(); _rmIssId=null;
+    document.getElementById('rmiss-form').style.display='none';
+    showToast('Issue deleted'); renderRMOutwardList();
+}
+function renderRMOutwardList() {
+    refreshRMIssSel();
+    const tbody = document.getElementById('rmiss-list-body');
+    if (!tbody) return;
+    const q = (document.getElementById('rmiss-filter')?.value||'').toLowerCase();
+    let list = (db.rmOutward||[]).slice().reverse();
+    if (q) list = list.filter(r=>{ const m=(db.rmMaterials||[]).find(x=>x.id===r.materialId); return ((m?m.name:'')+(r.issuedTo||'')+(r.issueNo||'')).toLowerCase().includes(q); });
+    if (!list.length) { tbody.innerHTML='<tr><td colspan="8" style="padding:20px;text-align:center;color:#94a3b8;">No issue records found.</td></tr>'; return; }
+    tbody.innerHTML = list.map(r => {
+        const m = (db.rmMaterials||[]).find(x=>x.id===r.materialId);
+        return `<tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:8px 12px;font-weight:600;font-family:monospace;font-size:12px;">${esc(r.issueNo||'—')}</td>
+            <td style="padding:8px 12px;">${r.date||'—'}</td>
+            <td style="padding:8px 12px;">${esc(m?m.name:'Unknown')}</td>
+            <td style="padding:8px 12px;text-align:center;">${esc(m?m.unit:'—')}</td>
+            <td style="padding:8px 12px;text-align:right;font-weight:600;">${(parseFloat(r.qty)||0).toFixed(3)}</td>
+            <td style="padding:8px 12px;">${esc(r.issuedTo||'—')}</td>
+            <td style="padding:8px 12px;font-size:12px;color:#64748b;">${esc(r.remarks||'—')}</td>
+            <td style="padding:8px 12px;text-align:center;"><button class="btn btn-sm btn-outline" onclick="openRMIssue('${r.id}')">&#9998; Edit</button></td>
+        </tr>`;
+    }).join('');
+}
+
+// ── Stock Summary ──────────────────────────────────────────────────────
+function renderRMStockSummary() {
+    const wrap = document.getElementById('rm-stock-wrap');
+    if (!wrap) return;
+    const catF = document.getElementById('rm-stock-cat')?.value||'';
+    const stF  = document.getElementById('rm-stock-status')?.value||'';
+    let list = db.rmMaterials || [];
+    if (catF) list = list.filter(m=>m.category===catF);
+    if (!list.length) { wrap.innerHTML='<div style="color:#94a3b8;font-size:13px;padding:20px;">No materials found for the selected filter.</div>'; return; }
+    let rows = list.map(m => ({ m, sd: getRMStockData(m.id) }));
+    if (stF === 'low') rows = rows.filter(r => r.sd.currentQty <= 0 || ((r.m.reorderQty||0)>0 && r.sd.currentQty<=(r.m.reorderQty||0)));
+    else if (stF === 'ok') rows = rows.filter(r => r.sd.currentQty > (r.m.reorderQty||0) && r.sd.currentQty > 0);
+    if (!rows.length) { wrap.innerHTML='<div style="color:#94a3b8;font-size:13px;padding:20px;">No materials match the filter.</div>'; return; }
+    const totalVal  = rows.reduce((s,r)=>s+r.sd.stockValue, 0);
+    const lowCount  = rows.filter(r=>r.sd.currentQty<=0||((r.m.reorderQty||0)>0&&r.sd.currentQty<=(r.m.reorderQty||0))).length;
+    let html = `<div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:18px;padding:4px 0;">
+        <div style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:10px;padding:14px 24px;min-width:150px;">
+            <div style="font-size:11px;color:#3b82f6;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Materials</div>
+            <div style="font-size:26px;font-weight:800;color:#1d4ed8;">${rows.length}</div>
+        </div>
+        <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:10px;padding:14px 24px;min-width:180px;">
+            <div style="font-size:11px;color:#16a34a;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Total Stock Value</div>
+            <div style="font-size:22px;font-weight:800;color:#15803d;">&#8377; ${totalVal.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+        </div>
+        <div style="background:#fff7ed;border:1.5px solid #fed7aa;border-radius:10px;padding:14px 24px;min-width:150px;">
+            <div style="font-size:11px;color:#ea580c;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Low / Out of Stock</div>
+            <div style="font-size:26px;font-weight:800;color:#dc2626;">${lowCount}</div>
+        </div>
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:12.5px;">
+    <thead><tr style="background:#1e293b;color:white;">
+        <th style="padding:9px 10px;text-align:left;">Code</th>
+        <th style="padding:9px 10px;text-align:left;">Material</th>
+        <th style="padding:9px 10px;text-align:left;">Category</th>
+        <th style="padding:9px 10px;text-align:center;">Unit</th>
+        <th style="padding:9px 10px;text-align:right;">Opening</th>
+        <th style="padding:9px 10px;text-align:right;">Total In</th>
+        <th style="padding:9px 10px;text-align:right;">Total Out</th>
+        <th style="padding:9px 10px;text-align:right;">Current Stock</th>
+        <th style="padding:9px 10px;text-align:right;">Avg Rate (&#8377;)</th>
+        <th style="padding:9px 10px;text-align:right;">Stock Value (&#8377;)</th>
+        <th style="padding:9px 10px;text-align:right;">Reorder Level</th>
+        <th style="padding:9px 10px;text-align:center;">Status</th>
+    </tr></thead><tbody>`;
+    rows.forEach(({m, sd}) => {
+        const isZero = sd.currentQty <= 0;
+        const isLow  = !isZero && (m.reorderQty||0)>0 && sd.currentQty<=(m.reorderQty||0);
+        const rowBg  = isZero ? '#fef2f2' : isLow ? '#fff7ed' : '';
+        const badge  = isZero
+            ? `<span style="background:#dc2626;color:#fff;padding:2px 9px;border-radius:12px;font-size:11px;font-weight:700;">OUT OF STOCK</span>`
+            : isLow
+            ? `<span style="background:#f97316;color:#fff;padding:2px 9px;border-radius:12px;font-size:11px;font-weight:700;">LOW ⚠</span>`
+            : `<span style="background:#16a34a;color:#fff;padding:2px 9px;border-radius:12px;font-size:11px;font-weight:700;">OK ✓</span>`;
+        html += `<tr style="border-bottom:1px solid #f1f5f9;${rowBg?'background:'+rowBg+';':''}">
+            <td style="padding:7px 10px;font-family:monospace;font-size:11px;">${esc(m.code||'—')}</td>
+            <td style="padding:7px 10px;font-weight:600;">${esc(m.name)}</td>
+            <td style="padding:7px 10px;">${esc(m.category||'')}</td>
+            <td style="padding:7px 10px;text-align:center;">${esc(m.unit||'KGS')}</td>
+            <td style="padding:7px 10px;text-align:right;">${sd.openQty.toFixed(3)}</td>
+            <td style="padding:7px 10px;text-align:right;color:#2563eb;font-weight:600;">${sd.totalIn.toFixed(3)}</td>
+            <td style="padding:7px 10px;text-align:right;color:#dc2626;">${sd.totalOut.toFixed(3)}</td>
+            <td style="padding:7px 10px;text-align:right;font-weight:700;${isZero?'color:#dc2626;':isLow?'color:#ea580c;':'color:#16a34a;'}">${sd.currentQty.toFixed(3)}</td>
+            <td style="padding:7px 10px;text-align:right;">&#8377;${sd.avgRate.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+            <td style="padding:7px 10px;text-align:right;font-weight:600;">&#8377;${sd.stockValue.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+            <td style="padding:7px 10px;text-align:right;">${(m.reorderQty||0).toFixed(3)}</td>
+            <td style="padding:7px 10px;text-align:center;">${badge}</td>
+        </tr>`;
     });
     html += '</tbody></table>';
     wrap.innerHTML = html;
