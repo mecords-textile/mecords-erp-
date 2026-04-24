@@ -948,6 +948,7 @@
         </div>
     </div>
 
+    <button class="tab-btn" data-tab="salesdispatch">&#128666; Sales &amp; Dispatch</button>
     <button class="tab-btn" data-tab="dashboard">&#128202; Cost Dashboard</button>
     <button class="tab-btn" data-tab="batchprocessing">&#128203; Chemical Batch Processing</button>
 </div>
@@ -2825,6 +2826,230 @@
 
     </div><!-- /tab-machinerycosting -->
 
+    <!-- ══════════════════════════════════════════ SALES & DISPATCH -->
+    <div id="tab-salesdispatch" class="tab-panel">
+        <div class="sub-tabs">
+            <button class="sub-tab-btn active" data-sub="sd-orders"   onclick="switchSubTab('sd-orders')">&#128203; Sales Orders</button>
+            <button class="sub-tab-btn"        data-sub="sd-dispatch" onclick="switchSubTab('sd-dispatch')">&#128666; Dispatch Register</button>
+            <button class="sub-tab-btn"        data-sub="sd-summary"  onclick="switchSubTab('sd-summary')">&#128202; Pending Summary</button>
+        </div>
+
+        <!-- ── SUB 1: Sales Orders ── -->
+        <div id="sub-sd-orders" class="sub-panel active">
+            <div class="form-row" style="margin-bottom:16px;">
+                <select id="so-sel" onchange="onSOSelect()" style="min-width:280px;font-size:14px;">
+                    <option value="">-- Select a Sales Order --</option>
+                </select>
+                <button class="btn btn-primary" onclick="newSO()">+ New SO</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteSO()">Delete</button>
+            </div>
+
+            <div id="so-form" style="display:none;">
+                <div class="card">
+                    <div class="card-title">Sales Order Details</div>
+                    <div class="form-row" style="flex-wrap:wrap;gap:16px;margin-bottom:12px;">
+                        <div class="form-group">
+                            <label>SO Number</label>
+                            <input type="text" id="so-number" readonly style="background:#f1f5f9;font-weight:700;min-width:160px;">
+                        </div>
+                        <div class="form-group">
+                            <label>Date</label>
+                            <input type="date" id="so-date">
+                        </div>
+                        <div class="form-group">
+                            <label>Customer Name</label>
+                            <input type="text" id="so-customer" placeholder="e.g. MRF LIMITED" style="min-width:220px;">
+                        </div>
+                        <div class="form-group">
+                            <label>Plant Name</label>
+                            <input type="text" id="so-plant" placeholder="e.g. Chennai Plant" style="min-width:180px;">
+                        </div>
+                        <div class="form-group">
+                            <label>Status</label>
+                            <select id="so-status" style="min-width:160px;font-size:13px;border:1px solid #cbd5e1;border-radius:6px;padding:6px 10px;">
+                                <option value="Confirmed">Confirmed</option>
+                                <option value="In Production">In Production</option>
+                                <option value="Dispatched">Dispatched</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>Remarks</label>
+                        <textarea id="so-remarks" rows="2" placeholder="Any remarks or special instructions..." style="width:100%;box-sizing:border-box;padding:8px 10px;font-size:13px;border:1.5px solid #e2e8f0;border-radius:8px;resize:vertical;"></textarea>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+                        <span>Line Items</span>
+                        <button class="btn btn-outline btn-sm" onclick="addSOLine()">+ Add Line</button>
+                    </div>
+                    <div style="overflow-x:auto;">
+                        <table style="width:100%;border-collapse:collapse;font-size:13px;" id="so-lines-table">
+                            <thead>
+                                <tr style="background:#f1f5f9;">
+                                    <th style="padding:8px 10px;text-align:left;border:1px solid #e2e8f0;color:#475569;">#</th>
+                                    <th style="padding:8px 10px;text-align:left;border:1px solid #e2e8f0;color:#475569;">Quality</th>
+                                    <th style="padding:8px 10px;text-align:left;border:1px solid #e2e8f0;color:#475569;">Description</th>
+                                    <th style="padding:8px 10px;text-align:right;border:1px solid #e2e8f0;color:#475569;">Qty (MT)</th>
+                                    <th style="padding:8px 10px;text-align:right;border:1px solid #e2e8f0;color:#475569;">Rate (&#8377;/MT)</th>
+                                    <th style="padding:8px 10px;text-align:right;border:1px solid #e2e8f0;color:#475569;">Amount (&#8377;)</th>
+                                    <th style="padding:8px 10px;text-align:center;border:1px solid #e2e8f0;color:#475569;">From Costing</th>
+                                    <th style="padding:8px 10px;text-align:center;border:1px solid #e2e8f0;color:#475569;"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="so-lines-body"></tbody>
+                            <tfoot>
+                                <tr style="background:#fef3c7;font-weight:700;">
+                                    <td colspan="5" style="padding:8px 10px;border:1px solid #e2e8f0;text-align:right;">Total Order Value</td>
+                                    <td style="padding:8px 10px;border:1px solid #e2e8f0;text-align:right;" id="so-total-value">&#8377; 0.00</td>
+                                    <td colspan="2" style="border:1px solid #e2e8f0;"></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="form-row" style="margin-bottom:24px;">
+                    <button class="btn btn-success" onclick="saveSOSheet()">&#128190; Save SO</button>
+                    <button class="btn btn-outline"  onclick="clearSOForm()">&#10005; Clear</button>
+                </div>
+            </div>
+
+            <!-- SO List -->
+            <div class="card" id="so-list-card">
+                <div class="card-title">All Sales Orders</div>
+                <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:13px;">
+                    <thead><tr style="background:#1e293b;color:white;">
+                        <th style="padding:9px 12px;text-align:left;">SO Number</th>
+                        <th style="padding:9px 12px;text-align:left;">Date</th>
+                        <th style="padding:9px 12px;text-align:left;">Customer</th>
+                        <th style="padding:9px 12px;text-align:left;">Plant</th>
+                        <th style="padding:9px 12px;text-align:center;">Items</th>
+                        <th style="padding:9px 12px;text-align:right;">Total Qty (MT)</th>
+                        <th style="padding:9px 12px;text-align:right;">Total Value (&#8377;)</th>
+                        <th style="padding:9px 12px;text-align:center;">Status</th>
+                        <th style="padding:9px 12px;text-align:center;">Action</th>
+                    </tr></thead>
+                    <tbody id="so-list-body"></tbody>
+                </table></div>
+            </div>
+        </div>
+
+        <!-- ── SUB 2: Dispatch Register ── -->
+        <div id="sub-sd-dispatch" class="sub-panel">
+            <div class="form-row" style="margin-bottom:16px;">
+                <select id="disp-sel" onchange="onDispSelect()" style="min-width:280px;font-size:14px;">
+                    <option value="">-- Select a Dispatch --</option>
+                </select>
+                <button class="btn btn-primary" onclick="newDispatch()">+ New Dispatch</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteDispatch()">Delete</button>
+            </div>
+
+            <div id="disp-form" style="display:none;">
+                <div class="card">
+                    <div class="card-title">Dispatch Details</div>
+                    <div class="form-row" style="flex-wrap:wrap;gap:16px;margin-bottom:0;">
+                        <div class="form-group">
+                            <label>Date</label>
+                            <input type="date" id="disp-date">
+                        </div>
+                        <div class="form-group">
+                            <label>Invoice Number</label>
+                            <input type="text" id="disp-invoice" placeholder="e.g. INV/2627/001" style="min-width:180px;">
+                        </div>
+                        <div class="form-group">
+                            <label>LR Number</label>
+                            <input type="text" id="disp-lr" placeholder="Lorry Receipt No." style="min-width:160px;">
+                        </div>
+                        <div class="form-group">
+                            <label>E-Way Bill No.</label>
+                            <input type="text" id="disp-eway" placeholder="E-Way Bill No." style="min-width:160px;">
+                        </div>
+                        <div class="form-group">
+                            <label>Transporter</label>
+                            <input type="text" id="disp-transporter" placeholder="Transporter name" style="min-width:180px;">
+                        </div>
+                        <div class="form-group">
+                            <label>Vehicle No.</label>
+                            <input type="text" id="disp-vehicle" placeholder="e.g. MH12AB1234" style="min-width:140px;">
+                        </div>
+                        <div class="form-group" style="flex:1;min-width:200px;">
+                            <label>Remarks</label>
+                            <input type="text" id="disp-remarks" placeholder="Any remarks...">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+                        <span>Items Dispatched</span>
+                        <button class="btn btn-outline btn-sm" onclick="addDispatchLine()">+ Add Line</button>
+                    </div>
+                    <div style="overflow-x:auto;">
+                        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                            <thead><tr style="background:#f1f5f9;">
+                                <th style="padding:8px 10px;text-align:left;border:1px solid #e2e8f0;color:#475569;">Sales Order</th>
+                                <th style="padding:8px 10px;text-align:left;border:1px solid #e2e8f0;color:#475569;">Quality</th>
+                                <th style="padding:8px 10px;text-align:left;border:1px solid #e2e8f0;color:#475569;">Customer</th>
+                                <th style="padding:8px 10px;text-align:left;border:1px solid #e2e8f0;color:#475569;">Plant</th>
+                                <th style="padding:8px 10px;text-align:right;border:1px solid #e2e8f0;color:#475569;">Pending (MT)</th>
+                                <th style="padding:8px 10px;text-align:right;border:1px solid #e2e8f0;color:#475569;">Dispatch Qty (MT)</th>
+                                <th style="padding:8px 10px;border:1px solid #e2e8f0;"></th>
+                            </tr></thead>
+                            <tbody id="disp-lines-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="form-row" style="margin-bottom:24px;">
+                    <button class="btn btn-success" onclick="saveDispatch()">&#128190; Save Dispatch</button>
+                    <button class="btn btn-outline"  onclick="clearDispForm()">&#10005; Clear</button>
+                </div>
+            </div>
+
+            <!-- Dispatch List -->
+            <div class="card" id="disp-list-card">
+                <div class="card-title">All Dispatches</div>
+                <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:13px;">
+                    <thead><tr style="background:#1e293b;color:white;">
+                        <th style="padding:9px 12px;text-align:left;">Date</th>
+                        <th style="padding:9px 12px;text-align:left;">Invoice No.</th>
+                        <th style="padding:9px 12px;text-align:left;">SO(s)</th>
+                        <th style="padding:9px 12px;text-align:left;">Customer(s)</th>
+                        <th style="padding:9px 12px;text-align:right;">Total Qty (MT)</th>
+                        <th style="padding:9px 12px;text-align:left;">LR No.</th>
+                        <th style="padding:9px 12px;text-align:left;">Transporter</th>
+                        <th style="padding:9px 12px;text-align:center;">Action</th>
+                    </tr></thead>
+                    <tbody id="disp-list-body"></tbody>
+                </table></div>
+            </div>
+        </div>
+
+        <!-- ── SUB 3: Pending Summary ── -->
+        <div id="sub-sd-summary" class="sub-panel">
+            <div class="card">
+                <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+                    <span>&#128202; Pending Order Summary</span>
+                    <div style="display:flex;gap:10px;align-items:center;">
+                        <input type="text" id="sd-filter-customer" placeholder="Filter by customer..." style="font-size:12px;padding:5px 10px;border:1px solid #cbd5e1;border-radius:6px;width:200px;" oninput="renderSDSummary()">
+                        <select id="sd-filter-status" onchange="renderSDSummary()" style="font-size:12px;padding:5px 10px;border:1px solid #cbd5e1;border-radius:6px;">
+                            <option value="">All Statuses</option>
+                            <option value="Confirmed">Confirmed</option>
+                            <option value="In Production">In Production</option>
+                            <option value="Dispatched">Dispatched</option>
+                        </select>
+                        <button class="btn btn-outline btn-sm" onclick="renderSDSummary()">&#8635; Refresh</button>
+                    </div>
+                </div>
+                <div style="overflow-x:auto;" id="sd-summary-wrap">
+                    <div style="color:#94a3b8;font-size:13px;padding:20px;">No sales orders found.</div>
+                </div>
+            </div>
+        </div>
+    </div><!-- /tab-salesdispatch -->
+
     <!-- ══════════════════════════════════════════ COST DASHBOARD -->
     <div id="tab-dashboard" class="tab-panel">
         <div id="dash-content" class="dash-wrap">
@@ -3019,8 +3244,11 @@ function _ensureDBStructure() {
     if (!Array.isArray(db.linerQuotations))          db.linerQuotations         = [];
     if (!Array.isArray(db.chaferExportCostings))     db.chaferExportCostings    = [];
     if (!Array.isArray(db.linerExportCostings))      db.linerExportCostings     = [];
-    if (!db.tabPasswords)                    db.tabPasswords      = { rawmaterials: '', batchprocessing: '', factorycosting: '', internalcosting: '', custcosting: '', machinerycosting: '', dashboard: '' };
+    if (!Array.isArray(db.salesOrders))      db.salesOrders       = [];
+    if (!Array.isArray(db.dispatches))       db.dispatches        = [];
+    if (!db.tabPasswords)                    db.tabPasswords      = { rawmaterials: '', batchprocessing: '', factorycosting: '', internalcosting: '', custcosting: '', machinerycosting: '', dashboard: '', salesdispatch: '' };
     if (!('dashboard' in db.tabPasswords))   db.tabPasswords.dashboard = '';
+    if (!('salesdispatch' in db.tabPasswords)) db.tabPasswords.salesdispatch = '';
 }
 
 async function hydrate() {
@@ -3212,6 +3440,9 @@ function switchSubTab(sub) {
     if (sub === 'mc-sheet')     renderMachineryTab();
     if (sub === 'mc-mcomp')     renderMCMachineComparison();
     if (sub === 'mc-compare')   renderMCComparison();
+    if (sub === 'sd-orders')    renderSOList();
+    if (sub === 'sd-dispatch')  renderDispList();
+    if (sub === 'sd-summary')   renderSDSummary();
 }
 
 function gotoTab(name) {
@@ -5714,6 +5945,456 @@ function updateMCComparison() {
     }).join('');
 }
 
+// ══════════════════════════════════════════════════════════════════════
+// SALES & DISPATCH MODULE
+// ══════════════════════════════════════════════════════════════════════
+let _soId = null, _dispId = null;
+
+// ── Helpers ──────────────────────────────────────────────────────────
+function genSONo() {
+    const now = new Date();
+    const m = now.getMonth() + 1;
+    const y = now.getFullYear();
+    const fy = m >= 4
+        ? String(y).slice(2) + String(y + 1).slice(2)
+        : String(y - 1).slice(2) + String(y).slice(2);
+    const existing = (db.salesOrders || []).filter(s => (s.soNo || '').startsWith('SO/' + fy + '/'));
+    return 'SO/' + fy + '/' + String(existing.length + 1).padStart(3, '0');
+}
+
+function getPendingQty(soId, lineItemId) {
+    const dispatched = (db.dispatches || []).reduce((sum, d) => {
+        return sum + (d.lines || []).filter(l => l.soId === soId && l.lineItemId === lineItemId)
+            .reduce((s2, l) => s2 + (l.qtyMT || 0), 0);
+    }, 0);
+    const so = (db.salesOrders || []).find(s => s.id === soId);
+    const li = so ? (so.lineItems || []).find(l => l.id === lineItemId) : null;
+    return li ? Math.max(0, (li.qtyMT || 0) - dispatched) : 0;
+}
+
+function soStatusBadge(status) {
+    const map = {
+        'Confirmed':     'background:#dbeafe;color:#1d4ed8;',
+        'In Production': 'background:#fef9c3;color:#92400e;',
+        'Dispatched':    'background:#dcfce7;color:#16a34a;'
+    };
+    return `<span style="padding:2px 10px;border-radius:10px;font-size:11px;font-weight:700;${map[status]||''}">${esc(status)}</span>`;
+}
+
+function inrFmt(n) { return '₹ ' + Number(n||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+
+// ── Sales Orders ──────────────────────────────────────────────────────
+function refreshSOSel() {
+    const sel = document.getElementById('so-sel');
+    if (!sel) return;
+    const list = db.salesOrders || [];
+    sel.innerHTML = '<option value="">-- Select a Sales Order --</option>'
+        + list.map(s => `<option value="${s.id}" ${s.id===_soId?'selected':''}>${esc(s.soNo)} — ${esc(s.customer||'')}</option>`).join('');
+}
+
+function renderSOList() {
+    refreshSOSel();
+    const tbody = document.getElementById('so-list-body');
+    if (!tbody) return;
+    const list = db.salesOrders || [];
+    if (!list.length) { tbody.innerHTML = '<tr><td colspan="9" style="padding:20px;text-align:center;color:#94a3b8;">No sales orders yet. Click "+ New SO" to create one.</td></tr>'; return; }
+    tbody.innerHTML = list.slice().reverse().map(s => {
+        const totalQty = (s.lineItems||[]).reduce((t,l)=>t+(l.qtyMT||0),0);
+        const totalVal = (s.lineItems||[]).reduce((t,l)=>t+(l.amount||0),0);
+        return `<tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:8px 12px;font-weight:600;">${esc(s.soNo)}</td>
+            <td style="padding:8px 12px;">${s.date||'—'}</td>
+            <td style="padding:8px 12px;">${esc(s.customer||'—')}</td>
+            <td style="padding:8px 12px;">${esc(s.plant||'—')}</td>
+            <td style="padding:8px 12px;text-align:center;">${(s.lineItems||[]).length}</td>
+            <td style="padding:8px 12px;text-align:right;font-weight:600;">${totalQty.toFixed(3)}</td>
+            <td style="padding:8px 12px;text-align:right;font-weight:600;">${inrFmt(totalVal)}</td>
+            <td style="padding:8px 12px;text-align:center;">${soStatusBadge(s.status||'Confirmed')}</td>
+            <td style="padding:8px 12px;text-align:center;"><button class="btn btn-sm btn-outline" onclick="openSO('${s.id}')">&#9998; Edit</button></td>
+        </tr>`;
+    }).join('');
+}
+
+function onSOSelect() {
+    const id = document.getElementById('so-sel').value;
+    if (!id) { document.getElementById('so-form').style.display = 'none'; return; }
+    openSO(id);
+}
+
+function openSO(id) {
+    _soId = id;
+    refreshSOSel();
+    const s = (db.salesOrders||[]).find(x=>x.id===id);
+    if (!s) return;
+    document.getElementById('so-form').style.display = '';
+    document.getElementById('so-number').value   = s.soNo || '';
+    document.getElementById('so-date').value     = s.date || '';
+    document.getElementById('so-customer').value = s.customer || '';
+    document.getElementById('so-plant').value    = s.plant || '';
+    document.getElementById('so-status').value   = s.status || 'Confirmed';
+    document.getElementById('so-remarks').value  = s.remarks || '';
+    renderSOLines(s.lineItems || []);
+    calcSOTotal();
+}
+
+function newSO() {
+    _soId = nid();
+    const soNo = genSONo();
+    const s = { id:_soId, soNo, date:new Date().toISOString().slice(0,10), customer:'', plant:'', status:'Confirmed', remarks:'', lineItems:[] };
+    (db.salesOrders = db.salesOrders||[]).push(s);
+    persist();
+    refreshSOSel();
+    document.getElementById('so-sel').value = _soId;
+    openSO(_soId);
+    addSOLine();
+}
+
+function deleteSO() {
+    if (!_soId) return alert('Select a Sales Order first.');
+    if (!confirm('Delete this Sales Order? This cannot be undone.')) return;
+    db.salesOrders = (db.salesOrders||[]).filter(s=>s.id!==_soId);
+    _soId = null;
+    persist();
+    document.getElementById('so-form').style.display='none';
+    renderSOList();
+}
+
+function clearSOForm() { if (_soId) openSO(_soId); }
+
+function renderSOLines(lines) {
+    const tbody = document.getElementById('so-lines-body');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    lines.forEach((l,i) => {
+        const tr = document.createElement('tr');
+        tr.id = 'so-line-' + l.id;
+        tr.innerHTML = `
+            <td style="padding:6px 8px;border:1px solid #e2e8f0;text-align:center;color:#94a3b8;">${i+1}</td>
+            <td style="padding:4px 6px;border:1px solid #e2e8f0;"><input type="text" value="${esc(l.quality||'')}" placeholder="Quality" style="width:100%;font-size:12px;border:1px solid #cbd5e1;border-radius:4px;padding:3px 6px;" oninput="updateSOLine('${l.id}','quality',this.value)"></td>
+            <td style="padding:4px 6px;border:1px solid #e2e8f0;"><input type="text" value="${esc(l.description||'')}" placeholder="Description" style="width:100%;font-size:12px;border:1px solid #cbd5e1;border-radius:4px;padding:3px 6px;" oninput="updateSOLine('${l.id}','description',this.value)"></td>
+            <td style="padding:4px 6px;border:1px solid #e2e8f0;"><input type="number" value="${l.qtyMT||''}" placeholder="0.000" min="0" step="0.001" style="width:80px;font-size:12px;border:1px solid #cbd5e1;border-radius:4px;padding:3px 6px;text-align:right;" oninput="updateSOLine('${l.id}','qtyMT',parseFloat(this.value)||0);calcSOTotal()"></td>
+            <td style="padding:4px 6px;border:1px solid #e2e8f0;"><input type="number" id="so-rate-${l.id}" value="${l.ratePer||''}" placeholder="0.00" min="0" step="0.01" style="width:110px;font-size:12px;border:1px solid #cbd5e1;border-radius:4px;padding:3px 6px;text-align:right;" oninput="updateSOLine('${l.id}','ratePer',parseFloat(this.value)||0);calcSOTotal()"></td>
+            <td style="padding:6px 8px;border:1px solid #e2e8f0;text-align:right;font-weight:600;" id="so-amt-${l.id}">${inrFmt(l.amount||0)}</td>
+            <td style="padding:4px 6px;border:1px solid #e2e8f0;text-align:center;"><button class="btn btn-sm" style="font-size:10px;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;" onclick="linkSOLineCosting('${l.id}')">&#128279; Link</button></td>
+            <td style="padding:4px 6px;border:1px solid #e2e8f0;text-align:center;"><button class="btn btn-sm btn-danger" style="font-size:10px;" onclick="removeSOLine('${l.id}')">&#10005;</button></td>`;
+        tbody.appendChild(tr);
+    });
+}
+
+function updateSOLine(lid, field, val) {
+    const s = (db.salesOrders||[]).find(x=>x.id===_soId);
+    if (!s) return;
+    const li = (s.lineItems||[]).find(l=>l.id===lid);
+    if (!li) return;
+    li[field] = val;
+}
+
+function addSOLine() {
+    const s = (db.salesOrders||[]).find(x=>x.id===_soId);
+    if (!s) return;
+    const li = { id:nid(), quality:'', description:'', qtyMT:0, ratePer:0, amount:0, linkedCostingId:null };
+    (s.lineItems=s.lineItems||[]).push(li);
+    const tbody = document.getElementById('so-lines-body');
+    const idx = s.lineItems.length;
+    const tr = document.createElement('tr');
+    tr.id = 'so-line-' + li.id;
+    tr.innerHTML = `
+        <td style="padding:6px 8px;border:1px solid #e2e8f0;text-align:center;color:#94a3b8;">${idx}</td>
+        <td style="padding:4px 6px;border:1px solid #e2e8f0;"><input type="text" value="" placeholder="Quality" style="width:100%;font-size:12px;border:1px solid #cbd5e1;border-radius:4px;padding:3px 6px;" oninput="updateSOLine('${li.id}','quality',this.value)"></td>
+        <td style="padding:4px 6px;border:1px solid #e2e8f0;"><input type="text" value="" placeholder="Description" style="width:100%;font-size:12px;border:1px solid #cbd5e1;border-radius:4px;padding:3px 6px;" oninput="updateSOLine('${li.id}','description',this.value)"></td>
+        <td style="padding:4px 6px;border:1px solid #e2e8f0;"><input type="number" value="" placeholder="0.000" min="0" step="0.001" style="width:80px;font-size:12px;border:1px solid #cbd5e1;border-radius:4px;padding:3px 6px;text-align:right;" oninput="updateSOLine('${li.id}','qtyMT',parseFloat(this.value)||0);calcSOTotal()"></td>
+        <td style="padding:4px 6px;border:1px solid #e2e8f0;"><input type="number" id="so-rate-${li.id}" value="" placeholder="0.00" min="0" step="0.01" style="width:110px;font-size:12px;border:1px solid #cbd5e1;border-radius:4px;padding:3px 6px;text-align:right;" oninput="updateSOLine('${li.id}','ratePer',parseFloat(this.value)||0);calcSOTotal()"></td>
+        <td style="padding:6px 8px;border:1px solid #e2e8f0;text-align:right;font-weight:600;" id="so-amt-${li.id}">${inrFmt(0)}</td>
+        <td style="padding:4px 6px;border:1px solid #e2e8f0;text-align:center;"><button class="btn btn-sm" style="font-size:10px;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;" onclick="linkSOLineCosting('${li.id}')">&#128279; Link</button></td>
+        <td style="padding:4px 6px;border:1px solid #e2e8f0;text-align:center;"><button class="btn btn-sm btn-danger" style="font-size:10px;" onclick="removeSOLine('${li.id}')">&#10005;</button></td>`;
+    tbody.appendChild(tr);
+}
+
+function removeSOLine(lid) {
+    const s = (db.salesOrders||[]).find(x=>x.id===_soId);
+    if (!s) return;
+    s.lineItems = (s.lineItems||[]).filter(l=>l.id!==lid);
+    document.getElementById('so-line-'+lid)?.remove();
+    calcSOTotal();
+}
+
+function calcSOTotal() {
+    const s = (db.salesOrders||[]).find(x=>x.id===_soId);
+    if (!s) return;
+    let total = 0;
+    (s.lineItems||[]).forEach(li => {
+        li.amount = (li.qtyMT||0) * (li.ratePer||0);
+        const amtEl = document.getElementById('so-amt-'+li.id);
+        if (amtEl) amtEl.textContent = inrFmt(li.amount);
+        total += li.amount;
+    });
+    const tv = document.getElementById('so-total-value');
+    if (tv) tv.textContent = inrFmt(total);
+}
+
+function linkSOLineCosting(lid) {
+    const costings = db.customerCostings || [];
+    if (!costings.length) { alert('No Customer Costing sheets found. Create one in HO Product Costing - Customers first.'); return; }
+    const opts = costings.map((c,i) => `${i+1}. ${c.customerName||c.title||'Sheet'} — ₹${(c.grandTotal||0).toFixed(2)}/MT`).join('\n');
+    const pick = prompt('Select costing sheet number to link rate:\n\n' + opts);
+    const idx = parseInt(pick) - 1;
+    if (isNaN(idx) || idx < 0 || idx >= costings.length) return;
+    const cc = costings[idx];
+    const rate = cc.grandTotal || 0;
+    const s = (db.salesOrders||[]).find(x=>x.id===_soId);
+    const li = s ? (s.lineItems||[]).find(l=>l.id===lid) : null;
+    if (!li) return;
+    li.ratePer = rate;
+    li.linkedCostingId = cc.id;
+    const rateEl = document.getElementById('so-rate-'+lid);
+    if (rateEl) rateEl.value = rate.toFixed(2);
+    calcSOTotal();
+}
+
+function saveSOSheet() {
+    if (!_soId) return;
+    const s = (db.salesOrders||[]).find(x=>x.id===_soId);
+    if (!s) return;
+    s.date     = document.getElementById('so-date').value;
+    s.customer = document.getElementById('so-customer').value.trim();
+    s.plant    = document.getElementById('so-plant').value.trim();
+    s.status   = document.getElementById('so-status').value;
+    s.remarks  = document.getElementById('so-remarks').value.trim();
+    calcSOTotal();
+    persist();
+    renderSOList();
+    const t = document.createElement('div');
+    toast('Sales Order saved ✓');
+}
+
+// ── Dispatch Register ─────────────────────────────────────────────────
+function refreshDispSel() {
+    const sel = document.getElementById('disp-sel');
+    if (!sel) return;
+    const list = db.dispatches || [];
+    sel.innerHTML = '<option value="">-- Select a Dispatch --</option>'
+        + list.slice().reverse().map(d => `<option value="${d.id}" ${d.id===_dispId?'selected':''}>${esc(d.invoiceNo||d.id)} — ${d.date||''}</option>`).join('');
+}
+
+function renderDispList() {
+    refreshDispSel();
+    const tbody = document.getElementById('disp-list-body');
+    if (!tbody) return;
+    const list = db.dispatches || [];
+    if (!list.length) { tbody.innerHTML = '<tr><td colspan="8" style="padding:20px;text-align:center;color:#94a3b8;">No dispatches yet.</td></tr>'; return; }
+    tbody.innerHTML = list.slice().reverse().map(d => {
+        const totalQty = (d.lines||[]).reduce((t,l)=>t+(l.qtyMT||0),0);
+        const sos = [...new Set((d.lines||[]).map(l=>l.soNo||l.soId))].join(', ');
+        const customers = [...new Set((d.lines||[]).map(l=>l.customer||''))].filter(Boolean).join(', ');
+        return `<tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:8px 12px;">${d.date||'—'}</td>
+            <td style="padding:8px 12px;font-weight:600;">${esc(d.invoiceNo||'—')}</td>
+            <td style="padding:8px 12px;">${esc(sos||'—')}</td>
+            <td style="padding:8px 12px;">${esc(customers||'—')}</td>
+            <td style="padding:8px 12px;text-align:right;font-weight:600;">${totalQty.toFixed(3)}</td>
+            <td style="padding:8px 12px;">${esc(d.lrNo||'—')}</td>
+            <td style="padding:8px 12px;">${esc(d.transporter||'—')}</td>
+            <td style="padding:8px 12px;text-align:center;"><button class="btn btn-sm btn-outline" onclick="openDispatch('${d.id}')">&#9998; Edit</button></td>
+        </tr>`;
+    }).join('');
+}
+
+function onDispSelect() {
+    const id = document.getElementById('disp-sel').value;
+    if (!id) { document.getElementById('disp-form').style.display='none'; return; }
+    openDispatch(id);
+}
+
+function openDispatch(id) {
+    _dispId = id;
+    refreshDispSel();
+    const d = (db.dispatches||[]).find(x=>x.id===id);
+    if (!d) return;
+    document.getElementById('disp-form').style.display = '';
+    document.getElementById('disp-date').value        = d.date||'';
+    document.getElementById('disp-invoice').value     = d.invoiceNo||'';
+    document.getElementById('disp-lr').value          = d.lrNo||'';
+    document.getElementById('disp-eway').value        = d.ewayBill||'';
+    document.getElementById('disp-transporter').value = d.transporter||'';
+    document.getElementById('disp-vehicle').value     = d.vehicleNo||'';
+    document.getElementById('disp-remarks').value     = d.remarks||'';
+    renderDispLines(d.lines||[]);
+}
+
+function newDispatch() {
+    _dispId = nid();
+    const d = { id:_dispId, date:new Date().toISOString().slice(0,10), invoiceNo:'', lrNo:'', ewayBill:'', transporter:'', vehicleNo:'', remarks:'', lines:[] };
+    (db.dispatches=db.dispatches||[]).push(d);
+    persist();
+    refreshDispSel();
+    document.getElementById('disp-sel').value = _dispId;
+    openDispatch(_dispId);
+    addDispatchLine();
+}
+
+function deleteDispatch() {
+    if (!_dispId) return alert('Select a Dispatch first.');
+    if (!confirm('Delete this dispatch record?')) return;
+    db.dispatches = (db.dispatches||[]).filter(d=>d.id!==_dispId);
+    _dispId = null;
+    persist();
+    document.getElementById('disp-form').style.display='none';
+    renderDispList();
+}
+
+function clearDispForm() { if (_dispId) openDispatch(_dispId); }
+
+function renderDispLines(lines) {
+    const tbody = document.getElementById('disp-lines-body');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    lines.forEach(l => {
+        const pending = getPendingQty(l.soId, l.lineItemId) + (l.qtyMT||0); // add back current dispatch qty
+        const tr = document.createElement('tr');
+        tr.id = 'disp-line-' + l.id;
+        tr.innerHTML = buildDispLineHTML(l, pending);
+        tbody.appendChild(tr);
+    });
+}
+
+function buildDispLineHTML(l, pendingBeforeThis) {
+    const sos = (db.salesOrders||[]);
+    const soOpts = sos.map(s=>`<option value="${s.id}" ${s.id===l.soId?'selected':''}>${esc(s.soNo)} — ${esc(s.customer||'')}</option>`).join('');
+    const so = sos.find(s=>s.id===l.soId);
+    const liOpts = so ? (so.lineItems||[]).map(li=>`<option value="${li.id}" ${li.id===l.lineItemId?'selected':''}>${esc(li.quality||li.description||'Line')}</option>`).join('') : '';
+    return `
+        <td style="padding:4px 6px;border:1px solid #e2e8f0;">
+            <select style="width:100%;font-size:12px;border:1px solid #cbd5e1;border-radius:4px;padding:3px 4px;" onchange="onDispSOChange('${l.id}',this.value)"><option value="">-- SO --</option>${soOpts}</select>
+        </td>
+        <td style="padding:4px 6px;border:1px solid #e2e8f0;">
+            <select id="disp-li-sel-${l.id}" style="width:100%;font-size:12px;border:1px solid #cbd5e1;border-radius:4px;padding:3px 4px;" onchange="onDispLIChange('${l.id}',this.value)"><option value="">-- Line --</option>${liOpts}</select>
+        </td>
+        <td style="padding:6px 8px;border:1px solid #e2e8f0;text-align:left;font-size:12px;">${esc(l.customer||'—')}</td>
+        <td style="padding:6px 8px;border:1px solid #e2e8f0;text-align:left;font-size:12px;">${esc(l.plant||'—')}</td>
+        <td style="padding:6px 8px;border:1px solid #e2e8f0;text-align:right;font-size:12px;color:#92400e;font-weight:600;" id="disp-pend-${l.id}">${pendingBeforeThis.toFixed(3)}</td>
+        <td style="padding:4px 6px;border:1px solid #e2e8f0;"><input type="number" value="${l.qtyMT||''}" placeholder="0.000" min="0" step="0.001" style="width:90px;font-size:12px;border:1px solid #cbd5e1;border-radius:4px;padding:3px 6px;text-align:right;" oninput="onDispQtyChange('${l.id}',parseFloat(this.value)||0)"></td>
+        <td style="padding:4px 6px;border:1px solid #e2e8f0;text-align:center;"><button class="btn btn-sm btn-danger" style="font-size:10px;" onclick="removeDispLine('${l.id}')">&#10005;</button></td>`;
+}
+
+function addDispatchLine() {
+    const d = (db.dispatches||[]).find(x=>x.id===_dispId);
+    if (!d) return;
+    const l = { id:nid(), soId:'', lineItemId:'', customer:'', plant:'', quality:'', qtyMT:0, soNo:'' };
+    (d.lines=d.lines||[]).push(l);
+    const tbody = document.getElementById('disp-lines-body');
+    const tr = document.createElement('tr');
+    tr.id = 'disp-line-' + l.id;
+    tr.innerHTML = buildDispLineHTML(l, 0);
+    tbody.appendChild(tr);
+}
+
+function removeDispLine(lid) {
+    const d = (db.dispatches||[]).find(x=>x.id===_dispId);
+    if (!d) return;
+    d.lines = (d.lines||[]).filter(l=>l.id!==lid);
+    document.getElementById('disp-line-'+lid)?.remove();
+}
+
+function onDispSOChange(lineId, soId) {
+    const d = (db.dispatches||[]).find(x=>x.id===_dispId);
+    const l = d ? (d.lines||[]).find(x=>x.id===lineId) : null;
+    if (!l) return;
+    l.soId = soId; l.lineItemId = ''; l.customer = ''; l.plant = ''; l.quality = ''; l.soNo = '';
+    const so = (db.salesOrders||[]).find(s=>s.id===soId);
+    if (so) { l.customer = so.customer||''; l.plant = so.plant||''; l.soNo = so.soNo||''; }
+    // Rebuild this row
+    const tr = document.getElementById('disp-line-'+lineId);
+    if (tr) tr.innerHTML = buildDispLineHTML(l, getPendingQty(soId, ''));
+}
+
+function onDispLIChange(lineId, liId) {
+    const d = (db.dispatches||[]).find(x=>x.id===_dispId);
+    const l = d ? (d.lines||[]).find(x=>x.id===lineId) : null;
+    if (!l) return;
+    l.lineItemId = liId;
+    const so = (db.salesOrders||[]).find(s=>s.id===l.soId);
+    const li = so ? (so.lineItems||[]).find(x=>x.id===liId) : null;
+    if (li) l.quality = li.quality||'';
+    const pending = getPendingQty(l.soId, liId);
+    const pendEl = document.getElementById('disp-pend-'+lineId);
+    if (pendEl) pendEl.textContent = pending.toFixed(3);
+}
+
+function onDispQtyChange(lineId, qty) {
+    const d = (db.dispatches||[]).find(x=>x.id===_dispId);
+    const l = d ? (d.lines||[]).find(x=>x.id===lineId) : null;
+    if (l) l.qtyMT = qty;
+}
+
+function saveDispatch() {
+    if (!_dispId) return;
+    const d = (db.dispatches||[]).find(x=>x.id===_dispId);
+    if (!d) return;
+    d.date        = document.getElementById('disp-date').value;
+    d.invoiceNo   = document.getElementById('disp-invoice').value.trim();
+    d.lrNo        = document.getElementById('disp-lr').value.trim();
+    d.ewayBill    = document.getElementById('disp-eway').value.trim();
+    d.transporter = document.getElementById('disp-transporter').value.trim();
+    d.vehicleNo   = document.getElementById('disp-vehicle').value.trim();
+    d.remarks     = document.getElementById('disp-remarks').value.trim();
+    // Auto-update SO status for fully dispatched SOs
+    const affectedSOIds = [...new Set((d.lines||[]).map(l=>l.soId))];
+    affectedSOIds.forEach(sid => {
+        const so = (db.salesOrders||[]).find(s=>s.id===sid);
+        if (!so) return;
+        const fullyDispatched = (so.lineItems||[]).every(li => getPendingQty(sid, li.id) === 0);
+        if (fullyDispatched && so.status !== 'Dispatched') so.status = 'Dispatched';
+    });
+    persist();
+    renderDispList();
+    toast('Dispatch saved ✓');
+}
+
+// ── Pending Summary ───────────────────────────────────────────────────
+function renderSDSummary() {
+    const wrap = document.getElementById('sd-summary-wrap');
+    if (!wrap) return;
+    const filterCustomer = (document.getElementById('sd-filter-customer')?.value||'').toLowerCase();
+    const filterStatus   = document.getElementById('sd-filter-status')?.value||'';
+    let orders = db.salesOrders || [];
+    if (filterCustomer) orders = orders.filter(s=>(s.customer||'').toLowerCase().includes(filterCustomer));
+    if (filterStatus)   orders = orders.filter(s=>(s.status||'')=== filterStatus);
+    if (!orders.length) { wrap.innerHTML='<div style="color:#94a3b8;font-size:13px;padding:20px;">No sales orders match the filter.</div>'; return; }
+    let html = `<table style="width:100%;border-collapse:collapse;font-size:12px;">
+        <thead><tr style="background:#1e293b;color:white;">
+            <th style="padding:8px 10px;text-align:left;">SO No.</th>
+            <th style="padding:8px 10px;text-align:left;">Customer</th>
+            <th style="padding:8px 10px;text-align:left;">Plant</th>
+            <th style="padding:8px 10px;text-align:left;">Quality</th>
+            <th style="padding:8px 10px;text-align:right;">SO Qty (MT)</th>
+            <th style="padding:8px 10px;text-align:right;">Dispatched (MT)</th>
+            <th style="padding:8px 10px;text-align:right;">Pending (MT)</th>
+            <th style="padding:8px 10px;text-align:center;">Status</th>
+        </tr></thead><tbody>`;
+    orders.forEach(s => {
+        (s.lineItems||[]).forEach((li,i) => {
+            const dispatched = (li.qtyMT||0) - getPendingQty(s.id, li.id);
+            const pending    = getPendingQty(s.id, li.id);
+            const pct = li.qtyMT>0 ? dispatched/li.qtyMT : 0;
+            const rowBg = pending===0 ? '#f0fdf4' : pct>0 ? '#fffbeb' : '#fff';
+            const pendColor = pending===0 ? '#16a34a' : pending===li.qtyMT ? '#dc2626' : '#d97706';
+            html += `<tr style="background:${rowBg};border-bottom:1px solid #f1f5f9;">
+                ${i===0 ? `<td style="padding:7px 10px;border:1px solid #e2e8f0;font-weight:700;" rowspan="${(s.lineItems||[]).length}">${esc(s.soNo)}</td>
+                <td style="padding:7px 10px;border:1px solid #e2e8f0;" rowspan="${(s.lineItems||[]).length}">${esc(s.customer||'—')}</td>
+                <td style="padding:7px 10px;border:1px solid #e2e8f0;" rowspan="${(s.lineItems||[]).length}">${esc(s.plant||'—')}</td>` : ''}
+                <td style="padding:7px 10px;border:1px solid #e2e8f0;">${esc(li.quality||li.description||'—')}</td>
+                <td style="padding:7px 10px;border:1px solid #e2e8f0;text-align:right;">${(li.qtyMT||0).toFixed(3)}</td>
+                <td style="padding:7px 10px;border:1px solid #e2e8f0;text-align:right;">${dispatched.toFixed(3)}</td>
+                <td style="padding:7px 10px;border:1px solid #e2e8f0;text-align:right;font-weight:700;color:${pendColor};">${pending.toFixed(3)}</td>
+                ${i===0 ? `<td style="padding:7px 10px;border:1px solid #e2e8f0;text-align:center;" rowspan="${(s.lineItems||[]).length}">${soStatusBadge(s.status||'Confirmed')}</td>` : ''}
+            </tr>`;
+        });
+    });
+    html += '</tbody></table>';
+    wrap.innerHTML = html;
+}
+
+// ══════════════════════════════════════════════════════════════════════
 function autoSaveMCRemarks() {
     if (!_mcId) return;
     const s = (db.machineryCostings || []).find(x => x.id === _mcId);
