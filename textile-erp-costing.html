@@ -669,7 +669,7 @@
             /* ── Machinery Costing: single-page landscape print ── */
             #tab-machinerycosting.active { font-size: 8px !important; }
 
-            @page { size: A4 landscape; margin: 6mm 8mm; }
+            @page { size: A4 portrait; margin: 6mm 8mm; }
 
             /* Show and centre-align the print header */
             #tab-machinerycosting .print-hd { display: block !important; }
@@ -6734,13 +6734,12 @@ function buildCCPrintTable() {
 window.addEventListener('beforeprint', function() {
     buildCCPrintTable();
     buildLQPrintBlock();
-    // Switch @page orientation: portrait for Chafer Fabrics, landscape for everything else
-    const isIC = document.getElementById('tab-internalcosting')?.classList.contains('active');
-    const icForm = document.getElementById('ic-form');
-    if (isIC && icForm && icForm.style.display !== 'none') {
+    // Switch @page to landscape only for Machinery Costing (default is portrait)
+    const isMC = document.getElementById('tab-machinerycosting')?.classList.contains('active');
+    if (isMC) {
         const s = document.createElement('style');
         s.id = '_ic_page_style';
-        s.textContent = '@page { size: A4 portrait; margin: 6mm 8mm; }';
+        s.textContent = '@page { size: A4 landscape; margin: 6mm 8mm; }';
         document.head.appendChild(s);
     }
 });
