@@ -768,36 +768,42 @@
             #sub-ic-liner #li-table-wrap .li-ph-det { display: none !important; }
 
             /* ── Chafer Fabrics: single-page portrait print ── */
-            #sub-ic-chafer #ic-costing-table-wrap { overflow: visible !important; }
-            #sub-ic-chafer .card { padding: 3px 5px !important; margin-bottom: 2px !important; box-shadow: none !important; border-radius: 2px !important; }
-            #sub-ic-chafer #ic-costing-table-wrap table { font-size: 7px !important; width: 100% !important; border-collapse: collapse !important; min-width: 0 !important; table-layout: fixed !important; }
-            #sub-ic-chafer #ic-costing-table-wrap td, #sub-ic-chafer #ic-costing-table-wrap th { padding: 1px 4px !important; font-size: 7px !important; line-height: 1.25 !important; }
-            #sub-ic-chafer #ic-costing-table-wrap th:first-child,
-            #sub-ic-chafer #ic-costing-table-wrap td:first-child { width: 160px !important; }
-            #sub-ic-chafer #ic-costing-table-wrap th:nth-child(2),
-            #sub-ic-chafer #ic-costing-table-wrap td:nth-child(2) { width: 24px !important; font-size: 6px !important; }
-            #sub-ic-chafer #ic-costing-table-wrap th:nth-child(n+3),
-            #sub-ic-chafer #ic-costing-table-wrap td:nth-child(n+3) { width: 80px !important; text-align: center !important; }
+            #ic-form { overflow: visible !important; }
+            #ic-form .card { padding: 0 2px !important; margin-bottom: 1px !important; box-shadow: none !important; border-radius: 0 !important; }
+            /* Print header: compact */
+            #ic-form .print-hd table { padding-bottom: 4px !important; margin-bottom: 6px !important; }
+            #ic-form #ic-print-title { font-size: 12px !important; }
+            #ic-form .print-hd td { font-size: 8px !important; }
+            /* Table */
+            #ic-costing-table-wrap { overflow: visible !important; }
+            #ic-costing-table-wrap table { font-size: 6px !important; width: 100% !important; border-collapse: collapse !important; min-width: 0 !important; table-layout: fixed !important; }
+            #ic-costing-table-wrap td, #ic-costing-table-wrap th { padding: 1px 2px !important; font-size: 6px !important; line-height: 1.15 !important; }
+            #ic-costing-table-wrap th:first-child,
+            #ic-costing-table-wrap td:first-child { width: 130px !important; }
+            #ic-costing-table-wrap th:nth-child(2),
+            #ic-costing-table-wrap td:nth-child(2) { width: 18px !important; font-size: 5.5px !important; }
+            #ic-costing-table-wrap th:nth-child(n+3),
+            #ic-costing-table-wrap td:nth-child(n+3) { width: 65px !important; text-align: center !important; }
             /* Hide detail rows */
-            #sub-ic-chafer #ic-costing-table-wrap .ic-ph-detail { display: none !important; }
+            #ic-costing-table-wrap .ic-ph-detail { display: none !important; }
             /* Hide Sub-Total 2 and Sub-Total 4 */
-            #sub-ic-chafer #ic-costing-table-wrap .ic-ph-sub-hidden { display: none !important; }
+            #ic-costing-table-wrap .ic-ph-sub-hidden { display: none !important; }
             /* Input fields: plain text */
-            #sub-ic-chafer #ic-costing-table-wrap input { font-size: 7px !important; padding: 0 !important; border: none !important; background: transparent !important; box-shadow: none !important; width: 100% !important; text-align: center !important; }
+            #ic-costing-table-wrap input { font-size: 6px !important; padding: 0 !important; border: none !important; background: transparent !important; box-shadow: none !important; width: 100% !important; text-align: center !important; }
             /* Buttons and selects: hidden */
-            #sub-ic-chafer #ic-costing-table-wrap button { display: none !important; }
-            #sub-ic-chafer #ic-costing-table-wrap select { display: none !important; }
+            #ic-costing-table-wrap button { display: none !important; }
+            #ic-costing-table-wrap select { display: none !important; }
             /* Plant name: orange + black */
             #ic-costing-table-wrap .ic-pname {
                 color: #000000 !important;
                 background: #f97316 !important;
-                border: 1.5px solid #ea580c !important;
+                border: 1px solid #ea580c !important;
                 font-weight: 900 !important;
-                font-size: 8px !important;
-                padding: 2px 4px !important;
+                font-size: 7px !important;
+                padding: 1px 3px !important;
             }
-            /* Remarks row: compact */
-            #sub-ic-chafer #ic-costing-table-wrap tr:last-child td { font-size: 6.5px !important; padding: 3px 6px !important; line-height: 1.5 !important; }
+            /* Remarks row: compact single line */
+            #ic-costing-table-wrap tr:last-child td { font-size: 6px !important; padding: 2px 4px !important; line-height: 1.4 !important; }
         }
         /* Import Modals (Capro + RBI) */
         .cc-import-overlay { position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1998; }
@@ -6728,13 +6734,13 @@ function buildCCPrintTable() {
 window.addEventListener('beforeprint', function() {
     buildCCPrintTable();
     buildLQPrintBlock();
-    // Switch @page orientation based on active sub-tab
-    const chaferPanel = document.getElementById('sub-ic-chafer');
+    // Switch @page orientation: portrait for Chafer Fabrics, landscape for everything else
     const isIC = document.getElementById('tab-internalcosting')?.classList.contains('active');
-    if (isIC && chaferPanel && chaferPanel.style.display !== 'none') {
+    const icForm = document.getElementById('ic-form');
+    if (isIC && icForm && icForm.style.display !== 'none') {
         const s = document.createElement('style');
         s.id = '_ic_page_style';
-        s.textContent = '@page { size: A4 portrait; margin: 8mm 10mm; }';
+        s.textContent = '@page { size: A4 portrait; margin: 6mm 8mm; }';
         document.head.appendChild(s);
     }
 });
