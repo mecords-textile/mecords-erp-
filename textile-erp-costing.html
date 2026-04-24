@@ -5619,13 +5619,14 @@ function updateMCComparison() {
     const tbody   = document.getElementById('mc-comp-body');
     if (!wrap || !card || !section || !tbody) return;
 
-    // Collect each column's machine name and net landed cost
+    // Collect each column's machine description and net landed cost
     const mnames = [...wrap.querySelectorAll('.mc-mname')];
     const cols = mnames.map(el => {
-        const pid  = el.dataset.pid;
-        const name = el.querySelector('input')?.value || el.textContent.trim() || 'Machine';
-        const valEl = wrap.querySelector(`.mc-calc[data-pid="${pid}"][data-field="netLanded"]`);
-        const val  = parseFloat(valEl?.textContent) || 0;
+        const pid     = el.dataset.pid;
+        const descEl  = wrap.querySelector(`.mc-inp[data-pid="${pid}"][data-field="description"]`);
+        const name    = descEl?.value?.trim() || el.value?.trim() || 'Machine';
+        const valEl   = wrap.querySelector(`.mc-calc[data-pid="${pid}"][data-field="netLanded"]`);
+        const val     = parseFloat(valEl?.textContent) || 0;
         return { name, val };
     });
 
