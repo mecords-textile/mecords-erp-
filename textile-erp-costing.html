@@ -5890,19 +5890,7 @@ function renderMCComparison() {
     if (!list.length) { empty.style.display = ''; wrap.style.display = 'none'; return; }
     empty.style.display = 'none'; wrap.style.display = '';
     document.getElementById('mcc-tbody').innerHTML = list.map((s, i) => {
-        const nets = (s.machines || []).map(m => {
-            const basicINR  = ((m.basicCFR||0) + (m.accessoriesPerUnit||0) + (m.optAccessoriesPerUnit||0)) * (m.qty||1) * (m.exchangeRate||1);
-            const insAmt    = basicINR * ((m.insurancePct||0) / 100);
-            const cif       = basicINR + (m.freightAmt||0) + (m.packingCharges||0) + insAmt;
-            const land      = cif * ((m.landingChargePct||0) / 100);
-            const av        = cif + land;
-            const bcd       = av * ((m.bcdPct||0) / 100);
-            const sws       = bcd * ((m.swsPct||10) / 100);
-            const duty      = bcd + sws;
-            const igst      = (av + duty) * ((m.igstPct||18) / 100);
-            const netL      = av + duty + (m.clgCharges||0);          // excl. IGST recovered
-            return netL + (m.transport||0) + (m.installation||0);
-        }).filter(v => v > 0);
+        const nets = (s.machines || []).map(m => calcMCCosts(m).netLanded).filter(v => v > 0);
         const minN = nets.length ? Math.min(...nets) : 0;
         const maxN = nets.length ? Math.max(...nets) : 0;
         return `<tr>
