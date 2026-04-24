@@ -1985,7 +1985,7 @@
             </div>
 
             <!-- Sheet Details -->
-            <div class="card">
+            <div class="card no-print" id="ic-sheet-details-card">
                 <div class="card-title">Sheet Details</div>
                 <div class="form-row" style="margin-bottom:12px;">
                     <div class="form-group">
@@ -2033,9 +2033,9 @@
 
             <!-- Costing Table -->
             <div class="card">
-                <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+                <div class="card-title no-print" style="display:flex;justify-content:space-between;align-items:center;">
                     <span id="ic-table-ttl">Costing Table</span>
-                    <button class="btn btn-outline btn-sm no-print" onclick="addICPlantCol()">+ Add Plant Column</button>
+                    <button class="btn btn-outline btn-sm" onclick="addICPlantCol()">+ Add Plant Column</button>
                 </div>
                 <div id="ic-costing-table-wrap" style="overflow-x:auto;"></div>
             </div>
