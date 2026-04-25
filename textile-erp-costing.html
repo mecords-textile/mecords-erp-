@@ -950,6 +950,12 @@
 
     <button class="tab-btn" data-tab="salesdispatch">&#128666; Sales &amp; Dispatch</button>
     <button class="tab-btn" data-tab="rminventory">&#129523; Yarn &amp; RM Inventory</button>
+    <button class="tab-btn" data-tab="custpricehistory">&#128200; Customer Price History</button>
+    <button class="tab-btn" data-tab="production">&#127981; Production Register</button>
+    <button class="tab-btn" data-tab="finprofit">&#128176; Finance &amp; Profitability</button>
+    <button class="tab-btn" data-tab="analytics">&#128201; Analytics</button>
+    <button class="tab-btn" data-tab="alertsauto">&#128276; Alerts</button>
+    <button class="tab-btn" data-tab="documents">&#128196; Documents</button>
     <button class="tab-btn" data-tab="dashboard">&#128202; Cost Dashboard</button>
     <button class="tab-btn" data-tab="batchprocessing">&#128203; Chemical Batch Processing</button>
 </div>
@@ -3351,6 +3357,278 @@
 
     </div><!-- /tab-rminventory -->
 
+    <!-- ══════════════════════════════════════════ CUSTOMER PRICE HISTORY -->
+    <div id="tab-custpricehistory" class="tab-panel">
+        <div class="card">
+            <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+                <span id="cph-form-title">New Price Record</span>
+                <button class="btn btn-outline btn-sm" onclick="newCPH()">+ New Record</button>
+            </div>
+            <input type="hidden" id="cph-id">
+            <div class="form-row" style="flex-wrap:wrap;gap:14px;margin-bottom:0;">
+                <div class="form-group"><label>Date</label><input type="date" id="cph-date"></div>
+                <div class="form-group"><label>Customer *</label><input type="text" id="cph-customer" placeholder="e.g. MRF LIMITED" style="min-width:200px;" list="cph-cust-dl"><datalist id="cph-cust-dl"></datalist></div>
+                <div class="form-group"><label>Plant</label><input type="text" id="cph-plant" placeholder="e.g. Chennai" style="min-width:130px;"></div>
+                <div class="form-group"><label>Quality *</label><input type="text" id="cph-quality" placeholder="e.g. DNCF 1616" style="min-width:150px;" list="cph-qual-dl"><datalist id="cph-qual-dl"></datalist></div>
+                <div class="form-group"><label>Description</label><input type="text" id="cph-desc" placeholder="e.g. 840D Nylon Chafer" style="min-width:180px;"></div>
+                <div class="form-group"><label>Period</label><input type="text" id="cph-period" placeholder="e.g. Q1 2026-27" style="min-width:120px;"></div>
+                <div class="form-group"><label>Price (&#8377;/KG)</label><input type="number" id="cph-price" min="0" step="0.01" placeholder="0.00" style="width:120px;"></div>
+                <div class="form-group">
+                    <label>Currency</label>
+                    <select id="cph-currency" style="min-width:80px;font-size:13px;border:1px solid #cbd5e1;border-radius:6px;padding:6px 10px;">
+                        <option>INR</option><option>USD</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="cph-status" style="min-width:120px;font-size:13px;border:1px solid #cbd5e1;border-radius:6px;padding:6px 10px;">
+                        <option>Quoted</option><option>Confirmed</option><option>Revised</option><option>Rejected</option>
+                    </select>
+                </div>
+                <div class="form-group" style="flex:1;min-width:200px;"><label>Notes</label><input type="text" id="cph-notes" placeholder="Any remarks..."></div>
+            </div>
+            <div class="form-row" style="margin-top:12px;">
+                <button class="btn btn-success" onclick="saveCPH()">&#128190; Save Record</button>
+                <button class="btn btn-outline" onclick="clearCPHForm()">&#10005; Clear</button>
+                <button class="btn btn-danger btn-sm" id="cph-del-btn" onclick="deleteCPH()" style="display:none;">&#128465; Delete</button>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+                <span>Price History</span>
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                    <input type="text" id="cph-f-cust" placeholder="Customer..." style="font-size:12px;padding:5px 10px;border:1px solid #cbd5e1;border-radius:6px;width:150px;" oninput="renderCPHList()">
+                    <input type="text" id="cph-f-qual" placeholder="Quality..." style="font-size:12px;padding:5px 10px;border:1px solid #cbd5e1;border-radius:6px;width:130px;" oninput="renderCPHList()">
+                    <select id="cph-f-status" onchange="renderCPHList()" style="font-size:12px;padding:5px 10px;border:1px solid #cbd5e1;border-radius:6px;">
+                        <option value="">All Statuses</option><option>Quoted</option><option>Confirmed</option><option>Revised</option><option>Rejected</option>
+                    </select>
+                    <button class="btn btn-outline btn-sm" onclick="renderCPHCompare()">&#128202; Compare</button>
+                    <button class="btn btn-outline btn-sm" onclick="renderCPHList()">&#128203; List</button>
+                </div>
+            </div>
+            <div id="cph-wrap"><div style="color:#94a3b8;font-size:13px;padding:20px;">No price records yet. Add one above.</div></div>
+        </div>
+    </div><!-- /tab-custpricehistory -->
+
+    <!-- ══════════════════════════════════════════ PRODUCTION REGISTER -->
+    <div id="tab-production" class="tab-panel">
+        <div class="sub-tabs">
+            <button class="sub-tab-btn active" data-sub="prod-register" onclick="switchSubTab('prod-register')">&#128203; Production Register</button>
+            <button class="sub-tab-btn" data-sub="prod-summary" onclick="switchSubTab('prod-summary')">&#128202; Monthly Summary</button>
+        </div>
+
+        <!-- SUB 1: Register -->
+        <div id="sub-prod-register" class="sub-panel active">
+            <div class="form-row" style="margin-bottom:16px;">
+                <select id="prod-sel" onchange="onProdSelect()" style="min-width:280px;font-size:14px;">
+                    <option value="">-- Select a Job Card --</option>
+                </select>
+                <button class="btn btn-primary" onclick="newProd()">+ New Job Card</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteProd()">Delete</button>
+            </div>
+            <div id="prod-form" style="display:none;">
+                <div class="card">
+                    <div class="card-title">Job Card</div>
+                    <input type="hidden" id="prod-id">
+                    <div class="form-row" style="flex-wrap:wrap;gap:14px;margin-bottom:0;">
+                        <div class="form-group"><label>Job No.</label><input type="text" id="prod-no" readonly style="background:#f1f5f9;font-weight:700;min-width:150px;"></div>
+                        <div class="form-group"><label>Date *</label><input type="date" id="prod-date"></div>
+                        <div class="form-group"><label>Quality *</label><input type="text" id="prod-quality" placeholder="e.g. DNCF 1616" style="min-width:160px;"></div>
+                        <div class="form-group"><label>Description</label><input type="text" id="prod-desc" placeholder="Product description" style="min-width:180px;"></div>
+                        <div class="form-group"><label>Machine</label><input type="text" id="prod-machine" placeholder="Machine name" style="min-width:150px;"></div>
+                        <div class="form-group"><label>Shift</label>
+                            <select id="prod-shift" style="min-width:100px;font-size:13px;border:1px solid #cbd5e1;border-radius:6px;padding:6px 10px;">
+                                <option value="A">Shift A</option><option value="B">Shift B</option><option value="C">Shift C</option><option value="Day">Day</option>
+                            </select>
+                        </div>
+                        <div class="form-group"><label>Target (KGS)</label><input type="number" id="prod-target" min="0" step="0.001" placeholder="0.000" style="width:120px;"></div>
+                        <div class="form-group"><label>Actual (KGS)</label><input type="number" id="prod-actual" min="0" step="0.001" placeholder="0.000" style="width:120px;" oninput="calcProdEff()"></div>
+                        <div class="form-group"><label>Waste (KGS)</label><input type="number" id="prod-waste" min="0" step="0.001" placeholder="0.000" style="width:120px;"></div>
+                        <div class="form-group"><label>Efficiency</label><input type="text" id="prod-eff" readonly style="background:#f0fdf4;font-weight:700;width:90px;color:#16a34a;"></div>
+                        <div class="form-group"><label>Operator</label><input type="text" id="prod-operator" placeholder="Operator name" style="min-width:160px;"></div>
+                        <div class="form-group">
+                            <label>Status</label>
+                            <select id="prod-status" style="min-width:140px;font-size:13px;border:1px solid #cbd5e1;border-radius:6px;padding:6px 10px;">
+                                <option>Planned</option><option>In Progress</option><option>Completed</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="flex:1;min-width:200px;"><label>Remarks</label><input type="text" id="prod-remarks" placeholder="Any remarks..."></div>
+                    </div>
+                </div>
+                <div class="form-row" style="margin-bottom:24px;">
+                    <button class="btn btn-success" onclick="saveProd()">&#128190; Save Job Card</button>
+                    <button class="btn btn-outline" onclick="clearProdForm()">&#10005; Clear</button>
+                </div>
+            </div>
+            <div class="card" id="prod-list-card">
+                <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+                    <span>Job Cards</span>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <input type="text" id="prod-filter" placeholder="Search quality or machine..." style="font-size:12px;padding:5px 10px;border:1px solid #cbd5e1;border-radius:6px;width:220px;" oninput="renderProdList()">
+                        <select id="prod-f-status" onchange="renderProdList()" style="font-size:12px;padding:5px 10px;border:1px solid #cbd5e1;border-radius:6px;">
+                            <option value="">All Statuses</option><option>Planned</option><option>In Progress</option><option>Completed</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                        <thead><tr style="background:#1e293b;color:white;">
+                            <th style="padding:9px 12px;">Job No.</th>
+                            <th style="padding:9px 12px;">Date</th>
+                            <th style="padding:9px 12px;">Quality</th>
+                            <th style="padding:9px 12px;">Machine</th>
+                            <th style="padding:9px 12px;">Shift</th>
+                            <th style="padding:9px 12px;text-align:right;">Target</th>
+                            <th style="padding:9px 12px;text-align:right;">Actual</th>
+                            <th style="padding:9px 12px;text-align:right;">Waste</th>
+                            <th style="padding:9px 12px;text-align:right;">Eff.%</th>
+                            <th style="padding:9px 12px;text-align:center;">Status</th>
+                            <th style="padding:9px 12px;text-align:center;">Action</th>
+                        </tr></thead>
+                        <tbody id="prod-list-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div><!-- /sub-prod-register -->
+
+        <!-- SUB 2: Summary -->
+        <div id="sub-prod-summary" class="sub-panel">
+            <div class="card">
+                <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+                    <span>&#128202; Monthly Production Summary</span>
+                    <div style="display:flex;gap:8px;">
+                        <select id="prod-sum-month" onchange="renderProdSummary()" style="font-size:12px;padding:5px 10px;border:1px solid #cbd5e1;border-radius:6px;"></select>
+                        <button class="btn btn-outline btn-sm" onclick="renderProdSummary()">&#8635; Refresh</button>
+                    </div>
+                </div>
+                <div id="prod-sum-wrap"><div style="color:#94a3b8;font-size:13px;padding:20px;">No production records yet.</div></div>
+            </div>
+        </div>
+    </div><!-- /tab-production -->
+
+    <!-- ══════════════════════════════════════════ FINANCE & PROFITABILITY -->
+    <div id="tab-finprofit" class="tab-panel">
+        <div class="sub-tabs">
+            <button class="sub-tab-btn active" data-sub="fp-revenue" onclick="switchSubTab('fp-revenue')">&#128178; Revenue Summary</button>
+            <button class="sub-tab-btn" data-sub="fp-profitability" onclick="switchSubTab('fp-profitability')">&#128200; Profitability</button>
+        </div>
+
+        <!-- SUB 1: Revenue -->
+        <div id="sub-fp-revenue" class="sub-panel active">
+            <div class="card">
+                <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+                    <span>&#128178; Revenue Summary</span>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <select id="fp-fy" onchange="renderFPRevenue()" style="font-size:12px;padding:5px 10px;border:1px solid #cbd5e1;border-radius:6px;"></select>
+                        <button class="btn btn-outline btn-sm" onclick="renderFPRevenue()">&#8635; Refresh</button>
+                    </div>
+                </div>
+                <div id="fp-revenue-wrap"><div style="color:#94a3b8;font-size:13px;padding:20px;">No dispatch data yet.</div></div>
+            </div>
+        </div>
+
+        <!-- SUB 2: Profitability -->
+        <div id="sub-fp-profitability" class="sub-panel">
+            <div class="card">
+                <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+                    <span>&#128200; Order Book Profitability</span>
+                    <button class="btn btn-outline btn-sm" onclick="renderFPProfitability()">&#8635; Refresh</button>
+                </div>
+                <div id="fp-profit-wrap"><div style="color:#94a3b8;font-size:13px;padding:20px;">No data yet.</div></div>
+            </div>
+        </div>
+    </div><!-- /tab-finprofit -->
+
+    <!-- ══════════════════════════════════════════ ANALYTICS -->
+    <div id="tab-analytics" class="tab-panel">
+        <div class="card">
+            <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+                <span>&#128201; Business Analytics</span>
+                <div style="display:flex;gap:8px;">
+                    <select id="anlx-fy" onchange="renderAnalytics()" style="font-size:12px;padding:5px 10px;border:1px solid #cbd5e1;border-radius:6px;"></select>
+                    <button class="btn btn-outline btn-sm" onclick="renderAnalytics()">&#8635; Refresh</button>
+                </div>
+            </div>
+            <div id="analytics-wrap"><div style="color:#94a3b8;font-size:13px;padding:20px;">Loading...</div></div>
+        </div>
+    </div><!-- /tab-analytics -->
+
+    <!-- ══════════════════════════════════════════ ALERTS -->
+    <div id="tab-alertsauto" class="tab-panel">
+        <div class="card">
+            <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+                <span>&#128276; Active Alerts</span>
+                <button class="btn btn-outline btn-sm" onclick="renderAlerts()">&#8635; Refresh</button>
+            </div>
+            <div id="alerts-wrap"><div style="color:#94a3b8;font-size:13px;padding:20px;">Loading alerts...</div></div>
+        </div>
+    </div><!-- /tab-alertsauto -->
+
+    <!-- ══════════════════════════════════════════ DOCUMENTS -->
+    <div id="tab-documents" class="tab-panel">
+        <div class="card">
+            <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+                <span id="doc-form-title">New Document</span>
+                <button class="btn btn-outline btn-sm" onclick="newDoc()">+ New Document</button>
+            </div>
+            <input type="hidden" id="doc-id">
+            <div class="form-row" style="flex-wrap:wrap;gap:14px;margin-bottom:0;">
+                <div class="form-group"><label>Date</label><input type="date" id="doc-date"></div>
+                <div class="form-group"><label>Document Name *</label><input type="text" id="doc-name" placeholder="e.g. MRF PO April 2026" style="min-width:220px;"></div>
+                <div class="form-group">
+                    <label>Type</label>
+                    <select id="doc-type" style="min-width:160px;font-size:13px;border:1px solid #cbd5e1;border-radius:6px;padding:6px 10px;">
+                        <option>Purchase Order</option><option>Sales Order</option><option>Invoice</option><option>Delivery Challan</option>
+                        <option>GRN</option><option>Certificate</option><option>Test Report</option><option>Agreement</option><option>Other</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Reference No.</label><input type="text" id="doc-refno" placeholder="PO/Invoice/Cert No." style="min-width:160px;"></div>
+                <div class="form-group">
+                    <label>Linked To</label>
+                    <select id="doc-linked-type" style="min-width:130px;font-size:13px;border:1px solid #cbd5e1;border-radius:6px;padding:6px 10px;">
+                        <option value="">None</option><option value="so">Sales Order</option><option value="grn">GRN</option><option value="customer">Customer</option><option value="supplier">Supplier</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Linked Ref.</label><input type="text" id="doc-linked-ref" placeholder="SO No. / GRN No. etc." style="min-width:160px;"></div>
+                <div class="form-group"><label>Expiry Date</label><input type="date" id="doc-expiry"></div>
+                <div class="form-group" style="flex:1;min-width:200px;"><label>Notes</label><input type="text" id="doc-notes" placeholder="Any remarks..."></div>
+            </div>
+            <div class="form-row" style="margin-top:12px;">
+                <button class="btn btn-success" onclick="saveDoc()">&#128190; Save Document</button>
+                <button class="btn btn-outline" onclick="clearDocForm()">&#10005; Clear</button>
+                <button class="btn btn-danger btn-sm" id="doc-del-btn" onclick="deleteDoc()" style="display:none;">&#128465; Delete</button>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+                <span>Document Register</span>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <input type="text" id="doc-filter" placeholder="Search..." style="font-size:12px;padding:5px 10px;border:1px solid #cbd5e1;border-radius:6px;width:180px;" oninput="renderDocList()">
+                    <select id="doc-f-type" onchange="renderDocList()" style="font-size:12px;padding:5px 10px;border:1px solid #cbd5e1;border-radius:6px;">
+                        <option value="">All Types</option>
+                        <option>Purchase Order</option><option>Sales Order</option><option>Invoice</option><option>Delivery Challan</option>
+                        <option>GRN</option><option>Certificate</option><option>Test Report</option><option>Agreement</option><option>Other</option>
+                    </select>
+                </div>
+            </div>
+            <div style="overflow-x:auto;">
+                <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                    <thead><tr style="background:#1e293b;color:white;">
+                        <th style="padding:9px 12px;text-align:left;">Date</th>
+                        <th style="padding:9px 12px;text-align:left;">Document Name</th>
+                        <th style="padding:9px 12px;text-align:left;">Type</th>
+                        <th style="padding:9px 12px;text-align:left;">Ref. No.</th>
+                        <th style="padding:9px 12px;text-align:left;">Linked To</th>
+                        <th style="padding:9px 12px;text-align:left;">Expiry</th>
+                        <th style="padding:9px 12px;text-align:left;">Notes</th>
+                        <th style="padding:9px 12px;text-align:center;">Action</th>
+                    </tr></thead>
+                    <tbody id="doc-list-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div><!-- /tab-documents -->
+
     <!-- ══════════════════════════════════════════ COST DASHBOARD -->
     <div id="tab-dashboard" class="tab-panel">
         <div id="dash-content" class="dash-wrap">
@@ -3550,10 +3828,19 @@ function _ensureDBStructure() {
     if (!Array.isArray(db.rmMaterials))      db.rmMaterials       = [];
     if (!Array.isArray(db.rmInward))         db.rmInward          = [];
     if (!Array.isArray(db.rmOutward))        db.rmOutward         = [];
+    if (!Array.isArray(db.custPriceHistory)) db.custPriceHistory  = [];
+    if (!Array.isArray(db.productionOrders)) db.productionOrders  = [];
+    if (!Array.isArray(db.documents))        db.documents         = [];
     if (!db.tabPasswords)                    db.tabPasswords      = { rawmaterials: '', batchprocessing: '', factorycosting: '', internalcosting: '', custcosting: '', machinerycosting: '', dashboard: '', salesdispatch: '', rminventory: '' };
     if (!('dashboard' in db.tabPasswords))   db.tabPasswords.dashboard = '';
     if (!('salesdispatch' in db.tabPasswords)) db.tabPasswords.salesdispatch = '';
-    if (!('rminventory' in db.tabPasswords)) db.tabPasswords.rminventory = '';
+    if (!('rminventory' in db.tabPasswords))      db.tabPasswords.rminventory      = '';
+    if (!('custpricehistory' in db.tabPasswords)) db.tabPasswords.custpricehistory = '';
+    if (!('production' in db.tabPasswords))       db.tabPasswords.production       = '';
+    if (!('finprofit' in db.tabPasswords))        db.tabPasswords.finprofit        = '';
+    if (!('analytics' in db.tabPasswords))        db.tabPasswords.analytics        = '';
+    if (!('alertsauto' in db.tabPasswords))       db.tabPasswords.alertsauto       = '';
+    if (!('documents' in db.tabPasswords))        db.tabPasswords.documents        = '';
 }
 
 async function hydrate() {
@@ -3645,6 +3932,14 @@ function activateTab(tab) {
     if (tab === 'custcosting')      renderCustCostingTab();
     if (tab === 'machinerycosting') renderMachineryTab();
     if (tab === 'dashboard')        renderDashboard();
+    if (tab === 'salesdispatch')    renderSOList();
+    if (tab === 'rminventory')      renderRMMasterList();
+    if (tab === 'custpricehistory') { clearCPHForm(); _cphRefreshDataLists(); renderCPHList(); }
+    if (tab === 'production')       renderProdList();
+    if (tab === 'finprofit')        { _populateFPFY(); renderFPRevenue(); }
+    if (tab === 'analytics')        { _populateFPFY(); renderAnalytics(); }
+    if (tab === 'alertsauto')       renderAlerts();
+    if (tab === 'documents')        { clearDocForm(); renderDocList(); }
     updateTabLockIcons();
 }
 
@@ -3752,6 +4047,10 @@ function switchSubTab(sub) {
     if (sub === 'rm-inward')    { _refreshRMMatDropdowns(); renderRMInwardList(); }
     if (sub === 'rm-outward')   { _refreshRMMatDropdowns(); renderRMOutwardList(); }
     if (sub === 'rm-stock')     renderRMStockSummary();
+    if (sub === 'prod-register') renderProdList();
+    if (sub === 'prod-summary')  { _populateProdMonths(); renderProdSummary(); }
+    if (sub === 'fp-revenue')    { _populateFPFY(); renderFPRevenue(); }
+    if (sub === 'fp-profitability') renderFPProfitability();
 }
 
 function gotoTab(name) {
@@ -7156,6 +7455,680 @@ function renderRMStockSummary() {
     html += '</tbody></table>';
     wrap.innerHTML = html;
 }
+
+// ══════════════════════════════════════════════════════════════════════
+// CUSTOMER PRICE HISTORY
+// ══════════════════════════════════════════════════════════════════════
+function _cphStatusBadge(s) {
+    const map = { Confirmed:'#16a34a', Quoted:'#2563eb', Revised:'#d97706', Rejected:'#dc2626' };
+    const c = map[s]||'#64748b';
+    return `<span style="background:${c};color:#fff;padding:2px 9px;border-radius:12px;font-size:11px;font-weight:700;">${esc(s)}</span>`;
+}
+function _cphRefreshDataLists() {
+    const customers = [...new Set((db.custPriceHistory||[]).map(r=>r.customerName).filter(Boolean))];
+    const qualities  = [...new Set((db.custPriceHistory||[]).map(r=>r.quality).filter(Boolean))];
+    const cdl = document.getElementById('cph-cust-dl'); if(cdl) cdl.innerHTML = customers.map(c=>`<option value="${esc(c)}">`).join('');
+    const qdl = document.getElementById('cph-qual-dl'); if(qdl) qdl.innerHTML = qualities.map(q=>`<option value="${esc(q)}">`).join('');
+}
+function clearCPHForm() {
+    document.getElementById('cph-id').value       = '';
+    document.getElementById('cph-date').value     = new Date().toISOString().slice(0,10);
+    document.getElementById('cph-customer').value = '';
+    document.getElementById('cph-plant').value    = '';
+    document.getElementById('cph-quality').value  = '';
+    document.getElementById('cph-desc').value     = '';
+    document.getElementById('cph-period').value   = '';
+    document.getElementById('cph-price').value    = '';
+    document.getElementById('cph-currency').value = 'INR';
+    document.getElementById('cph-status').value   = 'Quoted';
+    document.getElementById('cph-notes').value    = '';
+    document.getElementById('cph-form-title').textContent = 'New Price Record';
+    document.getElementById('cph-del-btn').style.display  = 'none';
+}
+function newCPH() { clearCPHForm(); }
+function openCPH(id) {
+    const r = (db.custPriceHistory||[]).find(x=>x.id===id); if(!r) return;
+    document.getElementById('cph-id').value       = r.id;
+    document.getElementById('cph-date').value     = r.date||'';
+    document.getElementById('cph-customer').value = r.customerName||'';
+    document.getElementById('cph-plant').value    = r.plant||'';
+    document.getElementById('cph-quality').value  = r.quality||'';
+    document.getElementById('cph-desc').value     = r.description||'';
+    document.getElementById('cph-period').value   = r.period||'';
+    document.getElementById('cph-price').value    = r.pricePerKg||'';
+    document.getElementById('cph-currency').value = r.currency||'INR';
+    document.getElementById('cph-status').value   = r.status||'Quoted';
+    document.getElementById('cph-notes').value    = r.notes||'';
+    document.getElementById('cph-form-title').textContent = 'Edit: ' + (r.customerName||'') + ' — ' + (r.quality||'');
+    document.getElementById('cph-del-btn').style.display  = '';
+    window.scrollTo({top:0,behavior:'smooth'});
+}
+function saveCPH() {
+    const customer = document.getElementById('cph-customer').value.trim();
+    const quality  = document.getElementById('cph-quality').value.trim();
+    if (!customer) { showToast('Customer name is required'); return; }
+    if (!quality)  { showToast('Quality is required'); return; }
+    const eid = document.getElementById('cph-id').value;
+    const rec = {
+        id: eid||nid(),
+        date:         document.getElementById('cph-date').value,
+        customerName: customer,
+        plant:        document.getElementById('cph-plant').value.trim(),
+        quality,
+        description:  document.getElementById('cph-desc').value.trim(),
+        period:       document.getElementById('cph-period').value.trim(),
+        pricePerKg:   parseFloat(document.getElementById('cph-price').value)||0,
+        currency:     document.getElementById('cph-currency').value,
+        status:       document.getElementById('cph-status').value,
+        notes:        document.getElementById('cph-notes').value.trim(),
+    };
+    if (eid) { const i=(db.custPriceHistory||[]).findIndex(r=>r.id===eid); if(i>=0) db.custPriceHistory[i]=rec; else (db.custPriceHistory=db.custPriceHistory||[]).push(rec); }
+    else     { (db.custPriceHistory=db.custPriceHistory||[]).push(rec); }
+    persist(); showToast('Price record saved');
+    clearCPHForm(); _cphRefreshDataLists(); renderCPHList();
+}
+function deleteCPH() {
+    const eid = document.getElementById('cph-id').value; if(!eid) return;
+    if(!confirm('Delete this price record?')) return;
+    db.custPriceHistory = (db.custPriceHistory||[]).filter(r=>r.id!==eid);
+    persist(); showToast('Deleted'); clearCPHForm(); renderCPHList();
+}
+function renderCPHList() {
+    _cphRefreshDataLists();
+    const wrap = document.getElementById('cph-wrap'); if(!wrap) return;
+    const fc = (document.getElementById('cph-f-cust')?.value||'').toLowerCase();
+    const fq = (document.getElementById('cph-f-qual')?.value||'').toLowerCase();
+    const fs = document.getElementById('cph-f-status')?.value||'';
+    let list = (db.custPriceHistory||[]).slice().reverse();
+    if(fc) list = list.filter(r=>(r.customerName||'').toLowerCase().includes(fc));
+    if(fq) list = list.filter(r=>(r.quality||'').toLowerCase().includes(fq));
+    if(fs) list = list.filter(r=>r.status===fs);
+    if(!list.length) { wrap.innerHTML='<div style="color:#94a3b8;font-size:13px;padding:20px;">No records match the filter.</div>'; return; }
+    wrap.innerHTML = `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead><tr style="background:#1e293b;color:white;">
+            <th style="padding:9px 12px;">Date</th><th style="padding:9px 12px;">Customer</th><th style="padding:9px 12px;">Plant</th>
+            <th style="padding:9px 12px;">Quality</th><th style="padding:9px 12px;">Period</th>
+            <th style="padding:9px 12px;text-align:right;">Price/KG</th><th style="padding:9px 12px;">Curr.</th>
+            <th style="padding:9px 12px;text-align:center;">Status</th><th style="padding:9px 12px;">Notes</th><th style="padding:9px 12px;text-align:center;">Action</th>
+        </tr></thead><tbody>` +
+        list.map(r=>`<tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:8px 12px;">${r.date||'—'}</td>
+            <td style="padding:8px 12px;font-weight:600;">${esc(r.customerName||'—')}</td>
+            <td style="padding:8px 12px;">${esc(r.plant||'—')}</td>
+            <td style="padding:8px 12px;">${esc(r.quality||'—')}</td>
+            <td style="padding:8px 12px;">${esc(r.period||'—')}</td>
+            <td style="padding:8px 12px;text-align:right;font-weight:700;">${r.pricePerKg?r.pricePerKg.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'}</td>
+            <td style="padding:8px 12px;">${esc(r.currency||'INR')}</td>
+            <td style="padding:8px 12px;text-align:center;">${_cphStatusBadge(r.status||'Quoted')}</td>
+            <td style="padding:8px 12px;font-size:12px;color:#64748b;">${esc(r.notes||'—')}</td>
+            <td style="padding:8px 12px;text-align:center;"><button class="btn btn-sm btn-outline" onclick="openCPH('${r.id}')">&#9998; Edit</button></td>
+        </tr>`).join('') + '</tbody></table></div>';
+}
+function renderCPHCompare() {
+    const wrap = document.getElementById('cph-wrap'); if(!wrap) return;
+    const fc = (document.getElementById('cph-f-cust')?.value||'').toLowerCase();
+    const fq = (document.getElementById('cph-f-qual')?.value||'').toLowerCase();
+    let list = (db.custPriceHistory||[]).filter(r=>r.status==='Confirmed'||r.status==='Quoted');
+    if(fc) list = list.filter(r=>(r.customerName||'').toLowerCase().includes(fc));
+    if(fq) list = list.filter(r=>(r.quality||'').toLowerCase().includes(fq));
+    if(!list.length) { wrap.innerHTML='<div style="color:#94a3b8;font-size:13px;padding:20px;">No records to compare.</div>'; return; }
+    const qualities  = [...new Set(list.map(r=>r.quality).filter(Boolean))].sort();
+    const customers  = [...new Set(list.map(r=>r.customerName).filter(Boolean))].sort();
+    let html = `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12.5px;">
+        <thead><tr style="background:#1e293b;color:white;">
+            <th style="padding:9px 12px;text-align:left;">Quality</th>` +
+        customers.map(c=>`<th style="padding:9px 12px;text-align:right;">${esc(c)}</th>`).join('') +
+        `</tr></thead><tbody>`;
+    qualities.forEach(q => {
+        html += `<tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:8px 12px;font-weight:600;">${esc(q)}</td>` +
+            customers.map(c => {
+                const recs = list.filter(r=>r.quality===q&&r.customerName===c);
+                if(!recs.length) return `<td style="padding:8px 12px;text-align:right;color:#cbd5e1;">—</td>`;
+                const latest = recs.sort((a,b)=>b.date.localeCompare(a.date))[0];
+                return `<td style="padding:8px 12px;text-align:right;font-weight:700;">&#8377;${latest.pricePerKg.toLocaleString('en-IN',{minimumFractionDigits:2})}<br><span style="font-size:10px;color:#64748b;">${latest.period||latest.date}</span></td>`;
+            }).join('') + `</tr>`;
+    });
+    html += '</tbody></table></div>';
+    wrap.innerHTML = html;
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// PRODUCTION REGISTER
+// ══════════════════════════════════════════════════════════════════════
+let _prodId = null;
+function _prodFY() {
+    const now = new Date(), m = now.getMonth()+1, y = now.getFullYear();
+    return m>=4 ? String(y).slice(2)+String(y+1).slice(2) : String(y-1).slice(2)+String(y).slice(2);
+}
+function genProdNo() {
+    const pre = 'JOB/' + _prodFY() + '/';
+    const ex  = (db.productionOrders||[]).filter(r=>(r.orderNo||'').startsWith(pre));
+    return pre + String(ex.length+1).padStart(3,'0');
+}
+function _prodStatusBadge(s) {
+    const map = { Completed:'#16a34a', 'In Progress':'#2563eb', Planned:'#94a3b8' };
+    return `<span style="background:${map[s]||'#64748b'};color:#fff;padding:2px 9px;border-radius:12px;font-size:11px;font-weight:700;">${esc(s)}</span>`;
+}
+function calcProdEff() {
+    const t = parseFloat(document.getElementById('prod-target')?.value)||0;
+    const a = parseFloat(document.getElementById('prod-actual')?.value)||0;
+    const el = document.getElementById('prod-eff');
+    if(!el) return;
+    if(!t) { el.value='—'; return; }
+    const pct = (a/t*100).toFixed(1);
+    el.value = pct + '%';
+    el.style.color = pct>=95?'#16a34a':pct>=80?'#d97706':'#dc2626';
+}
+function clearProdForm() {
+    document.getElementById('prod-id').value       = '';
+    document.getElementById('prod-no').value       = '';
+    document.getElementById('prod-date').value     = '';
+    document.getElementById('prod-quality').value  = '';
+    document.getElementById('prod-desc').value     = '';
+    document.getElementById('prod-machine').value  = '';
+    document.getElementById('prod-shift').value    = 'A';
+    document.getElementById('prod-target').value   = '';
+    document.getElementById('prod-actual').value   = '';
+    document.getElementById('prod-waste').value    = '';
+    document.getElementById('prod-eff').value      = '';
+    document.getElementById('prod-operator').value = '';
+    document.getElementById('prod-status').value   = 'Planned';
+    document.getElementById('prod-remarks').value  = '';
+}
+function refreshProdSel() {
+    const sel = document.getElementById('prod-sel'); if(!sel) return;
+    sel.innerHTML = '<option value="">-- Select a Job Card --</option>';
+    (db.productionOrders||[]).slice().reverse().forEach(r=>{
+        sel.innerHTML += `<option value="${r.id}"${r.id===_prodId?' selected':''}>${esc(r.orderNo||'JOB')} — ${esc(r.quality||'')} — ${r.date||''}</option>`;
+    });
+}
+function onProdSelect() {
+    const id = document.getElementById('prod-sel').value;
+    if(!id) { document.getElementById('prod-form').style.display='none'; _prodId=null; return; }
+    openProd(id);
+}
+function newProd() {
+    _prodId=null; clearProdForm();
+    document.getElementById('prod-no').value   = genProdNo();
+    document.getElementById('prod-date').value = new Date().toISOString().slice(0,10);
+    document.getElementById('prod-form').style.display='';
+}
+function openProd(id) {
+    const r = (db.productionOrders||[]).find(x=>x.id===id); if(!r) return;
+    _prodId=id;
+    document.getElementById('prod-id').value       = r.id;
+    document.getElementById('prod-no').value        = r.orderNo||'';
+    document.getElementById('prod-date').value      = r.date||'';
+    document.getElementById('prod-quality').value   = r.quality||'';
+    document.getElementById('prod-desc').value      = r.description||'';
+    document.getElementById('prod-machine').value   = r.machineName||'';
+    document.getElementById('prod-shift').value     = r.shift||'A';
+    document.getElementById('prod-target').value    = r.targetKg||'';
+    document.getElementById('prod-actual').value    = r.actualKg||'';
+    document.getElementById('prod-waste').value     = r.wasteKg||'';
+    document.getElementById('prod-operator').value  = r.operatorName||'';
+    document.getElementById('prod-status').value    = r.status||'Planned';
+    document.getElementById('prod-remarks').value   = r.remarks||'';
+    calcProdEff();
+    document.getElementById('prod-form').style.display='';
+    refreshProdSel();
+}
+function saveProd() {
+    const quality = document.getElementById('prod-quality').value.trim();
+    const date    = document.getElementById('prod-date').value;
+    if(!quality) { showToast('Quality is required'); return; }
+    if(!date)    { showToast('Date is required'); return; }
+    const eid = document.getElementById('prod-id').value;
+    const rec = {
+        id: eid||nid(), orderNo: document.getElementById('prod-no').value,
+        date, quality,
+        description:  document.getElementById('prod-desc').value.trim(),
+        machineName:  document.getElementById('prod-machine').value.trim(),
+        shift:        document.getElementById('prod-shift').value,
+        targetKg:     parseFloat(document.getElementById('prod-target').value)||0,
+        actualKg:     parseFloat(document.getElementById('prod-actual').value)||0,
+        wasteKg:      parseFloat(document.getElementById('prod-waste').value)||0,
+        operatorName: document.getElementById('prod-operator').value.trim(),
+        status:       document.getElementById('prod-status').value,
+        remarks:      document.getElementById('prod-remarks').value.trim(),
+    };
+    if(eid) { const i=(db.productionOrders||[]).findIndex(r=>r.id===eid); if(i>=0) db.productionOrders[i]=rec; else (db.productionOrders=db.productionOrders||[]).push(rec); }
+    else    { (db.productionOrders=db.productionOrders||[]).push(rec); }
+    persist(); showToast('Job Card saved');
+    document.getElementById('prod-form').style.display='none'; _prodId=null;
+    renderProdList();
+}
+function deleteProd() {
+    if(!_prodId) { showToast('Select a job card first'); return; }
+    if(!confirm('Delete this job card?')) return;
+    db.productionOrders=(db.productionOrders||[]).filter(r=>r.id!==_prodId);
+    persist(); _prodId=null;
+    document.getElementById('prod-form').style.display='none';
+    showToast('Deleted'); renderProdList();
+}
+function renderProdList() {
+    refreshProdSel();
+    const tbody = document.getElementById('prod-list-body'); if(!tbody) return;
+    const fq = (document.getElementById('prod-filter')?.value||'').toLowerCase();
+    const fs = document.getElementById('prod-f-status')?.value||'';
+    let list = (db.productionOrders||[]).slice().reverse();
+    if(fq) list=list.filter(r=>((r.quality||'')+(r.machineName||'')+(r.orderNo||'')).toLowerCase().includes(fq));
+    if(fs) list=list.filter(r=>r.status===fs);
+    if(!list.length) { tbody.innerHTML='<tr><td colspan="11" style="padding:20px;text-align:center;color:#94a3b8;">No job cards yet. Click "+ New Job Card" to create one.</td></tr>'; return; }
+    tbody.innerHTML=list.map(r=>{
+        const eff = r.targetKg>0 ? (r.actualKg/r.targetKg*100).toFixed(1) : '—';
+        const effColor = eff==='—'?'#64748b':eff>=95?'#16a34a':eff>=80?'#d97706':'#dc2626';
+        return `<tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:8px 12px;font-weight:600;font-family:monospace;font-size:12px;">${esc(r.orderNo||'—')}</td>
+            <td style="padding:8px 12px;">${r.date||'—'}</td>
+            <td style="padding:8px 12px;font-weight:600;">${esc(r.quality||'—')}</td>
+            <td style="padding:8px 12px;">${esc(r.machineName||'—')}</td>
+            <td style="padding:8px 12px;text-align:center;">${esc(r.shift||'—')}</td>
+            <td style="padding:8px 12px;text-align:right;">${(r.targetKg||0).toFixed(3)}</td>
+            <td style="padding:8px 12px;text-align:right;font-weight:700;">${(r.actualKg||0).toFixed(3)}</td>
+            <td style="padding:8px 12px;text-align:right;color:#dc2626;">${(r.wasteKg||0).toFixed(3)}</td>
+            <td style="padding:8px 12px;text-align:right;font-weight:700;color:${effColor};">${eff==='—'?'—':eff+'%'}</td>
+            <td style="padding:8px 12px;text-align:center;">${_prodStatusBadge(r.status||'Planned')}</td>
+            <td style="padding:8px 12px;text-align:center;"><button class="btn btn-sm btn-outline" onclick="openProd('${r.id}')">&#9998; Edit</button></td>
+        </tr>`;
+    }).join('');
+}
+function _populateProdMonths() {
+    const sel = document.getElementById('prod-sum-month'); if(!sel) return;
+    const months=[...new Set((db.productionOrders||[]).map(r=>(r.date||'').slice(0,7)).filter(Boolean))].sort().reverse();
+    const cur = sel.value;
+    sel.innerHTML='<option value="">All Time</option>'+months.map(m=>`<option value="${m}"${m===cur?' selected':''}>${m}</option>`).join('');
+}
+function renderProdSummary() {
+    const wrap=document.getElementById('prod-sum-wrap'); if(!wrap) return;
+    const mf=document.getElementById('prod-sum-month')?.value||'';
+    let list=db.productionOrders||[];
+    if(mf) list=list.filter(r=>(r.date||'').startsWith(mf));
+    const completed=list.filter(r=>r.status==='Completed');
+    if(!completed.length) { wrap.innerHTML='<div style="color:#94a3b8;font-size:13px;padding:20px;">No completed production records for this period.</div>'; return; }
+    // By machine
+    const byMachine={};
+    completed.forEach(r=>{
+        const key=r.machineName||'Unknown';
+        if(!byMachine[key]) byMachine[key]={machine:key,jobs:0,targetKg:0,actualKg:0,wasteKg:0};
+        byMachine[key].jobs++;
+        byMachine[key].targetKg+=r.targetKg||0;
+        byMachine[key].actualKg+=r.actualKg||0;
+        byMachine[key].wasteKg+=r.wasteKg||0;
+    });
+    const totalActual=completed.reduce((s,r)=>s+(r.actualKg||0),0);
+    const totalTarget=completed.reduce((s,r)=>s+(r.targetKg||0),0);
+    const totalWaste=completed.reduce((s,r)=>s+(r.wasteKg||0),0);
+    const overallEff=totalTarget>0?(totalActual/totalTarget*100).toFixed(1):'—';
+    wrap.innerHTML=`<div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:18px;">
+        <div style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:10px;padding:14px 24px;min-width:140px;">
+            <div style="font-size:11px;color:#3b82f6;font-weight:700;text-transform:uppercase;margin-bottom:4px;">Total Output (KGS)</div>
+            <div style="font-size:24px;font-weight:800;color:#1d4ed8;">${totalActual.toLocaleString('en-IN',{maximumFractionDigits:0})}</div>
+        </div>
+        <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:10px;padding:14px 24px;min-width:140px;">
+            <div style="font-size:11px;color:#16a34a;font-weight:700;text-transform:uppercase;margin-bottom:4px;">Efficiency</div>
+            <div style="font-size:24px;font-weight:800;color:#15803d;">${overallEff}%</div>
+        </div>
+        <div style="background:#fef2f2;border:1.5px solid #fecaca;border-radius:10px;padding:14px 24px;min-width:140px;">
+            <div style="font-size:11px;color:#dc2626;font-weight:700;text-transform:uppercase;margin-bottom:4px;">Total Waste (KGS)</div>
+            <div style="font-size:24px;font-weight:800;color:#dc2626;">${totalWaste.toLocaleString('en-IN',{maximumFractionDigits:0})}</div>
+        </div>
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+    <thead><tr style="background:#1e293b;color:white;">
+        <th style="padding:9px 12px;">Machine</th><th style="padding:9px 12px;text-align:right;">Jobs</th>
+        <th style="padding:9px 12px;text-align:right;">Target (KGS)</th><th style="padding:9px 12px;text-align:right;">Actual (KGS)</th>
+        <th style="padding:9px 12px;text-align:right;">Waste (KGS)</th><th style="padding:9px 12px;text-align:right;">Efficiency</th>
+    </tr></thead><tbody>` +
+    Object.values(byMachine).sort((a,b)=>b.actualKg-a.actualKg).map(m=>{
+        const eff=m.targetKg>0?(m.actualKg/m.targetKg*100).toFixed(1):'—';
+        const c=eff==='—'?'#64748b':eff>=95?'#16a34a':eff>=80?'#d97706':'#dc2626';
+        return `<tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:8px 12px;font-weight:600;">${esc(m.machine)}</td>
+            <td style="padding:8px 12px;text-align:right;">${m.jobs}</td>
+            <td style="padding:8px 12px;text-align:right;">${m.targetKg.toLocaleString('en-IN',{maximumFractionDigits:3})}</td>
+            <td style="padding:8px 12px;text-align:right;font-weight:700;">${m.actualKg.toLocaleString('en-IN',{maximumFractionDigits:3})}</td>
+            <td style="padding:8px 12px;text-align:right;color:#dc2626;">${m.wasteKg.toLocaleString('en-IN',{maximumFractionDigits:3})}</td>
+            <td style="padding:8px 12px;text-align:right;font-weight:700;color:${c};">${eff==='—'?'—':eff+'%'}</td>
+        </tr>`;
+    }).join('') + '</tbody></table>';
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// FINANCE & PROFITABILITY
+// ══════════════════════════════════════════════════════════════════════
+function _fpFYLabel(fy) {
+    // fy = '2526' → 'FY 2025-26'
+    return 'FY 20' + fy.slice(0,2) + '-' + fy.slice(2);
+}
+function _populateFPFY() {
+    ['fp-fy','anlx-fy'].forEach(selId=>{
+        const sel=document.getElementById(selId); if(!sel) return;
+        const cur=sel.value;
+        // Collect all FYs from SOs
+        const fys=[...new Set((db.salesOrders||[]).map(s=>{
+            if(!s.date) return null;
+            const d=new Date(s.date),m=d.getMonth()+1,y=d.getFullYear();
+            return m>=4?String(y).slice(2)+String(y+1).slice(2):String(y-1).slice(2)+String(y).slice(2);
+        }).filter(Boolean))].sort().reverse();
+        // Add current FY if not present
+        const now=new Date(),nm=now.getMonth()+1,ny=now.getFullYear();
+        const curFY=nm>=4?String(ny).slice(2)+String(ny+1).slice(2):String(ny-1).slice(2)+String(ny).slice(2);
+        if(!fys.includes(curFY)) fys.unshift(curFY);
+        sel.innerHTML=fys.map(f=>`<option value="${f}"${f===cur?' selected':''}>${_fpFYLabel(f)}</option>`).join('');
+    });
+}
+function _fyDates(fy) {
+    // fy='2526' → start=2025-04-01, end=2026-03-31
+    const sy=2000+parseInt(fy.slice(0,2));
+    return { start:`${sy}-04-01`, end:`${sy+1}-03-31` };
+}
+function renderFPRevenue() {
+    const wrap=document.getElementById('fp-revenue-wrap'); if(!wrap) return;
+    const fy=document.getElementById('fp-fy')?.value; if(!fy) return;
+    const {start,end}=_fyDates(fy);
+    // Get dispatches in FY
+    const disps=(db.dispatches||[]).filter(d=>d.date&&d.date>=start&&d.date<=end);
+    if(!disps.length) { wrap.innerHTML='<div style="color:#94a3b8;font-size:13px;padding:20px;">No dispatch records for '+_fpFYLabel(fy)+'.</div>'; return; }
+    // Compute revenue per dispatch line: qty × SO line rate
+    let totalRev=0, byMonth={}, byCust={};
+    disps.forEach(d=>{
+        (d.lines||[]).forEach(l=>{
+            const so=(db.salesOrders||[]).find(s=>s.id===l.soId);
+            const li=so?(so.lineItems||[]).find(x=>x.id===l.lineItemId):null;
+            const rate=li?parseFloat(li.ratePer||0):0;
+            const qty=parseFloat(l.qty||l.qtyMT||0);
+            const rev=qty*rate;
+            totalRev+=rev;
+            const mon=(d.date||'').slice(0,7);
+            byMonth[mon]=(byMonth[mon]||0)+rev;
+            const cust=l.customer||so?.customer||'Unknown';
+            byCust[cust]=(byCust[cust]||0)+rev;
+        });
+    });
+    // Total pending (SOs in FY not yet fully dispatched)
+    const sosFY=(db.salesOrders||[]).filter(s=>s.date&&s.date>=start&&s.date<=end);
+    const totalSOVal=sosFY.reduce((s,so)=>(so.lineItems||[]).reduce((a,l)=>a+(l.amount||0),s),0);
+    const pending=Math.max(0,totalSOVal-totalRev);
+    wrap.innerHTML=`<div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:18px;">
+        <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:10px;padding:14px 24px;min-width:160px;">
+            <div style="font-size:11px;color:#16a34a;font-weight:700;text-transform:uppercase;margin-bottom:4px;">Dispatched Revenue</div>
+            <div style="font-size:22px;font-weight:800;color:#15803d;">&#8377; ${totalRev.toLocaleString('en-IN',{maximumFractionDigits:0})}</div>
+        </div>
+        <div style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:10px;padding:14px 24px;min-width:160px;">
+            <div style="font-size:11px;color:#3b82f6;font-weight:700;text-transform:uppercase;margin-bottom:4px;">Order Book Value</div>
+            <div style="font-size:22px;font-weight:800;color:#1d4ed8;">&#8377; ${totalSOVal.toLocaleString('en-IN',{maximumFractionDigits:0})}</div>
+        </div>
+        <div style="background:#fff7ed;border:1.5px solid #fed7aa;border-radius:10px;padding:14px 24px;min-width:160px;">
+            <div style="font-size:11px;color:#ea580c;font-weight:700;text-transform:uppercase;margin-bottom:4px;">Pending Dispatch</div>
+            <div style="font-size:22px;font-weight:800;color:#dc2626;">&#8377; ${pending.toLocaleString('en-IN',{maximumFractionDigits:0})}</div>
+        </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+    <div><div style="font-weight:700;font-size:13px;margin-bottom:10px;color:#1e293b;">Monthly Revenue</div>
+    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+    <thead><tr style="background:#f1f5f9;"><th style="padding:8px 12px;text-align:left;">Month</th><th style="padding:8px 12px;text-align:right;">Revenue (&#8377;)</th></tr></thead><tbody>` +
+    Object.entries(byMonth).sort((a,b)=>a[0].localeCompare(b[0])).map(([m,v])=>
+        `<tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:7px 12px;">${m}</td><td style="padding:7px 12px;text-align:right;font-weight:600;">&#8377; ${v.toLocaleString('en-IN',{maximumFractionDigits:0})}</td></tr>`
+    ).join('') +
+    `</tbody></table></div>
+    <div><div style="font-weight:700;font-size:13px;margin-bottom:10px;color:#1e293b;">Customer-wise Revenue</div>
+    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+    <thead><tr style="background:#f1f5f9;"><th style="padding:8px 12px;text-align:left;">Customer</th><th style="padding:8px 12px;text-align:right;">Revenue (&#8377;)</th></tr></thead><tbody>` +
+    Object.entries(byCust).sort((a,b)=>b[1]-a[1]).map(([c,v])=>
+        `<tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:7px 12px;font-weight:600;">${esc(c)}</td><td style="padding:7px 12px;text-align:right;font-weight:700;">&#8377; ${v.toLocaleString('en-IN',{maximumFractionDigits:0})}</td></tr>`
+    ).join('') + `</tbody></table></div></div>`;
+}
+function renderFPProfitability() {
+    const wrap=document.getElementById('fp-profit-wrap'); if(!wrap) return;
+    // For each confirmed SO with line items, try to compare rate vs costing
+    const sos=(db.salesOrders||[]).filter(s=>s.status==='Confirmed'||s.status==='In Production');
+    if(!sos.length) { wrap.innerHTML='<div style="color:#94a3b8;font-size:13px;padding:20px;">No confirmed/in-production orders to analyse.</div>'; return; }
+    let html=`<table style="width:100%;border-collapse:collapse;font-size:13px;">
+    <thead><tr style="background:#1e293b;color:white;">
+        <th style="padding:9px 12px;">SO No.</th><th style="padding:9px 12px;">Customer</th>
+        <th style="padding:9px 12px;">Quality</th><th style="padding:9px 12px;text-align:right;">Qty (KGS)</th>
+        <th style="padding:9px 12px;text-align:right;">Rate (&#8377;/KGS)</th><th style="padding:9px 12px;text-align:right;">SO Value (&#8377;)</th>
+        <th style="padding:9px 12px;text-align:right;">Dispatched (KGS)</th><th style="padding:9px 12px;text-align:center;">Status</th>
+    </tr></thead><tbody>`;
+    let grandTotal=0;
+    sos.forEach(s=>{
+        (s.lineItems||[]).forEach((li,i)=>{
+            const disp=(db.dispatches||[]).reduce((sum,d)=>{
+                return sum+(d.lines||[]).filter(l=>l.soId===s.id&&l.lineItemId===li.id).reduce((a,l)=>a+(parseFloat(l.qty||l.qtyMT)||0),0);
+            },0);
+            const val=(li.qtyKgs||li.qtyMT||0)*(li.ratePer||0);
+            grandTotal+=val;
+            html+=`<tr style="border-bottom:1px solid #f1f5f9;">
+                ${i===0?`<td style="padding:7px 12px;font-weight:700;" rowspan="${(s.lineItems||[]).length}">${esc(s.soNo)}</td>
+                <td style="padding:7px 12px;" rowspan="${(s.lineItems||[]).length}">${esc(s.customer||'—')}</td>`:''}
+                <td style="padding:7px 12px;">${esc(li.quality||li.description||'—')}</td>
+                <td style="padding:7px 12px;text-align:right;">${(li.qtyKgs||li.qtyMT||0).toFixed(3)}</td>
+                <td style="padding:7px 12px;text-align:right;">&#8377;${(li.ratePer||0).toFixed(2)}</td>
+                <td style="padding:7px 12px;text-align:right;font-weight:700;">&#8377;${val.toLocaleString('en-IN',{maximumFractionDigits:0})}</td>
+                <td style="padding:7px 12px;text-align:right;">${disp.toFixed(3)}</td>
+                ${i===0?`<td style="padding:7px 12px;text-align:center;" rowspan="${(s.lineItems||[]).length}">${soStatusBadge(s.status)}</td>`:''}
+            </tr>`;
+        });
+    });
+    html+=`<tr style="background:#fef3c7;font-weight:700;">
+        <td colspan="5" style="padding:9px 12px;text-align:right;">Grand Total Order Book</td>
+        <td style="padding:9px 12px;text-align:right;">&#8377; ${grandTotal.toLocaleString('en-IN',{maximumFractionDigits:0})}</td>
+        <td colspan="2" style="padding:9px 12px;"></td>
+    </tr></tbody></table>`;
+    wrap.innerHTML=html;
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// ANALYTICS
+// ══════════════════════════════════════════════════════════════════════
+function renderAnalytics() {
+    _populateFPFY();
+    const wrap=document.getElementById('analytics-wrap'); if(!wrap) return;
+    const fy=document.getElementById('anlx-fy')?.value||'';
+    const {start,end}=fy?_fyDates(fy):{start:'1900-01-01',end:'2099-12-31'};
+    // KPIs
+    const sosFY=(db.salesOrders||[]).filter(s=>!s.date||s.date>=start&&s.date<=end);
+    const soVal=sosFY.reduce((s,so)=>(so.lineItems||[]).reduce((a,l)=>a+(l.amount||0),s),0);
+    const dispsFY=(db.dispatches||[]).filter(d=>!d.date||d.date>=start&&d.date<=end);
+    let dispRev=0;
+    dispsFY.forEach(d=>(d.lines||[]).forEach(l=>{
+        const so=(db.salesOrders||[]).find(s=>s.id===l.soId);
+        const li=so?(so.lineItems||[]).find(x=>x.id===l.lineItemId):null;
+        dispRev+=(parseFloat(l.qty||l.qtyMT)||0)*(li?parseFloat(li.ratePer||0):0);
+    }));
+    const rmStock=(db.rmMaterials||[]).reduce((s,m)=>s+getRMStockData(m.id).stockValue,0);
+    const prodOut=(db.productionOrders||[]).filter(r=>r.status==='Completed'&&r.date>=start&&r.date<=end).reduce((s,r)=>s+(r.actualKg||0),0);
+    const pendingOrders=sosFY.filter(s=>s.status!=='Dispatched').length;
+    // Customer breakdown
+    const byCust={};
+    sosFY.forEach(so=>{
+        const c=so.customer||'Unknown';
+        (so.lineItems||[]).forEach(l=>{ byCust[c]=(byCust[c]||0)+(l.amount||0); });
+    });
+    const topCusts=Object.entries(byCust).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    // Quality breakdown
+    const byQual={};
+    (db.productionOrders||[]).filter(r=>r.status==='Completed'&&r.date>=start&&r.date<=end).forEach(r=>{
+        const q=r.quality||'Unknown';
+        byQual[q]=(byQual[q]||0)+(r.actualKg||0);
+    });
+    wrap.innerHTML=`
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:24px;">
+        ${_anlxKpi('Order Book','&#8377; '+soVal.toLocaleString('en-IN',{maximumFractionDigits:0}),'#eff6ff','#bfdbfe','#1d4ed8','#3b82f6')}
+        ${_anlxKpi('Dispatched Revenue','&#8377; '+dispRev.toLocaleString('en-IN',{maximumFractionDigits:0}),'#f0fdf4','#bbf7d0','#15803d','#16a34a')}
+        ${_anlxKpi('Pending Orders',pendingOrders,'#fff7ed','#fed7aa','#dc2626','#ea580c')}
+        ${_anlxKpi('RM Stock Value','&#8377; '+rmStock.toLocaleString('en-IN',{maximumFractionDigits:0}),'#faf5ff','#e9d5ff','#6d28d9','#7c3aed')}
+        ${_anlxKpi('Production Output',prodOut.toLocaleString('en-IN',{maximumFractionDigits:0})+' KGS','#f0fdf4','#bbf7d0','#15803d','#16a34a')}
+        ${_anlxKpi('Low Stock Alerts',(db.rmMaterials||[]).filter(m=>{const sd=getRMStockData(m.id);return sd.currentQty<=(m.reorderQty||0)&&(m.reorderQty||0)>0;}).length,'#fef2f2','#fecaca','#dc2626','#ef4444')}
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+        <div>
+            <div style="font-weight:700;font-size:14px;margin-bottom:10px;color:#1e293b;">&#127942; Top Customers by Order Value</div>
+            <table style="width:100%;border-collapse:collapse;font-size:13px;">
+            <thead><tr style="background:#f1f5f9;"><th style="padding:8px 12px;">Customer</th><th style="padding:8px 12px;text-align:right;">Value (&#8377;)</th><th style="padding:8px 12px;text-align:right;">Share</th></tr></thead>
+            <tbody>${topCusts.length?topCusts.map(([c,v])=>
+                `<tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:7px 12px;font-weight:600;">${esc(c)}</td><td style="padding:7px 12px;text-align:right;">&#8377; ${v.toLocaleString('en-IN',{maximumFractionDigits:0})}</td><td style="padding:7px 12px;text-align:right;">${soVal>0?(v/soVal*100).toFixed(1)+'%':'—'}</td></tr>`
+            ).join(''):'<tr><td colspan="3" style="padding:20px;text-align:center;color:#94a3b8;">No data</td></tr>'}</tbody>
+            </table>
+        </div>
+        <div>
+            <div style="font-weight:700;font-size:14px;margin-bottom:10px;color:#1e293b;">&#127981; Production by Quality (KGS)</div>
+            <table style="width:100%;border-collapse:collapse;font-size:13px;">
+            <thead><tr style="background:#f1f5f9;"><th style="padding:8px 12px;">Quality</th><th style="padding:8px 12px;text-align:right;">Output (KGS)</th></tr></thead>
+            <tbody>${Object.entries(byQual).sort((a,b)=>b[1]-a[1]).length?Object.entries(byQual).sort((a,b)=>b[1]-a[1]).map(([q,v])=>
+                `<tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:7px 12px;font-weight:600;">${esc(q)}</td><td style="padding:7px 12px;text-align:right;">${v.toLocaleString('en-IN',{maximumFractionDigits:3})}</td></tr>`
+            ).join(''):'<tr><td colspan="2" style="padding:20px;text-align:center;color:#94a3b8;">No production data</td></tr>'}</tbody>
+            </table>
+        </div>
+    </div>`;
+}
+function _anlxKpi(label,val,bg,border,valColor,lblColor) {
+    return `<div style="background:${bg};border:1.5px solid ${border};border-radius:10px;padding:14px 18px;">
+        <div style="font-size:11px;color:${lblColor};font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">${label}</div>
+        <div style="font-size:20px;font-weight:800;color:${valColor};">${val}</div>
+    </div>`;
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// ALERTS
+// ══════════════════════════════════════════════════════════════════════
+function renderAlerts() {
+    const wrap=document.getElementById('alerts-wrap'); if(!wrap) return;
+    const alerts=[];
+    // 1. Low stock
+    (db.rmMaterials||[]).forEach(m=>{
+        const sd=getRMStockData(m.id);
+        if(sd.currentQty<=0) alerts.push({type:'danger',icon:'&#128308;',title:'Out of Stock',msg:`<b>${esc(m.name)}</b> (${esc(m.unit||'KGS')}) — Current stock: ${sd.currentQty.toFixed(3)}`});
+        else if((m.reorderQty||0)>0 && sd.currentQty<=(m.reorderQty||0)) alerts.push({type:'warning',icon:'&#128992;',title:'Low Stock',msg:`<b>${esc(m.name)}</b> — Stock: ${sd.currentQty.toFixed(3)} ${esc(m.unit||'KGS')} (Reorder: ${(m.reorderQty||0).toFixed(3)})`});
+    });
+    // 2. SOs confirmed but no dispatch for 30+ days
+    const today=new Date();
+    (db.salesOrders||[]).filter(s=>s.status==='Confirmed'||s.status==='In Production').forEach(s=>{
+        const hasDisp=(db.dispatches||[]).some(d=>(d.lines||[]).some(l=>l.soId===s.id));
+        if(!hasDisp && s.date) {
+            const soDate=new Date(s.date);
+            const days=Math.floor((today-soDate)/(1000*60*60*24));
+            if(days>30) alerts.push({type:'warning',icon:'&#128337;',title:'Pending Dispatch',msg:`SO <b>${esc(s.soNo)}</b> — ${esc(s.customer||'—')} — Confirmed ${days} days ago, no dispatch yet.`});
+        }
+    });
+    // 3. Documents expiring within 30 days
+    (db.documents||[]).forEach(d=>{
+        if(!d.expiry) return;
+        const exp=new Date(d.expiry);
+        const days=Math.floor((exp-today)/(1000*60*60*24));
+        if(days<0) alerts.push({type:'danger',icon:'&#128308;',title:'Expired Document',msg:`<b>${esc(d.docName)}</b> (${esc(d.docType)}) expired on ${d.expiry}`});
+        else if(days<=30) alerts.push({type:'warning',icon:'&#128992;',title:'Document Expiring Soon',msg:`<b>${esc(d.docName)}</b> (${esc(d.docType)}) expires in ${days} days (${d.expiry})`});
+    });
+    if(!alerts.length) {
+        wrap.innerHTML='<div style="text-align:center;padding:40px;"><div style="font-size:40px;margin-bottom:12px;">&#9989;</div><div style="font-size:16px;font-weight:600;color:#16a34a;">All clear! No active alerts.</div></div>';
+        return;
+    }
+    const dangerAlerts=alerts.filter(a=>a.type==='danger');
+    const warnAlerts=alerts.filter(a=>a.type==='warning');
+    wrap.innerHTML=`<div style="margin-bottom:10px;font-size:13px;color:#64748b;">${alerts.length} alert(s) — ${dangerAlerts.length} critical, ${warnAlerts.length} warnings</div>` +
+    alerts.map(a=>{
+        const bg=a.type==='danger'?'#fef2f2':'#fffbeb';
+        const border=a.type==='danger'?'#fecaca':'#fde68a';
+        const tc=a.type==='danger'?'#dc2626':'#92400e';
+        return `<div style="background:${bg};border:1.5px solid ${border};border-radius:10px;padding:14px 18px;margin-bottom:10px;display:flex;gap:14px;align-items:flex-start;">
+            <span style="font-size:22px;line-height:1;">${a.icon}</span>
+            <div><div style="font-weight:700;font-size:13px;color:${tc};margin-bottom:3px;">${a.title}</div>
+            <div style="font-size:13px;color:#374151;">${a.msg}</div></div>
+        </div>`;
+    }).join('');
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// DOCUMENTS
+// ══════════════════════════════════════════════════════════════════════
+function clearDocForm() {
+    document.getElementById('doc-id').value          = '';
+    document.getElementById('doc-date').value        = new Date().toISOString().slice(0,10);
+    document.getElementById('doc-name').value        = '';
+    document.getElementById('doc-type').value        = 'Purchase Order';
+    document.getElementById('doc-refno').value       = '';
+    document.getElementById('doc-linked-type').value = '';
+    document.getElementById('doc-linked-ref').value  = '';
+    document.getElementById('doc-expiry').value      = '';
+    document.getElementById('doc-notes').value       = '';
+    document.getElementById('doc-form-title').textContent = 'New Document';
+    document.getElementById('doc-del-btn').style.display  = 'none';
+}
+function newDoc() { clearDocForm(); }
+function openDoc(id) {
+    const r=(db.documents||[]).find(x=>x.id===id); if(!r) return;
+    document.getElementById('doc-id').value          = r.id;
+    document.getElementById('doc-date').value        = r.date||'';
+    document.getElementById('doc-name').value        = r.docName||'';
+    document.getElementById('doc-type').value        = r.docType||'Purchase Order';
+    document.getElementById('doc-refno').value       = r.refNo||'';
+    document.getElementById('doc-linked-type').value = r.linkedType||'';
+    document.getElementById('doc-linked-ref').value  = r.linkedRef||'';
+    document.getElementById('doc-expiry').value      = r.expiry||'';
+    document.getElementById('doc-notes').value       = r.notes||'';
+    document.getElementById('doc-form-title').textContent = 'Edit: ' + (r.docName||'');
+    document.getElementById('doc-del-btn').style.display  = '';
+    window.scrollTo({top:0,behavior:'smooth'});
+}
+function saveDoc() {
+    const name=document.getElementById('doc-name').value.trim();
+    if(!name) { showToast('Document name is required'); return; }
+    const eid=document.getElementById('doc-id').value;
+    const rec={
+        id: eid||nid(),
+        date:       document.getElementById('doc-date').value,
+        docName:    name,
+        docType:    document.getElementById('doc-type').value,
+        refNo:      document.getElementById('doc-refno').value.trim(),
+        linkedType: document.getElementById('doc-linked-type').value,
+        linkedRef:  document.getElementById('doc-linked-ref').value.trim(),
+        expiry:     document.getElementById('doc-expiry').value,
+        notes:      document.getElementById('doc-notes').value.trim(),
+    };
+    if(eid) { const i=(db.documents||[]).findIndex(r=>r.id===eid); if(i>=0) db.documents[i]=rec; else (db.documents=db.documents||[]).push(rec); }
+    else    { (db.documents=db.documents||[]).push(rec); }
+    persist(); showToast('Document saved');
+    clearDocForm(); renderDocList();
+}
+function deleteDoc() {
+    const eid=document.getElementById('doc-id').value; if(!eid) return;
+    if(!confirm('Delete this document record?')) return;
+    db.documents=(db.documents||[]).filter(r=>r.id!==eid);
+    persist(); showToast('Deleted'); clearDocForm(); renderDocList();
+}
+function renderDocList() {
+    const tbody=document.getElementById('doc-list-body'); if(!tbody) return;
+    const fq=(document.getElementById('doc-filter')?.value||'').toLowerCase();
+    const ft=document.getElementById('doc-f-type')?.value||'';
+    let list=(db.documents||[]).slice().reverse();
+    if(fq) list=list.filter(r=>((r.docName||'')+(r.refNo||'')+(r.linkedRef||'')).toLowerCase().includes(fq));
+    if(ft) list=list.filter(r=>r.docType===ft);
+    if(!list.length) { tbody.innerHTML='<tr><td colspan="8" style="padding:20px;text-align:center;color:#94a3b8;">No document records yet.</td></tr>'; return; }
+    const today=new Date();
+    tbody.innerHTML=list.map(r=>{
+        let expiryCell='—';
+        if(r.expiry) {
+            const exp=new Date(r.expiry), days=Math.floor((exp-today)/(1000*60*60*24));
+            const ec=days<0?'#dc2626':days<=30?'#d97706':'#16a34a';
+            const etxt=days<0?`Expired ${Math.abs(days)}d ago`:days<=30?`Expires in ${days}d`:r.expiry;
+            expiryCell=`<span style="color:${ec};font-weight:700;">${etxt}</span>`;
+        }
+        const linkTxt=r.linkedType&&r.linkedRef?`${r.linkedType.toUpperCase()}: ${esc(r.linkedRef)}`:'—';
+        return `<tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:8px 12px;">${r.date||'—'}</td>
+            <td style="padding:8px 12px;font-weight:600;">${esc(r.docName||'—')}</td>
+            <td style="padding:8px 12px;"><span style="background:#e2e8f0;padding:2px 8px;border-radius:10px;font-size:11px;">${esc(r.docType||'—')}</span></td>
+            <td style="padding:8px 12px;font-family:monospace;font-size:12px;">${esc(r.refNo||'—')}</td>
+            <td style="padding:8px 12px;font-size:12px;color:#64748b;">${linkTxt}</td>
+            <td style="padding:8px 12px;">${expiryCell}</td>
+            <td style="padding:8px 12px;font-size:12px;color:#64748b;">${esc(r.notes||'—')}</td>
+            <td style="padding:8px 12px;text-align:center;"><button class="btn btn-sm btn-outline" onclick="openDoc('${r.id}')">&#9998; Edit</button></td>
+        </tr>`;
+    }).join('');
+}
+
 
 // ══════════════════════════════════════════════════════════════════════
 function autoSaveMCRemarks() {
