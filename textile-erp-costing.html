@@ -956,6 +956,8 @@
     <button class="tab-btn" data-tab="analytics">&#128201; Analytics</button>
     <button class="tab-btn" data-tab="alertsauto">&#128276; Alerts</button>
     <button class="tab-btn" data-tab="documents">&#128196; Documents</button>
+    <button class="tab-btn" data-tab="factoryutilities">&#9889; Factory Monthly Costing</button>
+    <button class="tab-btn" data-tab="manual">&#128214; Manual</button>
     <button class="tab-btn" data-tab="dashboard">&#128202; Cost Dashboard</button>
     <button class="tab-btn" data-tab="batchprocessing">&#128203; Chemical Batch Processing</button>
 </div>
@@ -3629,6 +3631,217 @@
         </div>
     </div><!-- /tab-documents -->
 
+    <!-- ══════════════════════════════════════════ FACTORY MONTHLY COSTING -->
+    <div id="tab-factoryutilities" class="tab-panel">
+        <div class="sub-tabs">
+            <button class="sub-tab-btn active" data-sub="fu-entry"   onclick="switchSubTab('fu-entry')">&#9998; Monthly Entry</button>
+            <button class="sub-tab-btn"         data-sub="fu-ytd"    onclick="switchSubTab('fu-ytd')">&#128200; YTD Summary</button>
+            <button class="sub-tab-btn"         data-sub="fu-rates"  onclick="switchSubTab('fu-rates')">&#128202; Rate Analysis</button>
+        </div>
+
+        <!-- SUB 1: Monthly Entry -->
+        <div id="sub-fu-entry" class="sub-panel active">
+            <!-- Sheet selector + controls -->
+            <div class="form-row" style="margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+                <select id="fu-fy-sel" onchange="renderFUMonthList()" style="font-size:13px;border:1px solid #cbd5e1;border-radius:6px;padding:6px 10px;min-width:140px;"></select>
+                <select id="fu-dept-sel" onchange="renderFUMonthList()" style="font-size:13px;border:1px solid #cbd5e1;border-radius:6px;padding:6px 10px;min-width:160px;">
+                    <option value="">All Departments</option>
+                    <option>Maintenance</option><option>Weaving</option><option>Dipping</option>
+                    <option>Finishing</option><option>Utility</option><option>QC Lab</option><option>Admin</option>
+                </select>
+                <button class="btn btn-primary" onclick="openFUEntry()">+ New Month Entry</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteFUEntry()">Delete</button>
+            </div>
+
+            <!-- Entry form (hidden by default) -->
+            <div id="fu-form" style="display:none;">
+                <input type="hidden" id="fu-id">
+                <div class="card">
+                    <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+                        <span>&#9889; Utilities &amp; Spares — Monthly Entry</span>
+                        <div style="display:flex;gap:10px;align-items:center;">
+                            <div class="form-group" style="margin:0;"><label style="font-size:11px;">Department</label>
+                                <select id="fu-dept" style="font-size:13px;border:1px solid #cbd5e1;border-radius:6px;padding:5px 8px;min-width:150px;">
+                                    <option>Maintenance</option><option>Weaving</option><option>Dipping</option>
+                                    <option>Finishing</option><option>Utility</option><option>QC Lab</option><option>Admin</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="margin:0;"><label style="font-size:11px;">Month</label>
+                                <input type="month" id="fu-month" style="font-size:13px;border:1px solid #cbd5e1;border-radius:6px;padding:5px 8px;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Utilities table -->
+                    <div style="overflow-x:auto;">
+                    <table style="width:100%;border-collapse:collapse;font-size:13px;min-width:900px;">
+                        <thead>
+                            <tr>
+                                <th style="padding:8px 10px;background:#1e293b;color:white;text-align:left;border:1px solid #334155;">Utility / Cost Head</th>
+                                <th colspan="2" style="padding:8px 10px;background:#1e40af;color:white;text-align:center;border:1px solid #334155;">Units</th>
+                                <th style="padding:8px 10px;background:#1e40af;color:white;text-align:center;border:1px solid #334155;">Rate (&#8377;/Unit)</th>
+                                <th colspan="2" style="padding:8px 10px;background:#166534;color:white;text-align:center;border:1px solid #334155;">Cost (&#8377;)</th>
+                                <th style="padding:8px 10px;background:#92400e;color:white;text-align:center;border:1px solid #334155;">Variance (&#8377;)</th>
+                                <th style="padding:8px 10px;background:#374151;color:white;text-align:left;border:1px solid #334155;">Remarks</th>
+                            </tr>
+                            <tr style="background:#f1f5f9;">
+                                <th style="padding:6px 10px;border:1px solid #e2e8f0;"></th>
+                                <th style="padding:6px 10px;border:1px solid #e2e8f0;text-align:center;font-size:11px;color:#3b82f6;">Actual</th>
+                                <th style="padding:6px 10px;border:1px solid #e2e8f0;text-align:center;font-size:11px;color:#64748b;">Budget</th>
+                                <th style="padding:6px 10px;border:1px solid #e2e8f0;text-align:center;font-size:11px;color:#64748b;">Auto</th>
+                                <th style="padding:6px 10px;border:1px solid #e2e8f0;text-align:center;font-size:11px;color:#16a34a;">Actual</th>
+                                <th style="padding:6px 10px;border:1px solid #e2e8f0;text-align:center;font-size:11px;color:#64748b;">Budget</th>
+                                <th style="padding:6px 10px;border:1px solid #e2e8f0;text-align:center;font-size:11px;color:#b45309;">Bud - Act</th>
+                                <th style="padding:6px 10px;border:1px solid #e2e8f0;"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="fu-entry-body"></tbody>
+                        <tfoot id="fu-entry-foot"></tfoot>
+                    </table>
+                    </div>
+                </div>
+
+                <!-- Spares & Repairs -->
+                <div class="card">
+                    <div class="card-title">&#128295; Spares &amp; Repairs</div>
+                    <div style="overflow-x:auto;">
+                    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                        <thead>
+                            <tr style="background:#1e293b;color:white;">
+                                <th style="padding:8px 12px;text-align:left;border:1px solid #334155;">Spare / Repair Item</th>
+                                <th style="padding:8px 12px;text-align:right;border:1px solid #334155;">Actual Cost (&#8377;)</th>
+                                <th style="padding:8px 12px;text-align:right;border:1px solid #334155;">Budget (&#8377;)</th>
+                                <th style="padding:8px 12px;text-align:right;border:1px solid #334155;">Variance</th>
+                                <th style="padding:8px 12px;text-align:left;border:1px solid #334155;">Remarks</th>
+                                <th style="padding:8px 12px;border:1px solid #334155;"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="fu-spares-body"></tbody>
+                        <tfoot>
+                            <tr style="background:#fef3c7;">
+                                <td style="padding:8px 12px;font-weight:700;border:1px solid #e2e8f0;">Total Spares &amp; Repairs</td>
+                                <td style="padding:8px 12px;text-align:right;font-weight:700;border:1px solid #e2e8f0;" id="fu-spares-total-act">&#8377; 0</td>
+                                <td style="padding:8px 12px;text-align:right;font-weight:700;border:1px solid #e2e8f0;" id="fu-spares-total-bud">&#8377; 0</td>
+                                <td style="padding:8px 12px;text-align:right;font-weight:700;border:1px solid #e2e8f0;" id="fu-spares-total-var">0</td>
+                                <td colspan="2" style="padding:8px 12px;border:1px solid #e2e8f0;"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                    </div>
+                    <div style="margin-top:10px;">
+                        <button class="btn btn-outline btn-sm" onclick="addFUSpare()">+ Add Spare / Repair Line</button>
+                    </div>
+                </div>
+
+                <!-- Grand Total -->
+                <div class="card" style="background:#f8fafc;">
+                    <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:center;">
+                        <div style="font-size:13px;color:#475569;">
+                            <b>Total Utilities Cost (Actual):</b> <span id="fu-grand-util-act" style="font-size:16px;font-weight:800;color:#1d4ed8;margin-left:8px;">&#8377; 0</span>
+                        </div>
+                        <div style="font-size:13px;color:#475569;">
+                            <b>Total Spares Cost (Actual):</b> <span id="fu-grand-spares-act" style="font-size:16px;font-weight:800;color:#dc2626;margin-left:8px;">&#8377; 0</span>
+                        </div>
+                        <div style="font-size:13px;color:#475569;">
+                            <b>Grand Total (Actual):</b> <span id="fu-grand-total-act" style="font-size:18px;font-weight:900;color:#15803d;margin-left:8px;">&#8377; 0</span>
+                        </div>
+                        <div class="form-group" style="margin:0;">
+                            <label style="font-size:11px;">Production Output (KGS) — for rate/KG</label>
+                            <input type="number" id="fu-prod-kg" min="0" step="0.001" placeholder="0.000" style="width:140px;" oninput="calcFUGrandTotal()">
+                        </div>
+                        <div style="font-size:13px;color:#475569;">
+                            <b>Total Cost / KG:</b> <span id="fu-cost-per-kg" style="font-size:16px;font-weight:800;color:#7c3aed;margin-left:8px;">—</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row" style="margin-bottom:24px;">
+                    <button class="btn btn-success" onclick="saveFUEntry()">&#128190; Save Entry</button>
+                    <button class="btn btn-outline" onclick="cancelFUEntry()">&#10005; Cancel</button>
+                </div>
+            </div>
+
+            <!-- Month List -->
+            <div class="card" id="fu-list-card">
+                <div class="card-title">Monthly Entries</div>
+                <div style="overflow-x:auto;">
+                    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                        <thead><tr style="background:#1e293b;color:white;">
+                            <th style="padding:9px 12px;">Month</th>
+                            <th style="padding:9px 12px;">Department</th>
+                            <th style="padding:9px 12px;text-align:right;">Water (&#8377;)</th>
+                            <th style="padding:9px 12px;text-align:right;">Power (&#8377;)</th>
+                            <th style="padding:9px 12px;text-align:right;">DG (&#8377;)</th>
+                            <th style="padding:9px 12px;text-align:right;">Thermopack (&#8377;)</th>
+                            <th style="padding:9px 12px;text-align:right;">Other Utils (&#8377;)</th>
+                            <th style="padding:9px 12px;text-align:right;">Spares (&#8377;)</th>
+                            <th style="padding:9px 12px;text-align:right;">Grand Total (&#8377;)</th>
+                            <th style="padding:9px 12px;text-align:right;">Output (KGS)</th>
+                            <th style="padding:9px 12px;text-align:right;">Cost/KG (&#8377;)</th>
+                            <th style="padding:9px 12px;text-align:center;">Action</th>
+                        </tr></thead>
+                        <tbody id="fu-list-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div><!-- /sub-fu-entry -->
+
+        <!-- SUB 2: YTD Summary -->
+        <div id="sub-fu-ytd" class="sub-panel">
+            <div class="card">
+                <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+                    <span>&#128200; Year-to-Date Summary</span>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <select id="fu-ytd-fy" onchange="renderFUYTD()" style="font-size:12px;padding:5px 10px;border:1px solid #cbd5e1;border-radius:6px;"></select>
+                        <select id="fu-ytd-dept" onchange="renderFUYTD()" style="font-size:12px;padding:5px 10px;border:1px solid #cbd5e1;border-radius:6px;min-width:140px;">
+                            <option value="">All Departments</option>
+                            <option>Maintenance</option><option>Weaving</option><option>Dipping</option>
+                            <option>Finishing</option><option>Utility</option><option>QC Lab</option><option>Admin</option>
+                        </select>
+                        <button class="btn btn-outline btn-sm" onclick="renderFUYTD()">&#8635; Refresh</button>
+                    </div>
+                </div>
+                <div id="fu-ytd-wrap"><div style="color:#94a3b8;font-size:13px;padding:20px;">No data yet.</div></div>
+            </div>
+        </div>
+
+        <!-- SUB 3: Rate Analysis -->
+        <div id="sub-fu-rates" class="sub-panel">
+            <div class="card">
+                <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+                    <span>&#128202; Utility Rate Trend (Cost per KGS Produced)</span>
+                    <div style="display:flex;gap:8px;">
+                        <select id="fu-rate-fy" onchange="renderFURates()" style="font-size:12px;padding:5px 10px;border:1px solid #cbd5e1;border-radius:6px;"></select>
+                        <button class="btn btn-outline btn-sm" onclick="renderFURates()">&#8635; Refresh</button>
+                    </div>
+                </div>
+                <div id="fu-rates-wrap"><div style="color:#94a3b8;font-size:13px;padding:20px;">No data yet.</div></div>
+            </div>
+        </div>
+
+    </div><!-- /tab-factoryutilities -->
+
+    <!-- ══════════════════════════════════════════ MANUAL -->
+    <div id="tab-manual" class="tab-panel">
+        <div style="display:flex;gap:0;min-height:80vh;">
+
+            <!-- ── Sidebar ── -->
+            <div style="width:230px;min-width:230px;border-right:2px solid #e2e8f0;padding:16px 0;background:#f8fafc;">
+                <div style="padding:0 14px 12px;">
+                    <input type="text" id="man-search" placeholder="&#128269; Search topics..." oninput="manSearch()" style="width:100%;box-sizing:border-box;font-size:12px;padding:7px 10px;border:1px solid #cbd5e1;border-radius:8px;">
+                </div>
+                <div id="man-nav" style="overflow-y:auto;">
+                    <!-- nav items rendered by JS -->
+                </div>
+            </div>
+
+            <!-- ── Content ── -->
+            <div id="man-content" style="flex:1;padding:30px 40px;overflow-y:auto;max-height:85vh;line-height:1.7;">
+                <!-- sections injected by JS -->
+            </div>
+        </div>
+    </div><!-- /tab-manual -->
+
     <!-- ══════════════════════════════════════════ COST DASHBOARD -->
     <div id="tab-dashboard" class="tab-panel">
         <div id="dash-content" class="dash-wrap">
@@ -3828,9 +4041,10 @@ function _ensureDBStructure() {
     if (!Array.isArray(db.rmMaterials))      db.rmMaterials       = [];
     if (!Array.isArray(db.rmInward))         db.rmInward          = [];
     if (!Array.isArray(db.rmOutward))        db.rmOutward         = [];
-    if (!Array.isArray(db.custPriceHistory)) db.custPriceHistory  = [];
-    if (!Array.isArray(db.productionOrders)) db.productionOrders  = [];
-    if (!Array.isArray(db.documents))        db.documents         = [];
+    if (!Array.isArray(db.custPriceHistory))    db.custPriceHistory    = [];
+    if (!Array.isArray(db.productionOrders))   db.productionOrders    = [];
+    if (!Array.isArray(db.documents))          db.documents           = [];
+    if (!Array.isArray(db.factoryMonthly))     db.factoryMonthly      = [];
     if (!db.tabPasswords)                    db.tabPasswords      = { rawmaterials: '', batchprocessing: '', factorycosting: '', internalcosting: '', custcosting: '', machinerycosting: '', dashboard: '', salesdispatch: '', rminventory: '' };
     if (!('dashboard' in db.tabPasswords))   db.tabPasswords.dashboard = '';
     if (!('salesdispatch' in db.tabPasswords)) db.tabPasswords.salesdispatch = '';
@@ -3940,6 +4154,8 @@ function activateTab(tab) {
     if (tab === 'analytics')        { _populateFPFY(); renderAnalytics(); }
     if (tab === 'alertsauto')       renderAlerts();
     if (tab === 'documents')        { clearDocForm(); renderDocList(); }
+    if (tab === 'manual')           { _manActive='man-welcome'; renderManual(); }
+    if (tab === 'factoryutilities') { _populateFUFY(); renderFUMonthList(); }
     updateTabLockIcons();
 }
 
@@ -4051,6 +4267,9 @@ function switchSubTab(sub) {
     if (sub === 'prod-summary')  { _populateProdMonths(); renderProdSummary(); }
     if (sub === 'fp-revenue')    { _populateFPFY(); renderFPRevenue(); }
     if (sub === 'fp-profitability') renderFPProfitability();
+    if (sub === 'fu-entry')  { _populateFUFY(); renderFUMonthList(); }
+    if (sub === 'fu-ytd')    { _populateFUFY(); renderFUYTD(); }
+    if (sub === 'fu-rates')  { _populateFUFY(); renderFURates(); }
 }
 
 function gotoTab(name) {
@@ -8129,6 +8348,1002 @@ function renderDocList() {
     }).join('');
 }
 
+
+// ══════════════════════════════════════════════════════════════════════
+// FACTORY MONTHLY COSTING — UTILITIES & SPARES
+// ══════════════════════════════════════════════════════════════════════
+
+// Utility rows definition — label, field prefix, unit label
+const _FU_UTILS = [
+    { label:'Water',                 key:'water',   unit:'KL'   },
+    { label:'Power (EB Grid)',       key:'power',   unit:'kWh'  },
+    { label:'DG (Diesel Generator)', key:'dg',      unit:'Ltrs' },
+    { label:'Thermopack / Fuel Oil', key:'thermo',  unit:'Ltrs' },
+    { label:'Other Utilities',       key:'other',   unit:'—'    },
+];
+
+// State
+let _fuId = null;
+let _fuSpares = []; // [{id, item, actual, budget, remarks}]
+
+// ── FY helpers ────────────────────────────────────────────────────────
+function _fuFYFromMonth(ym) { // ym = "2025-04"
+    if (!ym) return '';
+    const [y,m] = ym.split('-').map(Number);
+    return m >= 4 ? String(y).slice(2)+String(y+1).slice(2) : String(y-1).slice(2)+String(y).slice(2);
+}
+function _fuFYLabel2(fy) { return 'FY 20'+fy.slice(0,2)+'-'+fy.slice(2); }
+function _fuCurrentFY() {
+    const now=new Date(),m=now.getMonth()+1,y=now.getFullYear();
+    return m>=4?String(y).slice(2)+String(y+1).slice(2):String(y-1).slice(2)+String(y).slice(2);
+}
+function _populateFUFY() {
+    const fys=[...new Set((db.factoryMonthly||[]).map(r=>_fuFYFromMonth(r.yearMonth)).filter(Boolean))].sort().reverse();
+    const cur=_fuCurrentFY();
+    if(!fys.includes(cur)) fys.unshift(cur);
+    ['fu-fy-sel','fu-ytd-fy','fu-rate-fy'].forEach(sid=>{
+        const sel=document.getElementById(sid); if(!sel) return;
+        const prev=sel.value;
+        sel.innerHTML=fys.map(f=>`<option value="${f}"${f===prev?' selected':''}>${_fuFYLabel2(f)}</option>`).join('');
+    });
+}
+
+// ── Entry form ────────────────────────────────────────────────────────
+function _fuGetField(key,suffix) { return parseFloat(document.getElementById('fu-'+key+'-'+suffix)?.value)||0; }
+
+function renderFUEntryRows() {
+    const tbody=document.getElementById('fu-entry-body'); if(!tbody) return;
+    tbody.innerHTML = _FU_UTILS.map(u=>{
+        const act=_fuGetField(u.key,'cost-act');
+        const bud=_fuGetField(u.key,'cost-bud');
+        const var_=bud-act;
+        const varColor=var_>=0?'#16a34a':'#dc2626';
+        const unitsAct=_fuGetField(u.key,'units-act');
+        const rate=unitsAct>0?(act/unitsAct).toFixed(2):'—';
+        return `<tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:8px 10px;font-weight:600;border:1px solid #e2e8f0;background:#f8fafc;">${esc(u.label)}<br><span style="font-size:11px;color:#94a3b8;">${u.unit}</span></td>
+            <td style="padding:6px 8px;border:1px solid #e2e8f0;"><input type="number" id="fu-${u.key}-units-act" value="${_fuGetField(u.key,'units-act')||''}" min="0" step="0.001" placeholder="0.000" style="width:90px;font-size:12px;border:1px solid #cbd5e1;border-radius:4px;padding:4px 6px;text-align:right;" oninput="calcFURow('${u.key}');calcFUGrandTotal()"></td>
+            <td style="padding:6px 8px;border:1px solid #e2e8f0;"><input type="number" id="fu-${u.key}-units-bud" value="${_fuGetField(u.key,'units-bud')||''}" min="0" step="0.001" placeholder="0.000" style="width:90px;font-size:12px;border:1px solid #cbd5e1;border-radius:4px;padding:4px 6px;text-align:right;background:#f8fafc;" oninput="calcFURow('${u.key}')"></td>
+            <td style="padding:6px 8px;border:1px solid #e2e8f0;text-align:center;font-size:12px;color:#64748b;" id="fu-${u.key}-rate">${rate}</td>
+            <td style="padding:6px 8px;border:1px solid #e2e8f0;"><input type="number" id="fu-${u.key}-cost-act" value="${_fuGetField(u.key,'cost-act')||''}" min="0" step="0.01" placeholder="0.00" style="width:110px;font-size:12px;border:1px solid #cbd5e1;border-radius:4px;padding:4px 6px;text-align:right;" oninput="calcFURow('${u.key}');calcFUGrandTotal()"></td>
+            <td style="padding:6px 8px;border:1px solid #e2e8f0;"><input type="number" id="fu-${u.key}-cost-bud" value="${_fuGetField(u.key,'cost-bud')||''}" min="0" step="0.01" placeholder="0.00" style="width:110px;font-size:12px;border:1px solid #cbd5e1;border-radius:4px;padding:4px 6px;text-align:right;background:#f8fafc;" oninput="calcFURow('${u.key}');calcFUGrandTotal()"></td>
+            <td style="padding:8px 10px;border:1px solid #e2e8f0;text-align:right;font-weight:700;color:${varColor};" id="fu-${u.key}-var">${var_>=0?'+':''}${var_.toLocaleString('en-IN',{maximumFractionDigits:0})}</td>
+            <td style="padding:6px 8px;border:1px solid #e2e8f0;"><input type="text" id="fu-${u.key}-remarks" placeholder="Remarks..." style="width:140px;font-size:12px;border:1px solid #cbd5e1;border-radius:4px;padding:4px 6px;"></td>
+        </tr>`;
+    }).join('');
+}
+
+function calcFURow(key) {
+    const act  = parseFloat(document.getElementById('fu-'+key+'-cost-act')?.value)||0;
+    const bud  = parseFloat(document.getElementById('fu-'+key+'-cost-bud')?.value)||0;
+    const uAct = parseFloat(document.getElementById('fu-'+key+'-units-act')?.value)||0;
+    const varEl = document.getElementById('fu-'+key+'-var');
+    const rateEl= document.getElementById('fu-'+key+'-rate');
+    const v=bud-act;
+    if(varEl){ varEl.textContent=(v>=0?'+':'')+v.toLocaleString('en-IN',{maximumFractionDigits:0}); varEl.style.color=v>=0?'#16a34a':'#dc2626'; }
+    if(rateEl) rateEl.textContent=uAct>0?(act/uAct).toFixed(2):'—';
+}
+
+function calcFUGrandTotal() {
+    const totalUtilAct = _FU_UTILS.reduce((s,u)=>s+(parseFloat(document.getElementById('fu-'+u.key+'-cost-act')?.value)||0),0);
+    const totalSparesAct= _fuSpares.reduce((s,r)=>s+(parseFloat(r.actual)||0),0);
+    const totalSparesBud= _fuSpares.reduce((s,r)=>s+(parseFloat(r.budget)||0),0);
+    const grand = totalUtilAct + totalSparesAct;
+    const prodKg= parseFloat(document.getElementById('fu-prod-kg')?.value)||0;
+    const el=id=>document.getElementById(id);
+    if(el('fu-grand-util-act'))   el('fu-grand-util-act').textContent   = '₹ '+totalUtilAct.toLocaleString('en-IN',{maximumFractionDigits:0});
+    if(el('fu-grand-spares-act')) el('fu-grand-spares-act').textContent = '₹ '+totalSparesAct.toLocaleString('en-IN',{maximumFractionDigits:0});
+    if(el('fu-grand-total-act'))  el('fu-grand-total-act').textContent  = '₹ '+grand.toLocaleString('en-IN',{maximumFractionDigits:0});
+    if(el('fu-cost-per-kg'))      el('fu-cost-per-kg').textContent = prodKg>0 ? '₹ '+(grand/prodKg).toFixed(2)+'/KG' : '—';
+    // spares totals row
+    if(el('fu-spares-total-act')) el('fu-spares-total-act').textContent='₹ '+totalSparesAct.toLocaleString('en-IN',{maximumFractionDigits:0});
+    if(el('fu-spares-total-bud')) el('fu-spares-total-bud').textContent='₹ '+totalSparesBud.toLocaleString('en-IN',{maximumFractionDigits:0});
+    const sv=totalSparesBud-totalSparesAct;
+    if(el('fu-spares-total-var')){ el('fu-spares-total-var').textContent=(sv>=0?'+':'')+sv.toLocaleString('en-IN',{maximumFractionDigits:0}); el('fu-spares-total-var').style.color=sv>=0?'#16a34a':'#dc2626'; }
+}
+
+function renderFUSparesBody() {
+    const tbody=document.getElementById('fu-spares-body'); if(!tbody) return;
+    if(!_fuSpares.length) { tbody.innerHTML='<tr><td colspan="6" style="padding:12px;text-align:center;color:#94a3b8;font-size:12px;">No spare/repair lines yet. Click "+ Add Spare / Repair Line".</td></tr>'; calcFUGrandTotal(); return; }
+    tbody.innerHTML=_fuSpares.map(r=>`<tr style="border-bottom:1px solid #f1f5f9;">
+        <td style="padding:6px 10px;border:1px solid #e2e8f0;"><input type="text" value="${esc(r.item||'')}" placeholder="Item description" style="width:100%;font-size:12px;border:1px solid #cbd5e1;border-radius:4px;padding:4px 6px;" oninput="updateFUSpare('${r.id}','item',this.value)"></td>
+        <td style="padding:6px 10px;border:1px solid #e2e8f0;"><input type="number" value="${r.actual||''}" min="0" step="0.01" placeholder="0.00" style="width:110px;font-size:12px;border:1px solid #cbd5e1;border-radius:4px;padding:4px 6px;text-align:right;" oninput="updateFUSpare('${r.id}','actual',parseFloat(this.value)||0);calcFUGrandTotal()"></td>
+        <td style="padding:6px 10px;border:1px solid #e2e8f0;"><input type="number" value="${r.budget||''}" min="0" step="0.01" placeholder="0.00" style="width:110px;font-size:12px;border:1px solid #cbd5e1;border-radius:4px;padding:4px 6px;text-align:right;background:#f8fafc;" oninput="updateFUSpare('${r.id}','budget',parseFloat(this.value)||0);calcFUGrandTotal()"></td>
+        <td style="padding:8px 10px;border:1px solid #e2e8f0;text-align:right;font-weight:700;font-size:12px;${(r.budget||0)-(r.actual||0)>=0?'color:#16a34a':'color:#dc2626'}">${((r.budget||0)-(r.actual||0)>=0?'+':'')+((r.budget||0)-(r.actual||0)).toLocaleString('en-IN',{maximumFractionDigits:0})}</td>
+        <td style="padding:6px 10px;border:1px solid #e2e8f0;"><input type="text" value="${esc(r.remarks||'')}" placeholder="Remarks" style="width:100%;font-size:12px;border:1px solid #cbd5e1;border-radius:4px;padding:4px 6px;" oninput="updateFUSpare('${r.id}','remarks',this.value)"></td>
+        <td style="padding:6px 10px;border:1px solid #e2e8f0;text-align:center;"><button class="btn btn-sm" style="background:#fef2f2;color:#dc2626;border:1px solid #fecaca;" onclick="removeFUSpare('${r.id}')">&#10005;</button></td>
+    </tr>`).join('');
+    calcFUGrandTotal();
+}
+
+function addFUSpare() {
+    _fuSpares.push({id:nid(),item:'',actual:0,budget:0,remarks:''});
+    renderFUSparesBody();
+}
+function updateFUSpare(id,field,val) { const r=_fuSpares.find(x=>x.id===id); if(r) r[field]=val; }
+function removeFUSpare(id) { _fuSpares=_fuSpares.filter(x=>x.id!==id); renderFUSparesBody(); }
+
+function openFUEntry(id) {
+    _fuId = id||null;
+    _fuSpares = [];
+    document.getElementById('fu-form').style.display='';
+    document.getElementById('fu-list-card').style.display='none';
+    // Clear fields
+    _FU_UTILS.forEach(u=>{
+        ['units-act','units-bud','cost-act','cost-bud','remarks'].forEach(f=>{
+            const el=document.getElementById('fu-'+u.key+'-'+f); if(el) el.value='';
+        });
+    });
+    document.getElementById('fu-prod-kg').value='';
+    // Set defaults
+    const now=new Date();
+    document.getElementById('fu-month').value=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+    if(id) {
+        const r=(db.factoryMonthly||[]).find(x=>x.id===id);
+        if(r){
+            document.getElementById('fu-dept').value=r.department||'Maintenance';
+            document.getElementById('fu-month').value=r.yearMonth||'';
+            document.getElementById('fu-prod-kg').value=r.prodKg||'';
+            _FU_UTILS.forEach(u=>{
+                const fu=r.utils&&r.utils[u.key]||{};
+                ['units-act','units-bud','cost-act','cost-bud','remarks'].forEach(f=>{
+                    const el=document.getElementById('fu-'+u.key+'-'+f);
+                    const fk=f.replace(/-/g,'_');
+                    if(el&&fu[fk]!==undefined) el.value=fu[fk];
+                });
+            });
+            _fuSpares=(r.spares||[]).map(s=>({...s}));
+        }
+    }
+    renderFUEntryRows();
+    renderFUSparesBody();
+    calcFUGrandTotal();
+}
+
+function cancelFUEntry() {
+    _fuId=null; _fuSpares=[];
+    document.getElementById('fu-form').style.display='none';
+    document.getElementById('fu-list-card').style.display='';
+}
+
+function saveFUEntry() {
+    const ym=document.getElementById('fu-month').value;
+    if(!ym){ showToast('Select a month'); return; }
+    const dept=document.getElementById('fu-dept').value;
+    // Build utils object
+    const utils={};
+    _FU_UTILS.forEach(u=>{
+        utils[u.key]={
+            units_act:  parseFloat(document.getElementById('fu-'+u.key+'-units-act')?.value)||0,
+            units_bud:  parseFloat(document.getElementById('fu-'+u.key+'-units-bud')?.value)||0,
+            cost_act:   parseFloat(document.getElementById('fu-'+u.key+'-cost-act')?.value)||0,
+            cost_bud:   parseFloat(document.getElementById('fu-'+u.key+'-cost-bud')?.value)||0,
+            remarks:    document.getElementById('fu-'+u.key+'-remarks')?.value.trim()||'',
+        };
+    });
+    const rec={
+        id:        _fuId||nid(),
+        yearMonth: ym,
+        department:dept,
+        prodKg:    parseFloat(document.getElementById('fu-prod-kg')?.value)||0,
+        utils,
+        spares:    _fuSpares.map(s=>({...s})),
+    };
+    if(_fuId){ const i=(db.factoryMonthly||[]).findIndex(r=>r.id===_fuId); if(i>=0) db.factoryMonthly[i]=rec; else (db.factoryMonthly=db.factoryMonthly||[]).push(rec); }
+    else     { (db.factoryMonthly=db.factoryMonthly||[]).push(rec); }
+    persist(); showToast('Entry saved');
+    cancelFUEntry(); renderFUMonthList();
+}
+
+function deleteFUEntry() {
+    if(!_fuId){ showToast('Open an entry first'); return; }
+    if(!confirm('Delete this monthly entry?')) return;
+    db.factoryMonthly=(db.factoryMonthly||[]).filter(r=>r.id!==_fuId);
+    persist(); showToast('Deleted'); cancelFUEntry(); renderFUMonthList();
+}
+
+function _fuTotalUtil(r) {
+    return _FU_UTILS.reduce((s,u)=>s+((r.utils&&r.utils[u.key]&&r.utils[u.key].cost_act)||0),0);
+}
+function _fuTotalSpares(r) { return (r.spares||[]).reduce((s,sp)=>s+(parseFloat(sp.actual)||0),0); }
+function _fuGrand(r) { return _fuTotalUtil(r)+_fuTotalSpares(r); }
+
+function renderFUMonthList() {
+    _populateFUFY();
+    const tbody=document.getElementById('fu-list-body'); if(!tbody) return;
+    const fy=document.getElementById('fu-fy-sel')?.value||_fuCurrentFY();
+    const dept=document.getElementById('fu-dept-sel')?.value||'';
+    const {start,end}=_fyDates(fy);
+    let list=(db.factoryMonthly||[]).filter(r=>r.yearMonth&&r.yearMonth+'-01'>=start&&r.yearMonth+'-01'<=end);
+    if(dept) list=list.filter(r=>r.department===dept);
+    list=list.sort((a,b)=>a.yearMonth.localeCompare(b.yearMonth));
+    if(!list.length){ tbody.innerHTML='<tr><td colspan="12" style="padding:20px;text-align:center;color:#94a3b8;">No entries for this period. Click "+ New Month Entry".</td></tr>'; return; }
+    const inrC=v=>'₹ '+v.toLocaleString('en-IN',{maximumFractionDigits:0});
+    tbody.innerHTML=list.map(r=>{
+        const grand=_fuGrand(r);
+        const spares=_fuTotalSpares(r);
+        const cpkg=r.prodKg>0?'₹ '+(grand/r.prodKg).toFixed(2):'—';
+        const wu=k=>(r.utils&&r.utils[k]&&r.utils[k].cost_act)||0;
+        return `<tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:8px 12px;font-weight:600;">${r.yearMonth}</td>
+            <td style="padding:8px 12px;">${esc(r.department||'—')}</td>
+            <td style="padding:8px 12px;text-align:right;">${wu('water')?inrC(wu('water')):'—'}</td>
+            <td style="padding:8px 12px;text-align:right;">${wu('power')?inrC(wu('power')):'—'}</td>
+            <td style="padding:8px 12px;text-align:right;">${wu('dg')?inrC(wu('dg')):'—'}</td>
+            <td style="padding:8px 12px;text-align:right;">${wu('thermo')?inrC(wu('thermo')):'—'}</td>
+            <td style="padding:8px 12px;text-align:right;">${wu('other')?inrC(wu('other')):'—'}</td>
+            <td style="padding:8px 12px;text-align:right;">${spares?inrC(spares):'—'}</td>
+            <td style="padding:8px 12px;text-align:right;font-weight:700;color:#1d4ed8;">${grand?inrC(grand):'—'}</td>
+            <td style="padding:8px 12px;text-align:right;">${r.prodKg?r.prodKg.toLocaleString('en-IN',{maximumFractionDigits:0}):'—'}</td>
+            <td style="padding:8px 12px;text-align:right;font-weight:700;color:#7c3aed;">${cpkg}</td>
+            <td style="padding:8px 12px;text-align:center;"><button class="btn btn-sm btn-outline" onclick="openFUEntry('${r.id}')">&#9998; Edit</button></td>
+        </tr>`;
+    }).join('');
+}
+
+// ── YTD Summary ───────────────────────────────────────────────────────
+function renderFUYTD() {
+    _populateFUFY();
+    const wrap=document.getElementById('fu-ytd-wrap'); if(!wrap) return;
+    const fy=document.getElementById('fu-ytd-fy')?.value||_fuCurrentFY();
+    const dept=document.getElementById('fu-ytd-dept')?.value||'';
+    const {start,end}=_fyDates(fy);
+    let list=(db.factoryMonthly||[]).filter(r=>r.yearMonth&&r.yearMonth+'-01'>=start&&r.yearMonth+'-01'<=end);
+    if(dept) list=list.filter(r=>r.department===dept);
+    list=list.sort((a,b)=>a.yearMonth.localeCompare(b.yearMonth));
+    if(!list.length){ wrap.innerHTML='<div style="color:#94a3b8;font-size:13px;padding:20px;">No data for this period.</div>'; return; }
+
+    const months=['2025-04','2025-05','2025-06','2025-07','2025-08','2025-09','2025-10','2025-11','2025-12','2026-01','2026-02','2026-03'];
+    const fyStart=2000+parseInt(fy.slice(0,2));
+    const fyMonths=Array.from({length:12},(_,i)=>{
+        const d=new Date(fyStart,3+i,1);
+        return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+    });
+    const monthMap={};
+    list.forEach(r=>{ monthMap[r.yearMonth]=r; });
+    const inrC=v=>v?'₹ '+v.toLocaleString('en-IN',{maximumFractionDigits:0}):'—';
+    const cellStyle='padding:7px 10px;border:1px solid #e2e8f0;text-align:right;font-size:12px;';
+
+    // Totals
+    const totals={util_act:0,util_bud:0,spares_act:0,spares_bud:0,grand_act:0,grand_bud:0};
+    list.forEach(r=>{
+        const ua=_fuTotalUtil(r),sa=_fuTotalSpares(r);
+        const ub=_FU_UTILS.reduce((s,u)=>s+((r.utils&&r.utils[u.key]&&r.utils[u.key].cost_bud)||0),0);
+        const sb=(r.spares||[]).reduce((s,sp)=>s+(parseFloat(sp.budget)||0),0);
+        totals.util_act+=ua; totals.util_bud+=ub;
+        totals.spares_act+=sa; totals.spares_bud+=sb;
+        totals.grand_act+=ua+sa; totals.grand_bud+=ub+sb;
+    });
+    const overallVar=totals.grand_bud-totals.grand_act;
+
+    wrap.innerHTML=`
+    <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:18px;">
+        <div style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:10px;padding:14px 22px;min-width:160px;">
+            <div style="font-size:11px;color:#3b82f6;font-weight:700;text-transform:uppercase;margin-bottom:4px;">Total Utilities (Actual)</div>
+            <div style="font-size:20px;font-weight:800;color:#1d4ed8;">&#8377; ${totals.util_act.toLocaleString('en-IN',{maximumFractionDigits:0})}</div>
+        </div>
+        <div style="background:#fef2f2;border:1.5px solid #fecaca;border-radius:10px;padding:14px 22px;min-width:160px;">
+            <div style="font-size:11px;color:#dc2626;font-weight:700;text-transform:uppercase;margin-bottom:4px;">Total Spares (Actual)</div>
+            <div style="font-size:20px;font-weight:800;color:#dc2626;">&#8377; ${totals.spares_act.toLocaleString('en-IN',{maximumFractionDigits:0})}</div>
+        </div>
+        <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:10px;padding:14px 22px;min-width:160px;">
+            <div style="font-size:11px;color:#16a34a;font-weight:700;text-transform:uppercase;margin-bottom:4px;">Grand Total (Actual)</div>
+            <div style="font-size:20px;font-weight:800;color:#15803d;">&#8377; ${totals.grand_act.toLocaleString('en-IN',{maximumFractionDigits:0})}</div>
+        </div>
+        <div style="background:${overallVar>=0?'#f0fdf4':'#fef2f2'};border:1.5px solid ${overallVar>=0?'#bbf7d0':'#fecaca'};border-radius:10px;padding:14px 22px;min-width:160px;">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;margin-bottom:4px;color:${overallVar>=0?'#16a34a':'#dc2626'};">YTD Variance (Bud−Act)</div>
+            <div style="font-size:20px;font-weight:800;color:${overallVar>=0?'#15803d':'#dc2626'};">${overallVar>=0?'+':''}&#8377; ${Math.abs(overallVar).toLocaleString('en-IN',{maximumFractionDigits:0})}</div>
+        </div>
+    </div>
+    <div style="overflow-x:auto;">
+    <table style="border-collapse:collapse;font-size:12px;min-width:1100px;width:100%;">
+    <thead>
+        <tr>
+            <th rowspan="2" style="padding:9px 12px;background:#1e293b;color:white;border:1px solid #334155;text-align:left;white-space:nowrap;">Month</th>
+            ${_FU_UTILS.map(u=>`<th colspan="3" style="padding:8px 10px;background:#1e40af;color:white;border:1px solid #334155;text-align:center;">${esc(u.label)}</th>`).join('')}
+            <th colspan="2" style="padding:8px 10px;background:#7e22ce;color:white;border:1px solid #334155;text-align:center;">Spares &amp; Repairs</th>
+            <th colspan="3" style="padding:8px 10px;background:#166534;color:white;border:1px solid #334155;text-align:center;">Grand Total</th>
+        </tr>
+        <tr>
+            ${_FU_UTILS.map(()=>'<th style="padding:6px 8px;background:#dbeafe;color:#1e40af;border:1px solid #e2e8f0;font-size:10px;">Act (₹)</th><th style="padding:6px 8px;background:#f0f9ff;color:#64748b;border:1px solid #e2e8f0;font-size:10px;">Bud (₹)</th><th style="padding:6px 8px;background:#fefce8;color:#64748b;border:1px solid #e2e8f0;font-size:10px;">Var</th>').join('')}
+            <th style="padding:6px 8px;background:#f3e8ff;color:#7e22ce;border:1px solid #e2e8f0;font-size:10px;">Act (₹)</th><th style="padding:6px 8px;background:#faf5ff;color:#64748b;border:1px solid #e2e8f0;font-size:10px;">Bud (₹)</th>
+            <th style="padding:6px 8px;background:#dcfce7;color:#166534;border:1px solid #e2e8f0;font-size:10px;">Act (₹)</th><th style="padding:6px 8px;background:#f0fdf4;color:#64748b;border:1px solid #e2e8f0;font-size:10px;">Bud (₹)</th><th style="padding:6px 8px;background:#fefce8;color:#64748b;border:1px solid #e2e8f0;font-size:10px;">Var</th>
+        </tr>
+    </thead><tbody>` +
+    fyMonths.map(ym=>{
+        const r=monthMap[ym];
+        const mLabel=new Date(ym+'-01').toLocaleString('en-IN',{month:'short',year:'2-digit'});
+        if(!r) return `<tr style="background:#f8fafc;"><td style="${cellStyle}text-align:left;color:#94a3b8;">${mLabel}</td>${Array(11).fill(`<td style="${cellStyle}color:#e2e8f0;">—</td>`).join('')}</tr>`;
+        const spAct=_fuTotalSpares(r);
+        const spBud=(r.spares||[]).reduce((s,sp)=>s+(parseFloat(sp.budget)||0),0);
+        const gAct=_fuTotalUtil(r)+spAct;
+        const gBud=_FU_UTILS.reduce((s,u)=>s+((r.utils&&r.utils[u.key]&&r.utils[u.key].cost_bud)||0),0)+spBud;
+        const gVar=gBud-gAct;
+        return `<tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="${cellStyle}text-align:left;font-weight:600;">${mLabel}</td>` +
+            _FU_UTILS.map(u=>{
+                const ud=r.utils&&r.utils[u.key]||{};
+                const a=ud.cost_act||0,b=ud.cost_bud||0,v=b-a;
+                return `<td style="${cellStyle}">${a?'₹ '+a.toLocaleString('en-IN',{maximumFractionDigits:0}):'—'}</td><td style="${cellStyle}color:#64748b;">${b?'₹ '+b.toLocaleString('en-IN',{maximumFractionDigits:0}):'—'}</td><td style="${cellStyle}font-weight:700;${v>=0?'color:#16a34a':'color:#dc2626'}">${a||b?(v>=0?'+':'')+v.toLocaleString('en-IN',{maximumFractionDigits:0}):'—'}</td>`;
+            }).join('') +
+            `<td style="${cellStyle}">${spAct?'₹ '+spAct.toLocaleString('en-IN',{maximumFractionDigits:0}):'—'}</td>
+            <td style="${cellStyle}color:#64748b;">${spBud?'₹ '+spBud.toLocaleString('en-IN',{maximumFractionDigits:0}):'—'}</td>
+            <td style="${cellStyle}font-weight:700;color:#1d4ed8;">${gAct?'₹ '+gAct.toLocaleString('en-IN',{maximumFractionDigits:0}):'—'}</td>
+            <td style="${cellStyle}color:#64748b;">${gBud?'₹ '+gBud.toLocaleString('en-IN',{maximumFractionDigits:0}):'—'}</td>
+            <td style="${cellStyle}font-weight:700;${gVar>=0?'color:#16a34a':'color:#dc2626'}">${gAct||gBud?(gVar>=0?'+':'')+gVar.toLocaleString('en-IN',{maximumFractionDigits:0}):'—'}</td>
+        </tr>`;
+    }).join('') +
+    `<tr style="background:#1e293b;color:white;font-weight:700;">
+        <td style="padding:9px 12px;border:1px solid #334155;">YTD Total</td>` +
+    _FU_UTILS.map(u=>{
+        const a=list.reduce((s,r)=>s+((r.utils&&r.utils[u.key]&&r.utils[u.key].cost_act)||0),0);
+        const b=list.reduce((s,r)=>s+((r.utils&&r.utils[u.key]&&r.utils[u.key].cost_bud)||0),0);
+        const v=b-a;
+        return `<td style="padding:9px 10px;border:1px solid #334155;text-align:right;">₹ ${a.toLocaleString('en-IN',{maximumFractionDigits:0})}</td><td style="padding:9px 10px;border:1px solid #334155;text-align:right;color:#94a3b8;">₹ ${b.toLocaleString('en-IN',{maximumFractionDigits:0})}</td><td style="padding:9px 10px;border:1px solid #334155;text-align:right;${v>=0?'color:#4ade80':'color:#f87171'}">${(v>=0?'+':'')+v.toLocaleString('en-IN',{maximumFractionDigits:0})}</td>`;
+    }).join('') +
+    `<td style="padding:9px 10px;border:1px solid #334155;text-align:right;">₹ ${totals.spares_act.toLocaleString('en-IN',{maximumFractionDigits:0})}</td>
+    <td style="padding:9px 10px;border:1px solid #334155;text-align:right;color:#94a3b8;">₹ ${totals.spares_bud.toLocaleString('en-IN',{maximumFractionDigits:0})}</td>
+    <td style="padding:9px 10px;border:1px solid #334155;text-align:right;">₹ ${totals.grand_act.toLocaleString('en-IN',{maximumFractionDigits:0})}</td>
+    <td style="padding:9px 10px;border:1px solid #334155;text-align:right;color:#94a3b8;">₹ ${totals.grand_bud.toLocaleString('en-IN',{maximumFractionDigits:0})}</td>
+    <td style="padding:9px 10px;border:1px solid #334155;text-align:right;${overallVar>=0?'color:#4ade80':'color:#f87171'}">${(overallVar>=0?'+':'')+overallVar.toLocaleString('en-IN',{maximumFractionDigits:0})}</td>
+    </tr></tbody></table></div>`;
+}
+
+// ── Rate Analysis ─────────────────────────────────────────────────────
+function renderFURates() {
+    _populateFUFY();
+    const wrap=document.getElementById('fu-rates-wrap'); if(!wrap) return;
+    const fy=document.getElementById('fu-rate-fy')?.value||_fuCurrentFY();
+    const {start,end}=_fyDates(fy);
+    const list=(db.factoryMonthly||[]).filter(r=>r.yearMonth&&r.yearMonth+'-01'>=start&&r.yearMonth+'-01'<=end&&r.prodKg>0).sort((a,b)=>a.yearMonth.localeCompare(b.yearMonth));
+    if(!list.length){ wrap.innerHTML='<div style="color:#94a3b8;font-size:13px;padding:20px;">No data with Production Output (KGS) entered for this period.<br>Enter Production KGS in the Monthly Entry form to see rate analysis.</div>'; return; }
+    const cellStyle='padding:8px 12px;border:1px solid #e2e8f0;text-align:right;font-size:13px;';
+    wrap.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:13px;">
+    <thead><tr style="background:#1e293b;color:white;">
+        <th style="padding:9px 12px;border:1px solid #334155;">Month</th>
+        <th style="padding:9px 12px;border:1px solid #334155;">Dept.</th>
+        <th style="padding:9px 12px;text-align:right;border:1px solid #334155;">Output (KGS)</th>
+        <th style="padding:9px 12px;text-align:right;border:1px solid #334155;">Utils Cost (&#8377;)</th>
+        <th style="padding:9px 12px;text-align:right;border:1px solid #334155;">Spares Cost (&#8377;)</th>
+        <th style="padding:9px 12px;text-align:right;border:1px solid #334155;">Grand Total (&#8377;)</th>
+        <th style="padding:9px 12px;text-align:right;border:1px solid #334155;">&#8377; / KGS (Utils)</th>
+        <th style="padding:9px 12px;text-align:right;border:1px solid #334155;">&#8377; / KGS (Spares)</th>
+        <th style="padding:9px 12px;text-align:right;border:1px solid #334155;">&#8377; / KGS (Total)</th>
+    </tr></thead><tbody>` +
+    list.map(r=>{
+        const ua=_fuTotalUtil(r),sa=_fuTotalSpares(r),ga=ua+sa;
+        const cpkgU=r.prodKg>0?(ua/r.prodKg).toFixed(2):'—';
+        const cpkgS=r.prodKg>0?(sa/r.prodKg).toFixed(2):'—';
+        const cpkgG=r.prodKg>0?(ga/r.prodKg).toFixed(2):'—';
+        return `<tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="${cellStyle}text-align:left;font-weight:600;">${r.yearMonth}</td>
+            <td style="${cellStyle}text-align:left;">${esc(r.department||'—')}</td>
+            <td style="${cellStyle}">${r.prodKg.toLocaleString('en-IN',{maximumFractionDigits:0})}</td>
+            <td style="${cellStyle}">₹ ${ua.toLocaleString('en-IN',{maximumFractionDigits:0})}</td>
+            <td style="${cellStyle}">₹ ${sa.toLocaleString('en-IN',{maximumFractionDigits:0})}</td>
+            <td style="${cellStyle}font-weight:700;">₹ ${ga.toLocaleString('en-IN',{maximumFractionDigits:0})}</td>
+            <td style="${cellStyle}color:#2563eb;font-weight:700;">₹ ${cpkgU}</td>
+            <td style="${cellStyle}color:#dc2626;">₹ ${cpkgS}</td>
+            <td style="${cellStyle}color:#7c3aed;font-weight:800;">₹ ${cpkgG}</td>
+        </tr>`;
+    }).join('') + '</tbody></table>';
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// IN-APP MANUAL
+// ══════════════════════════════════════════════════════════════════════
+const _MAN_SECTIONS = [
+  { id:'man-welcome', label:'👋 Welcome & Overview' },
+  { id:'man-rawmat',  label:'⚗️ Raw Material & Chemical Master' },
+  { id:'man-rmwkg',   label:'📐 RM Price Working' },
+  { id:'man-batch',   label:'🧪 Chemical Batch Processing' },
+  { id:'man-ic',      label:'🏭 HO Internal Costing (Chafer & Liner)' },
+  { id:'man-hc',      label:'👤 HO Customer Costing' },
+  { id:'man-mc',      label:'⚙️ Machinery Costing' },
+  { id:'man-sd',      label:'🚛 Sales & Dispatch' },
+  { id:'man-rmi',     label:'🧵 Yarn & RM Inventory' },
+  { id:'man-cph',     label:'📈 Customer Price History' },
+  { id:'man-prod',    label:'🏗️ Production Register' },
+  { id:'man-fp',      label:'💰 Finance & Profitability' },
+  { id:'man-anlx',    label:'📊 Analytics Dashboard' },
+  { id:'man-alrt',    label:'🔔 Alerts' },
+  { id:'man-docs',    label:'📄 Documents' },
+  { id:'man-tips',    label:'💡 Tips & Best Practices' },
+];
+
+const _MAN_CONTENT = {
+
+'man-welcome': `
+<h2 style="margin-top:0;color:#1e293b;font-size:22px;">Welcome to MeCords ERP</h2>
+<p style="color:#64748b;font-size:14px;margin-bottom:20px;">A complete ERP system for textile fabric manufacturing — tire cord, chafer, liner, and industrial fabrics.</p>
+<div style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:10px;padding:18px 22px;margin-bottom:20px;">
+  <b style="color:#1d4ed8;">What this system covers:</b>
+  <ul style="margin:10px 0 0;padding-left:20px;color:#374151;line-height:2;">
+    <li>Raw material and chemical price management</li>
+    <li>Full product costing (Chafer, Liner, Customer, Machinery)</li>
+    <li>Sales Orders and Dispatch Register</li>
+    <li>Yarn &amp; Raw Material Inventory with stock tracking</li>
+    <li>Customer price history and comparison</li>
+    <li>Production job card register</li>
+    <li>Finance &amp; Revenue analytics</li>
+    <li>Automated alerts for stock, orders, and documents</li>
+  </ul>
+</div>
+<div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:10px;padding:18px 22px;margin-bottom:20px;">
+  <b style="color:#15803d;">Recommended order to set up the system for the first time:</b>
+  <ol style="margin:10px 0 0;padding-left:20px;color:#374151;line-height:2.2;">
+    <li>Set up <b>Raw Material &amp; Chemical Master</b> with current prices</li>
+    <li>Add materials to <b>Yarn &amp; RM Inventory</b> master with opening stock</li>
+    <li>Create <b>Product Costing sheets</b> (Internal / Customer)</li>
+    <li>Add <b>Customers</b> and create <b>Sales Orders</b></li>
+    <li>Record <b>Dispatches</b> as goods are shipped</li>
+    <li>Log <b>Production</b> daily or shift-wise</li>
+    <li>Enter <b>Customer Price History</b> for past and current quotes</li>
+    <li>Upload key <b>Documents</b> references (POs, Certificates)</li>
+  </ol>
+</div>
+<div style="background:#fff7ed;border:1.5px solid #fed7aa;border-radius:10px;padding:14px 18px;">
+  <b style="color:#92400e;">Data Storage:</b> All data is saved locally in your browser. Use the Firebase sync if enabled for cloud backup. Export data regularly using the Export button in the settings area.
+</div>`,
+
+'man-rawmat': `
+<h2 style="margin-top:0;color:#1e293b;font-size:22px;">⚗️ Raw Material &amp; Chemical Master</h2>
+<p style="color:#64748b;margin-bottom:16px;">The central price database for all chemicals and raw materials used in costing calculations. Every costing sheet pulls prices from here.</p>
+<div style="background:#eff6ff;border-left:4px solid #3b82f6;border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:20px;"><b>Purpose:</b> Maintain current prices for chemicals, sizing agents, dipping chemicals, and other materials. When prices change, update here and all costing sheets referencing these materials will reflect the new prices.</div>
+<h3 style="color:#374151;font-size:15px;">Step-by-Step: Adding a Chemical / Material</h3>
+<ol style="padding-left:20px;line-height:2.4;">
+  <li>Click the <b>Raw Materials</b> tab in the top navigation</li>
+  <li>Go to the <b>Raw Material &amp; Chemical Master</b> sub-tab</li>
+  <li>Fill in the form:
+    <ul style="margin:4px 0;padding-left:18px;line-height:2;">
+      <li><b>Chemical Name</b> — e.g., "Acrysol WS-68", "RFL Liquid"</li>
+      <li><b>Supplier</b> — supplier name for reference</li>
+      <li><b>Month</b> — the month this price is valid (e.g., Apr-26)</li>
+      <li><b>Price</b> — cost per unit</li>
+      <li><b>Unit</b> — KG, Litre, Bag, etc.</li>
+    </ul>
+  </li>
+  <li>Click <b>Save Chemical</b></li>
+</ol>
+<h3 style="color:#374151;font-size:15px;">Step-by-Step: Updating Prices</h3>
+<ol style="padding-left:20px;line-height:2.4;">
+  <li>Find the chemical in the list and click <b>Edit</b></li>
+  <li>Update the price and change the Month to the current month</li>
+  <li>Click <b>Save Chemical</b></li>
+</ol>
+<div style="background:#fef3c7;border-left:4px solid #f59e0b;border-radius:0 8px 8px 0;padding:12px 16px;margin-top:16px;"><b>💡 Tip:</b> Update chemical prices every month or whenever there is a price change from your supplier. This keeps all costing sheets accurate without editing them individually.</div>`,
+
+'man-rmwkg': `
+<h2 style="margin-top:0;color:#1e293b;font-size:22px;">📐 RM Price Working</h2>
+<p style="color:#64748b;margin-bottom:16px;">Calculates the effective cost of yarn and raw materials per KG or per metre based on yarn specifications, twist, and count. Feeds into the product costing sheets.</p>
+<div style="background:#eff6ff;border-left:4px solid #3b82f6;border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:20px;"><b>Purpose:</b> Convert yarn market prices into a usable cost per KG for the costing sheets. Handles denier, twist factor, and processing costs.</div>
+<h3 style="color:#374151;font-size:15px;">Step-by-Step</h3>
+<ol style="padding-left:20px;line-height:2.4;">
+  <li>Go to <b>Raw Materials</b> → <b>RM Price Working</b> sub-tab</li>
+  <li>Select or enter the <b>yarn type</b> (e.g., 840D Nylon)</li>
+  <li>Enter <b>yarn price</b> as quoted by the supplier</li>
+  <li>Enter <b>denier, count, twist</b> specifications from the product spec sheet</li>
+  <li>The system calculates the effective <b>cost per KG</b> including processing</li>
+  <li>This calculated rate is then used when building a costing sheet</li>
+</ol>
+<div style="background:#fef3c7;border-left:4px solid #f59e0b;border-radius:0 8px 8px 0;padding:12px 16px;margin-top:16px;"><b>💡 Tip:</b> Run a new price working whenever yarn prices change — especially for imported yarn where exchange rates affect cost.</div>`,
+
+'man-batch': `
+<h2 style="margin-top:0;color:#1e293b;font-size:22px;">🧪 Chemical Batch Processing</h2>
+<p style="color:#64748b;margin-bottom:16px;">Tracks chemical consumption per batch and calculates the dipping chemical cost per KG of fabric. Directly used in Internal Costing sheets.</p>
+<div style="background:#eff6ff;border-left:4px solid #3b82f6;border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:20px;"><b>Purpose:</b> Dipping is a major cost in fabric manufacturing. This module lets you record every chemical used in a dip bath, calculate the batch cost, and arrive at cost per KG of fabric processed.</div>
+<h3 style="color:#374151;font-size:15px;">Step-by-Step: Creating a Batch</h3>
+<ol style="padding-left:20px;line-height:2.4;">
+  <li>Go to <b>Chemical Batch Processing</b> tab</li>
+  <li>Click <b>New Batch</b></li>
+  <li>Enter <b>Batch Name / ID</b> (e.g., "Batch Apr 2026 - RFL")</li>
+  <li>Enter <b>Batch Size</b> in KG (how much fabric this bath processes)</li>
+  <li>Add chemicals one by one:
+    <ul style="margin:4px 0;padding-left:18px;line-height:2;">
+      <li>Select chemical from the master list</li>
+      <li>Enter quantity consumed (the price auto-fills from master)</li>
+    </ul>
+  </li>
+  <li>The system calculates <b>Total Batch Cost</b> and <b>Cost per KG of Fabric</b></li>
+  <li>Click <b>Save Batch</b></li>
+  <li>This cost per KG flows into the dipping cost row of your costing sheets</li>
+</ol>
+<div style="background:#fef3c7;border-left:4px solid #f59e0b;border-radius:0 8px 8px 0;padding:12px 16px;margin-top:16px;"><b>💡 Tip:</b> Create separate batches for different qualities (e.g., Nylon RFL vs Polyester RFL) as chemical ratios differ. Label batches clearly with the quality name.</div>`,
+
+'man-ic': `
+<h2 style="margin-top:0;color:#1e293b;font-size:22px;">🏭 HO Internal Costing — Chafer &amp; Liner Fabrics</h2>
+<p style="color:#64748b;margin-bottom:16px;">The core product costing module. Calculates the full manufacturing cost of Chafer or Liner fabrics, plant-by-plant, with a detailed breakup from raw material to net landed cost.</p>
+<div style="background:#eff6ff;border-left:4px solid #3b82f6;border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:20px;"><b>Purpose:</b> Internal use — to know exactly what a product costs to manufacture at each plant. Supports up to 5 plants side-by-side for comparison. Used for pricing decisions, profitability analysis, and internal reviews.</div>
+<h3 style="color:#374151;font-size:15px;">Step-by-Step: Creating a Costing Sheet</h3>
+<ol style="padding-left:20px;line-height:2.4;">
+  <li>Go to <b>HO Product Costing → Internal</b> → choose <b>Chafer Fabrics</b> or <b>Liner Fabrics</b></li>
+  <li>Click <b>New Sheet</b> to start a blank costing</li>
+  <li>Fill in <b>Sheet Details</b> (top section):
+    <ul style="margin:4px 0;padding-left:18px;line-height:2;">
+      <li><b>Party</b> — customer name (e.g., MRF LIMITED)</li>
+      <li><b>Quality</b> — fabric quality code (e.g., DNCF 1616)</li>
+      <li><b>Quarter / Period</b> — e.g., Q1 2026-27</li>
+      <li><b>Date</b> — costing date</li>
+      <li><b>Costing based on MT</b> — production volume basis</li>
+      <li><b>Import Exchange Rate</b> — ₹/$ rate for imported materials</li>
+    </ul>
+  </li>
+  <li>Enter <b>Plant Names</b> in the column headers (each column = one plant)</li>
+  <li>Fill in each <b>cost row</b> for each plant:
+    <ul style="margin:4px 0;padding-left:18px;line-height:2;">
+      <li>Fabric / Yarn Cost</li>
+      <li>Processing / Weaving Cost</li>
+      <li>Dipping Chemical Cost (link to a batch if available)</li>
+      <li>Overheads (Admin, Selling, Depreciation)</li>
+      <li>Finance Cost (auto-calculated as % of Sub-Total + Fabric Waste)</li>
+      <li>Packing Cost</li>
+      <li>IGST</li>
+    </ul>
+  </li>
+  <li>The system auto-calculates all <b>Sub-Totals</b> and <b>Net Landed Cost</b></li>
+  <li>Click <b>Save Sheet</b></li>
+  <li>To print: click the <b>Print</b> button — prints in portrait, single page, with full cost breakup</li>
+</ol>
+<h3 style="color:#374151;font-size:15px;">Understanding the Columns</h3>
+<p>Each column in the costing table represents one manufacturing plant. You can add up to 5 plants and compare costs side by side. The plant name you enter in the header row (orange background) is what appears in print.</p>
+<div style="background:#fef3c7;border-left:4px solid #f59e0b;border-radius:0 8px 8px 0;padding:12px 16px;margin-top:16px;"><b>💡 Tip:</b> Create one sheet per customer per quarter. Name sheets clearly (e.g., "MRF – Q1 2026-27") so you can find them quickly in the dropdown. Use the <b>Sheets Overview</b> to compare Net Landed Cost across all sheets.</div>`,
+
+'man-hc': `
+<h2 style="margin-top:0;color:#1e293b;font-size:22px;">👤 HO Customer Costing</h2>
+<p style="color:#64748b;margin-bottom:16px;">Customer-facing product costing. Similar to Internal Costing but formatted for sharing with customers or for quotation preparation.</p>
+<div style="background:#eff6ff;border-left:4px solid #3b82f6;border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:20px;"><b>Purpose:</b> Prepare a costing sheet that shows the customer how the price is built up. Includes a quotation-ready format. Also includes a Liner Quotation sub-module.</div>
+<h3 style="color:#374151;font-size:15px;">Step-by-Step</h3>
+<ol style="padding-left:20px;line-height:2.4;">
+  <li>Go to <b>HO Product Costing → Customers</b></li>
+  <li>Click <b>New Sheet</b></li>
+  <li>Fill in customer name, quality, and period — same as Internal Costing</li>
+  <li>Enter cost rows as in Internal Costing (this is your cost base)</li>
+  <li>Enter your <b>selling price / target rate</b> to calculate margin</li>
+  <li>Click <b>Save</b> and use <b>Print</b> to generate a formatted quotation sheet</li>
+</ol>
+<h3 style="color:#374151;font-size:15px;">Comparison View</h3>
+<p>Use the <b>Compare</b> sub-tab to view Net Landed Costs from all customer sheets side by side — useful for quarterly review meetings.</p>
+<div style="background:#fef3c7;border-left:4px solid #f59e0b;border-radius:0 8px 8px 0;padding:12px 16px;margin-top:16px;"><b>💡 Tip:</b> Keep Internal and Customer sheets separate. Internal sheets show your true cost (with all overheads). Customer sheets show only what you want the customer to see.</div>`,
+
+'man-mc': `
+<h2 style="margin-top:0;color:#1e293b;font-size:22px;">⚙️ Machinery Costing</h2>
+<p style="color:#64748b;margin-bottom:16px;">Evaluate the economics of machinery — operating cost per KG, comparison across multiple machines, and investment analysis.</p>
+<div style="background:#eff6ff;border-left:4px solid #3b82f6;border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:20px;"><b>Purpose:</b> When buying new machinery or comparing plant efficiency, this module calculates the true cost per KG output for each machine including depreciation, power, maintenance, and labour.</div>
+<h3 style="color:#374151;font-size:15px;">Step-by-Step: Creating a Machinery Costing Sheet</h3>
+<ol style="padding-left:20px;line-height:2.4;">
+  <li>Go to <b>Machinery Costing → Costing Sheet</b></li>
+  <li>Click <b>New Sheet</b> and give it a name</li>
+  <li>Click <b>Add Machine</b> to add each machine you want to evaluate</li>
+  <li>For each machine, enter:
+    <ul style="margin:4px 0;padding-left:18px;line-height:2;">
+      <li><b>Machine Name / Description</b></li>
+      <li><b>Quantity</b> of machines</li>
+      <li>Power consumption, operator count, maintenance cost</li>
+      <li>Machine purchase cost (for depreciation)</li>
+      <li>Annual output capacity (KGS)</li>
+    </ul>
+  </li>
+  <li>The system calculates <b>Net Landed Cost per KG</b> for each machine</li>
+  <li>Click <b>Save Sheet</b></li>
+</ol>
+<h3 style="color:#374151;font-size:15px;">Cost Comparison</h3>
+<ol style="padding-left:20px;line-height:2.4;">
+  <li>Go to <b>Cost Comparison</b> sub-tab</li>
+  <li>Select the sheet — all machines appear side by side</li>
+  <li>Shows: Machine Name, Quantity, Net Landed Cost per KG</li>
+  <li>Use this to decide which machine type is most economical</li>
+</ol>
+<div style="background:#fef3c7;border-left:4px solid #f59e0b;border-radius:0 8px 8px 0;padding:12px 16px;margin-top:16px;"><b>💡 Tip:</b> Use the <b>Sheets Overview</b> to compare Net Landed Costs across multiple machinery costing sheets — useful when evaluating different technology options from different vendors.</div>`,
+
+'man-sd': `
+<h2 style="margin-top:0;color:#1e293b;font-size:22px;">🚛 Sales &amp; Dispatch</h2>
+<p style="color:#64748b;margin-bottom:16px;">Manage the full order-to-delivery cycle. Create Sales Orders with multiple line items, record dispatches against them, and track pending quantities in real time.</p>
+<div style="background:#eff6ff;border-left:4px solid #3b82f6;border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:20px;"><b>Purpose:</b> Replaces a manual dispatch register. Every Sales Order and every dispatch is recorded here. The system automatically calculates how much has been dispatched and how much is still pending for each SO line.</div>
+<h3 style="color:#374151;font-size:15px;">Step 1: Create a Sales Order</h3>
+<ol style="padding-left:20px;line-height:2.4;">
+  <li>Go to <b>Sales &amp; Dispatch → Sales Orders</b></li>
+  <li>Click <b>+ New SO</b> — the system auto-generates the SO number (e.g., SO/2526/001)</li>
+  <li>Enter:
+    <ul style="margin:4px 0;padding-left:18px;line-height:2;">
+      <li><b>Date</b> of the order</li>
+      <li><b>Customer Name</b> — e.g., MRF LIMITED</li>
+      <li><b>Plant Name</b> — customer's plant (e.g., Chennai)</li>
+      <li><b>Status</b> — set to <i>Confirmed</i> when the order is confirmed</li>
+      <li><b>Remarks</b> — special instructions, delivery terms</li>
+    </ul>
+  </li>
+  <li>Click <b>+ Add Line</b> to add line items:
+    <ul style="margin:4px 0;padding-left:18px;line-height:2;">
+      <li><b>Quality</b> — fabric quality code</li>
+      <li><b>Description</b> — brief description</li>
+      <li><b>Qty (KGS)</b> — ordered quantity</li>
+      <li><b>Rate (₹/KGS)</b> — selling price per KG (or click "From Costing" to link to a costing sheet)</li>
+      <li>Amount auto-calculates</li>
+    </ul>
+  </li>
+  <li>Add as many line items as needed (one per quality/grade)</li>
+  <li>Click <b>💾 Save SO</b></li>
+</ol>
+<h3 style="color:#374151;font-size:15px;">Step 2: Record a Dispatch</h3>
+<ol style="padding-left:20px;line-height:2.4;">
+  <li>Go to <b>Dispatch Register</b> sub-tab</li>
+  <li>Click <b>+ New Dispatch</b></li>
+  <li>Enter dispatch details:
+    <ul style="margin:4px 0;padding-left:18px;line-height:2;">
+      <li><b>Date</b> of dispatch</li>
+      <li><b>Invoice Number</b></li>
+      <li><b>LR Number</b> (Lorry Receipt)</li>
+      <li><b>E-Way Bill No.</b></li>
+      <li><b>Transporter</b> name</li>
+      <li><b>Vehicle No.</b></li>
+    </ul>
+  </li>
+  <li>Click <b>+ Add Line</b> for each item being dispatched:
+    <ul style="margin:4px 0;padding-left:18px;line-height:2;">
+      <li>Select the <b>Sales Order</b> from dropdown</li>
+      <li>Select the <b>line item</b> (quality) from that SO</li>
+      <li>System shows <b>Pending Qty</b> automatically</li>
+      <li>Enter the <b>Dispatch Qty</b> (cannot exceed pending)</li>
+    </ul>
+  </li>
+  <li>One dispatch can cover multiple SOs and multiple line items</li>
+  <li>Click <b>💾 Save Dispatch</b></li>
+</ol>
+<h3 style="color:#374151;font-size:15px;">Step 3: Monitor Pending Orders</h3>
+<ol style="padding-left:20px;line-height:2.4;">
+  <li>Go to <b>Pending Summary</b> sub-tab</li>
+  <li>See all open SO lines with SO Qty, Dispatched, and Pending</li>
+  <li>Filter by customer or status</li>
+  <li>Green rows = fully dispatched, Orange = partially dispatched, Red = not yet dispatched</li>
+</ol>
+<div style="background:#fef3c7;border-left:4px solid #f59e0b;border-radius:0 8px 8px 0;padding:12px 16px;margin-top:16px;"><b>💡 Tip:</b> Change the SO Status to <i>Dispatched</i> once all quantities are dispatched. This removes it from the pending alerts. Update status to <i>In Production</i> when manufacturing starts.</div>`,
+
+'man-rmi': `
+<h2 style="margin-top:0;color:#1e293b;font-size:22px;">🧵 Yarn &amp; RM Inventory</h2>
+<p style="color:#64748b;margin-bottom:16px;">Full stock management for yarn and raw materials. Tracks every receipt (GRN) and every issue — giving you real-time stock position, weighted average cost, and low stock alerts.</p>
+<div style="background:#eff6ff;border-left:4px solid #3b82f6;border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:20px;"><b>Purpose:</b> Know exactly how much of each yarn / chemical / packing material you have in stock at any point. The system calculates stock value using weighted average rate, and alerts you when stock goes below the reorder level.</div>
+<h3 style="color:#374151;font-size:15px;">Step 1: Set Up Material Master</h3>
+<ol style="padding-left:20px;line-height:2.4;">
+  <li>Go to <b>Yarn &amp; RM Inventory → Material Master</b></li>
+  <li>Click <b>+ New Material</b></li>
+  <li>Enter:
+    <ul style="margin:4px 0;padding-left:18px;line-height:2;">
+      <li><b>Material Code</b> — e.g., NY840D (optional but helpful)</li>
+      <li><b>Material Name</b> — e.g., 840D Nylon Yarn</li>
+      <li><b>Category</b> — Nylon Yarn / Polyester Yarn / Chemicals / Packing Material etc.</li>
+      <li><b>Unit</b> — KGS, MT, Litres, Bags, Rolls, Nos</li>
+      <li><b>Opening Qty</b> — current stock on hand when you start the system</li>
+      <li><b>Opening Rate (₹)</b> — average purchase rate of existing stock</li>
+      <li><b>Reorder Level</b> — minimum stock to trigger a low-stock alert</li>
+      <li><b>Supplier</b> — primary supplier name</li>
+      <li><b>Notes</b> — specifications, denier, grade etc.</li>
+    </ul>
+  </li>
+  <li>Click <b>💾 Save Material</b></li>
+  <li>Repeat for all yarn types, chemicals, and packing materials</li>
+</ol>
+<h3 style="color:#374151;font-size:15px;">Step 2: Record Goods Received (GRN)</h3>
+<ol style="padding-left:20px;line-height:2.4;">
+  <li>Go to <b>GRN / Inward</b> sub-tab</li>
+  <li>Click <b>+ New GRN</b> — system auto-generates GRN number (e.g., GRN/2526/001)</li>
+  <li>Enter:
+    <ul style="margin:4px 0;padding-left:18px;line-height:2;">
+      <li><b>Date</b> of receipt</li>
+      <li><b>Material</b> — select from master dropdown</li>
+      <li><b>Qty</b> — quantity received</li>
+      <li><b>Rate</b> — purchase rate per unit (₹/KGS)</li>
+      <li>Value auto-calculates</li>
+      <li><b>Supplier</b> — auto-fills from master, can be changed</li>
+      <li><b>Invoice / DC No.</b> — supplier invoice or delivery challan number</li>
+    </ul>
+  </li>
+  <li>Click <b>💾 Save GRN</b> — stock is immediately updated</li>
+</ol>
+<h3 style="color:#374151;font-size:15px;">Step 3: Record Material Issues (Outward)</h3>
+<ol style="padding-left:20px;line-height:2.4;">
+  <li>Go to <b>Issue / Outward</b> sub-tab</li>
+  <li>Click <b>+ New Issue</b> — system auto-generates Issue No. (e.g., ISS/2526/001)</li>
+  <li>Select <b>Material</b> — the <i>Available Stock</i> field shows current balance</li>
+  <li>Enter:
+    <ul style="margin:4px 0;padding-left:18px;line-height:2;">
+      <li><b>Qty</b> to issue (system blocks if it exceeds available stock)</li>
+      <li><b>Issued To</b> — e.g., Production, Lab, QC</li>
+      <li><b>Remarks</b> — batch reference, job number etc.</li>
+    </ul>
+  </li>
+  <li>Click <b>💾 Save Issue</b></li>
+</ol>
+<h3 style="color:#374151;font-size:15px;">Step 4: View Stock Summary</h3>
+<ol style="padding-left:20px;line-height:2.4;">
+  <li>Go to <b>Stock Summary</b> sub-tab</li>
+  <li>See a complete stock report:
+    <ul style="margin:4px 0;padding-left:18px;line-height:2;">
+      <li>Opening + Total In − Total Out = <b>Current Stock</b></li>
+      <li><b>Weighted Average Rate</b> — calculated across all purchases</li>
+      <li><b>Stock Value</b> — current stock × average rate</li>
+      <li>Status badges: <span style="background:#16a34a;color:#fff;padding:1px 8px;border-radius:10px;font-size:11px;">OK ✓</span> <span style="background:#f97316;color:#fff;padding:1px 8px;border-radius:10px;font-size:11px;">LOW ⚠</span> <span style="background:#dc2626;color:#fff;padding:1px 8px;border-radius:10px;font-size:11px;">OUT OF STOCK</span></li>
+    </ul>
+  </li>
+  <li>Filter by Category or Stock Level</li>
+</ol>
+<div style="background:#fef3c7;border-left:4px solid #f59e0b;border-radius:0 8px 8px 0;padding:12px 16px;margin-top:16px;"><b>💡 Tip:</b> Set meaningful Reorder Levels for each material. A good rule of thumb: set the reorder level equal to 2 weeks of average consumption. This gives you time to place a purchase order before running out.</div>`,
+
+'man-cph': `
+<h2 style="margin-top:0;color:#1e293b;font-size:22px;">📈 Customer Price History</h2>
+<p style="color:#64748b;margin-bottom:16px;">Maintain a complete record of every price quoted or confirmed to every customer for every quality. Compare prices across customers for the same fabric quality.</p>
+<div style="background:#eff6ff;border-left:4px solid #3b82f6;border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:20px;"><b>Purpose:</b> Track price trends over time. Know what price you offered MRF vs Apollo vs CEAT for the same quality. See at a glance which customer got a better rate and when prices were revised.</div>
+<h3 style="color:#374151;font-size:15px;">Step-by-Step: Adding a Price Record</h3>
+<ol style="padding-left:20px;line-height:2.4;">
+  <li>Go to <b>Customer Price History</b> tab</li>
+  <li>Click <b>+ New Record</b></li>
+  <li>Enter:
+    <ul style="margin:4px 0;padding-left:18px;line-height:2;">
+      <li><b>Date</b> — when the price was quoted or confirmed</li>
+      <li><b>Customer</b> — customer name (type to autocomplete from history)</li>
+      <li><b>Plant</b> — customer's plant (e.g., Chennai, Goa)</li>
+      <li><b>Quality</b> — fabric quality code (type to autocomplete)</li>
+      <li><b>Description</b> — brief description of the fabric</li>
+      <li><b>Period</b> — e.g., Q1 2026-27 (pricing period)</li>
+      <li><b>Price per KG</b> — the price in ₹ (or $)</li>
+      <li><b>Currency</b> — INR or USD</li>
+      <li><b>Status</b>:
+        <ul style="padding-left:16px;">
+          <li><i>Quoted</i> — price sent to customer, awaiting confirmation</li>
+          <li><i>Confirmed</i> — customer has accepted the price</li>
+          <li><i>Revised</i> — price was revised (add a new record)</li>
+          <li><i>Rejected</i> — customer rejected this price</li>
+        </ul>
+      </li>
+      <li><b>Notes</b> — any relevant remarks</li>
+    </ul>
+  </li>
+  <li>Click <b>💾 Save Record</b></li>
+</ol>
+<h3 style="color:#374151;font-size:15px;">Tracking Price Revisions</h3>
+<p>Do not edit old price records when prices change. Instead, add a new record with the new price and status "Revised". This maintains a complete audit trail of all price changes.</p>
+<h3 style="color:#374151;font-size:15px;">Compare View</h3>
+<ol style="padding-left:20px;line-height:2.4;">
+  <li>Click <b>📊 Compare</b> button</li>
+  <li>A pivot table appears: rows = Qualities, columns = Customers</li>
+  <li>Each cell shows the latest Confirmed or Quoted price for that customer/quality combination</li>
+  <li>Use filters to narrow to specific customers or qualities</li>
+</ol>
+<div style="background:#fef3c7;border-left:4px solid #f59e0b;border-radius:0 8px 8px 0;padding:12px 16px;margin-top:16px;"><b>💡 Tip:</b> Enter prices quarterly at the start of each quarter. Add a record for every customer-quality combination you supply. Over time, this becomes a valuable database of pricing history for negotiations.</div>`,
+
+'man-prod': `
+<h2 style="margin-top:0;color:#1e293b;font-size:22px;">🏗️ Production Register</h2>
+<p style="color:#64748b;margin-bottom:16px;">Log daily production output shift-by-shift and machine-by-machine. Track target vs actual output, waste, and efficiency percentage.</p>
+<div style="background:#eff6ff;border-left:4px solid #3b82f6;border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:20px;"><b>Purpose:</b> Replace the manual production register. Every job card entered here gives you a real-time view of machine-wise efficiency, quality-wise output, and monthly production totals.</div>
+<h3 style="color:#374151;font-size:15px;">Step-by-Step: Creating a Job Card</h3>
+<ol style="padding-left:20px;line-height:2.4;">
+  <li>Go to <b>Production Register</b> tab</li>
+  <li>Click <b>+ New Job Card</b> — Job No. auto-generates (e.g., JOB/2526/001)</li>
+  <li>Enter:
+    <ul style="margin:4px 0;padding-left:18px;line-height:2;">
+      <li><b>Date</b> — production date</li>
+      <li><b>Quality</b> — fabric quality produced (e.g., DNCF 1616)</li>
+      <li><b>Description</b> — brief description</li>
+      <li><b>Machine</b> — machine name or number</li>
+      <li><b>Shift</b> — A, B, C, or Day</li>
+      <li><b>Target (KGS)</b> — planned production for this shift</li>
+      <li><b>Actual (KGS)</b> — actual production achieved</li>
+      <li><b>Waste (KGS)</b> — material wasted / rejected</li>
+      <li><b>Efficiency</b> — auto-calculates as Actual ÷ Target × 100%</li>
+      <li><b>Operator</b> — operator or shift supervisor name</li>
+      <li><b>Status</b> — Planned / In Progress / Completed</li>
+    </ul>
+  </li>
+  <li>Click <b>💾 Save Job Card</b></li>
+</ol>
+<h3 style="color:#374151;font-size:15px;">Understanding Efficiency Colours</h3>
+<ul style="padding-left:20px;line-height:2.4;">
+  <li><span style="color:#16a34a;font-weight:700;">Green (≥ 95%)</span> — Excellent, target achieved</li>
+  <li><span style="color:#d97706;font-weight:700;">Amber (80–94%)</span> — Acceptable, room for improvement</li>
+  <li><span style="color:#dc2626;font-weight:700;">Red (&lt; 80%)</span> — Below target, needs investigation</li>
+</ul>
+<h3 style="color:#374151;font-size:15px;">Monthly Summary</h3>
+<ol style="padding-left:20px;line-height:2.4;">
+  <li>Go to <b>Monthly Summary</b> sub-tab</li>
+  <li>Select the month from the dropdown</li>
+  <li>See: Total Output (KGS), Overall Efficiency, Total Waste — broken down by machine</li>
+</ol>
+<div style="background:#fef3c7;border-left:4px solid #f59e0b;border-radius:0 8px 8px 0;padding:12px 16px;margin-top:16px;"><b>💡 Tip:</b> Create one Job Card per machine per shift. Set status to <i>Planned</i> at the start of the shift, <i>In Progress</i> during, and <i>Completed</i> at end of shift with actual numbers filled in. This discipline gives you accurate monthly summaries.</div>`,
+
+'man-fp': `
+<h2 style="margin-top:0;color:#1e293b;font-size:22px;">💰 Finance &amp; Profitability</h2>
+<p style="color:#64748b;margin-bottom:16px;">Revenue summary and order book analysis — automatically derived from your Sales Orders and Dispatch records. No manual entry needed.</p>
+<div style="background:#eff6ff;border-left:4px solid #3b82f6;border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:20px;"><b>Purpose:</b> Understand how much revenue has been generated (dispatched), how much is still in the order book, and which customers contribute the most. Data is calculated live from SO and Dispatch records.</div>
+<h3 style="color:#374151;font-size:15px;">Revenue Summary</h3>
+<ol style="padding-left:20px;line-height:2.4;">
+  <li>Go to <b>Finance &amp; Profitability → Revenue Summary</b></li>
+  <li>Select the <b>Financial Year</b> from the dropdown</li>
+  <li>Click <b>Refresh</b></li>
+  <li>You will see:
+    <ul style="margin:4px 0;padding-left:18px;line-height:2;">
+      <li><b>Dispatched Revenue</b> — qty dispatched × rate from SO, for the selected FY</li>
+      <li><b>Order Book Value</b> — total value of all SOs in the FY</li>
+      <li><b>Pending Dispatch</b> — difference (yet to be invoiced)</li>
+      <li><b>Monthly Revenue</b> — month-by-month breakdown</li>
+      <li><b>Customer-wise Revenue</b> — top customers ranked by revenue</li>
+    </ul>
+  </li>
+</ol>
+<h3 style="color:#374151;font-size:15px;">Profitability View</h3>
+<ol style="padding-left:20px;line-height:2.4;">
+  <li>Go to <b>Profitability</b> sub-tab</li>
+  <li>Shows all confirmed / in-production SOs with:
+    <ul style="margin:4px 0;padding-left:18px;line-height:2;">
+      <li>Qty ordered, Rate per KG, Total Order Value</li>
+      <li>Qty already dispatched</li>
+    </ul>
+  </li>
+  <li>Review which orders have the highest value and prioritise dispatch accordingly</li>
+</ol>
+<div style="background:#fef3c7;border-left:4px solid #f59e0b;border-radius:0 8px 8px 0;padding:12px 16px;margin-top:16px;"><b>💡 Tip:</b> For best results, ensure that every Sales Order has the correct Rate per KG entered, and every dispatch is recorded promptly. The more accurate your SO and dispatch data, the more reliable the financial figures.</div>`,
+
+'man-anlx': `
+<h2 style="margin-top:0;color:#1e293b;font-size:22px;">📊 Analytics Dashboard</h2>
+<p style="color:#64748b;margin-bottom:16px;">A bird's-eye view of your entire business — key metrics, top customers, and production output — all in one screen.</p>
+<div style="background:#eff6ff;border-left:4px solid #3b82f6;border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:20px;"><b>Purpose:</b> Quick morning check — open Analytics to see the health of the business at a glance. No manual data entry needed; it reads all other modules automatically.</div>
+<h3 style="color:#374151;font-size:15px;">KPI Cards Explained</h3>
+<table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:16px;">
+  <tr style="background:#f1f5f9;"><th style="padding:8px 12px;text-align:left;border:1px solid #e2e8f0;">KPI</th><th style="padding:8px 12px;text-align:left;border:1px solid #e2e8f0;">What it shows</th><th style="padding:8px 12px;text-align:left;border:1px solid #e2e8f0;">Source</th></tr>
+  <tr><td style="padding:7px 12px;border:1px solid #e2e8f0;"><b>Order Book</b></td><td style="padding:7px 12px;border:1px solid #e2e8f0;">Total value of all SOs in selected FY</td><td style="padding:7px 12px;border:1px solid #e2e8f0;">Sales Orders</td></tr>
+  <tr style="background:#f8fafc;"><td style="padding:7px 12px;border:1px solid #e2e8f0;"><b>Dispatched Revenue</b></td><td style="padding:7px 12px;border:1px solid #e2e8f0;">Revenue from goods actually shipped</td><td style="padding:7px 12px;border:1px solid #e2e8f0;">Dispatch records × SO rates</td></tr>
+  <tr><td style="padding:7px 12px;border:1px solid #e2e8f0;"><b>Pending Orders</b></td><td style="padding:7px 12px;border:1px solid #e2e8f0;">Count of SOs not yet fully dispatched</td><td style="padding:7px 12px;border:1px solid #e2e8f0;">Sales Orders</td></tr>
+  <tr style="background:#f8fafc;"><td style="padding:7px 12px;border:1px solid #e2e8f0;"><b>RM Stock Value</b></td><td style="padding:7px 12px;border:1px solid #e2e8f0;">Total value of current raw material inventory</td><td style="padding:7px 12px;border:1px solid #e2e8f0;">RM Inventory</td></tr>
+  <tr><td style="padding:7px 12px;border:1px solid #e2e8f0;"><b>Production Output</b></td><td style="padding:7px 12px;border:1px solid #e2e8f0;">Total KGS produced (completed jobs)</td><td style="padding:7px 12px;border:1px solid #e2e8f0;">Production Register</td></tr>
+  <tr style="background:#f8fafc;"><td style="padding:7px 12px;border:1px solid #e2e8f0;"><b>Low Stock Alerts</b></td><td style="padding:7px 12px;border:1px solid #e2e8f0;">Number of materials at/below reorder level</td><td style="padding:7px 12px;border:1px solid #e2e8f0;">RM Inventory</td></tr>
+</table>
+<h3 style="color:#374151;font-size:15px;">How to Use</h3>
+<ol style="padding-left:20px;line-height:2.4;">
+  <li>Go to <b>Analytics</b> tab</li>
+  <li>Select the <b>Financial Year</b> you want to analyse</li>
+  <li>Click <b>Refresh</b> (or it loads automatically)</li>
+  <li>Review KPI cards, Top 5 Customers table, and Quality-wise Production table</li>
+</ol>
+<div style="background:#fef3c7;border-left:4px solid #f59e0b;border-radius:0 8px 8px 0;padding:12px 16px;margin-top:16px;"><b>💡 Tip:</b> Use Analytics for your Monday morning review meeting. It gives a complete picture of the week's performance without having to open multiple tabs.</div>`,
+
+'man-alrt': `
+<h2 style="margin-top:0;color:#1e293b;font-size:22px;">🔔 Alerts</h2>
+<p style="color:#64748b;margin-bottom:16px;">Automatic alerts for stock, orders, and document expiry — so nothing slips through the cracks.</p>
+<div style="background:#eff6ff;border-left:4px solid #3b82f6;border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:20px;"><b>Purpose:</b> The Alerts tab scans all modules every time you open it and flags anything that needs attention. No manual monitoring needed.</div>
+<h3 style="color:#374151;font-size:15px;">Alert Types</h3>
+<table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:16px;">
+  <tr style="background:#f1f5f9;"><th style="padding:8px 12px;border:1px solid #e2e8f0;">Alert</th><th style="padding:8px 12px;border:1px solid #e2e8f0;">Trigger condition</th><th style="padding:8px 12px;border:1px solid #e2e8f0;">Action required</th></tr>
+  <tr><td style="padding:7px 12px;border:1px solid #e2e8f0;"><span style="color:#dc2626;font-weight:700;">🔴 Out of Stock</span></td><td style="padding:7px 12px;border:1px solid #e2e8f0;">RM item current stock ≤ 0</td><td style="padding:7px 12px;border:1px solid #e2e8f0;">Place purchase order immediately</td></tr>
+  <tr style="background:#f8fafc;"><td style="padding:7px 12px;border:1px solid #e2e8f0;"><span style="color:#ea580c;font-weight:700;">🟠 Low Stock</span></td><td style="padding:7px 12px;border:1px solid #e2e8f0;">Stock ≤ Reorder Level</td><td style="padding:7px 12px;border:1px solid #e2e8f0;">Initiate purchase order</td></tr>
+  <tr><td style="padding:7px 12px;border:1px solid #e2e8f0;"><span style="color:#ea580c;font-weight:700;">🟠 Pending Dispatch</span></td><td style="padding:7px 12px;border:1px solid #e2e8f0;">Confirmed SO with no dispatch for 30+ days</td><td style="padding:7px 12px;border:1px solid #e2e8f0;">Follow up on dispatch</td></tr>
+  <tr style="background:#f8fafc;"><td style="padding:7px 12px;border:1px solid #e2e8f0;"><span style="color:#dc2626;font-weight:700;">🔴 Expired Document</span></td><td style="padding:7px 12px;border:1px solid #e2e8f0;">Document expiry date is past</td><td style="padding:7px 12px;border:1px solid #e2e8f0;">Renew certificate/agreement</td></tr>
+  <tr><td style="padding:7px 12px;border:1px solid #e2e8f0;"><span style="color:#ea580c;font-weight:700;">🟠 Expiring Soon</span></td><td style="padding:7px 12px;border:1px solid #e2e8f0;">Document expires within 30 days</td><td style="padding:7px 12px;border:1px solid #e2e8f0;">Plan renewal</td></tr>
+</table>
+<h3 style="color:#374151;font-size:15px;">How to Use</h3>
+<ol style="padding-left:20px;line-height:2.4;">
+  <li>Click the <b>Alerts</b> tab — alerts load automatically</li>
+  <li>Click <b>🔄 Refresh</b> to re-scan after taking action</li>
+  <li>Address alerts in priority order: Out of Stock first, then Low Stock, then others</li>
+</ol>
+<h3 style="color:#374151;font-size:15px;">How to Activate Alerts</h3>
+<ul style="padding-left:20px;line-height:2.4;">
+  <li>For <b>stock alerts</b>: Set a Reorder Level in the RM Inventory Material Master</li>
+  <li>For <b>dispatch alerts</b>: SOs are auto-scanned — just ensure SOs are saved with correct status</li>
+  <li>For <b>document alerts</b>: Enter an Expiry Date when saving a document in the Documents tab</li>
+</ul>
+<div style="background:#fef3c7;border-left:4px solid #f59e0b;border-radius:0 8px 8px 0;padding:12px 16px;margin-top:16px;"><b>💡 Tip:</b> Check Alerts every morning as the first thing you do. A clean Alerts screen (all green ✅) means no immediate action is needed.</div>`,
+
+'man-docs': `
+<h2 style="margin-top:0;color:#1e293b;font-size:22px;">📄 Documents</h2>
+<p style="color:#64748b;margin-bottom:16px;">A central register for all important business documents — purchase orders, certificates, test reports, agreements. Track reference numbers and expiry dates.</p>
+<div style="background:#eff6ff;border-left:4px solid #3b82f6;border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:20px;"><b>Purpose:</b> Know exactly where every document is and when certificates expire. Documents with expiry dates automatically appear in the Alerts tab before they expire.</div>
+<h3 style="color:#374151;font-size:15px;">Step-by-Step: Adding a Document</h3>
+<ol style="padding-left:20px;line-height:2.4;">
+  <li>Go to <b>Documents</b> tab</li>
+  <li>Click <b>+ New Document</b></li>
+  <li>Enter:
+    <ul style="margin:4px 0;padding-left:18px;line-height:2;">
+      <li><b>Date</b> — date of the document</li>
+      <li><b>Document Name</b> — clear, descriptive name (e.g., "MRF Purchase Order Apr 2026")</li>
+      <li><b>Type</b> — Purchase Order / Sales Order / Invoice / Delivery Challan / GRN / Certificate / Test Report / Agreement / Other</li>
+      <li><b>Reference No.</b> — PO number, invoice number, certificate number</li>
+      <li><b>Linked To</b> — optionally link to a Sales Order, GRN, Customer, or Supplier</li>
+      <li><b>Linked Ref.</b> — the SO/GRN number or customer name you are linking to</li>
+      <li><b>Expiry Date</b> — fill this for certificates, agreements, and approvals that have a validity period</li>
+      <li><b>Notes</b> — any relevant remarks</li>
+    </ul>
+  </li>
+  <li>Click <b>💾 Save Document</b></li>
+</ol>
+<h3 style="color:#374151;font-size:15px;">Expiry Status (in the list)</h3>
+<ul style="padding-left:20px;line-height:2.4;">
+  <li><span style="color:#16a34a;font-weight:700;">Green date</span> — valid, expires in more than 30 days</li>
+  <li><span style="color:#d97706;font-weight:700;">Amber "Expires in X days"</span> — expiring within 30 days, plan renewal</li>
+  <li><span style="color:#dc2626;font-weight:700;">Red "Expired X days ago"</span> — expired, action required</li>
+</ul>
+<div style="background:#fef3c7;border-left:4px solid #f59e0b;border-radius:0 8px 8px 0;padding:12px 16px;margin-top:16px;"><b>💡 Tip:</b> Register all quality certificates (ISO, IATF, product approvals) here with their expiry dates. The Alerts tab will remind you 30 days before they expire — giving you time to arrange audit/renewal without last-minute rush.</div>`,
+
+'man-tips': `
+<h2 style="margin-top:0;color:#1e293b;font-size:22px;">💡 Tips &amp; Best Practices</h2>
+<h3 style="color:#374151;font-size:15px;">Daily Routine</h3>
+<ul style="padding-left:20px;line-height:2.4;">
+  <li>Open <b>Alerts</b> first thing every morning</li>
+  <li>Enter <b>Production</b> job cards at end of each shift</li>
+  <li>Record <b>Dispatches</b> on the same day goods are shipped</li>
+  <li>Record <b>GRNs</b> on the day material is received</li>
+</ul>
+<h3 style="color:#374151;font-size:15px;">Monthly Routine</h3>
+<ul style="padding-left:20px;line-height:2.4;">
+  <li>Update <b>Raw Material &amp; Chemical</b> prices at the start of each month</li>
+  <li>Review <b>Analytics</b> dashboard at the start of each month for the previous month's performance</li>
+  <li>Add <b>Customer Price History</b> records at the start of each quarter</li>
+  <li>Create new <b>Costing Sheets</b> when raw material prices change significantly</li>
+</ul>
+<h3 style="color:#374151;font-size:15px;">Naming Conventions</h3>
+<ul style="padding-left:20px;line-height:2.4;">
+  <li><b>Costing sheets</b>: "Customer Name – Quality – Period" (e.g., "MRF – DNCF 1616 – Q1 2026-27")</li>
+  <li><b>Production</b>: Use consistent machine names exactly the same every time</li>
+  <li><b>Quality codes</b>: Use the same code format everywhere (e.g., DNCF 1616, not "DNCF-1616" sometimes)</li>
+  <li><b>Customer names</b>: Use the full legal name consistently (e.g., "MRF LIMITED", not "MRF" or "Mrf Ltd")</li>
+</ul>
+<h3 style="color:#374151;font-size:15px;">Data Safety</h3>
+<ul style="padding-left:20px;line-height:2.4;">
+  <li>All data is saved in your <b>browser's local storage</b> — it stays on this device</li>
+  <li>If Firebase sync is enabled, data is also saved to the cloud and accessible from any device</li>
+  <li>Do not clear your browser cache / site data — this will erase all locally stored ERP data</li>
+  <li>Use a <b>dedicated browser</b> for the ERP and avoid clearing its data</li>
+</ul>
+<h3 style="color:#374151;font-size:15px;">Common Mistakes to Avoid</h3>
+<ul style="padding-left:20px;line-height:2.4;">
+  <li>❌ Editing old chemical prices instead of adding a new record — always add a new month's record</li>
+  <li>❌ Leaving SO status as "Confirmed" after full dispatch — update to "Dispatched" to clear the pending alert</li>
+  <li>❌ Not entering rates in Sales Orders — without rates, Finance &amp; Analytics cannot calculate revenue</li>
+  <li>❌ Skipping GRN entries — without GRNs, stock levels and alerts will be inaccurate</li>
+  <li>❌ Using different quality codes for the same product — this breaks comparisons and history views</li>
+</ul>`
+
+}; // end _MAN_CONTENT
+
+let _manActive = 'man-welcome';
+
+function renderManual() {
+    const nav  = document.getElementById('man-nav');
+    const cont = document.getElementById('man-content');
+    if (!nav || !cont) return;
+    // Build nav
+    nav.innerHTML = _MAN_SECTIONS.map(s =>
+        `<div onclick="showManSection('${s.id}')" id="mannav-${s.id}" style="
+            padding:9px 16px;cursor:pointer;font-size:13px;border-left:3px solid transparent;
+            transition:all .15s;${s.id===_manActive?'border-left-color:#3b82f6;background:#eff6ff;font-weight:700;color:#1d4ed8;':'color:#374151;'}"
+            onmouseover="if(this.id!=='mannav-${_manActive}')this.style.background='#f1f5f9'"
+            onmouseout="if(this.id!=='mannav-${_manActive}')this.style.background=''"
+        >${esc(s.label)}</div>`
+    ).join('');
+    // Show content
+    cont.innerHTML = _MAN_CONTENT[_manActive] || '<p style="color:#94a3b8;">Section not found.</p>';
+}
+
+function showManSection(id) {
+    _manActive = id;
+    renderManual();
+    document.getElementById('man-content')?.scrollTo({ top:0, behavior:'smooth' });
+}
+
+function manSearch() {
+    const q = (document.getElementById('man-search')?.value || '').toLowerCase().trim();
+    const nav = document.getElementById('man-nav');
+    if (!nav) return;
+    if (!q) { renderManual(); return; }
+    // Search through content
+    const results = _MAN_SECTIONS.filter(s => {
+        const content = (_MAN_CONTENT[s.id] || '').replace(/<[^>]+>/g, ' ').toLowerCase();
+        return content.includes(q) || s.label.toLowerCase().includes(q);
+    });
+    nav.innerHTML = results.length
+        ? results.map(s =>
+            `<div onclick="showManSection('${s.id}')" style="padding:9px 16px;cursor:pointer;font-size:13px;color:#374151;border-left:3px solid transparent;"
+                onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background=''"
+            >${esc(s.label)}</div>`).join('')
+        : '<div style="padding:16px;font-size:12px;color:#94a3b8;">No results found.</div>';
+}
 
 // ══════════════════════════════════════════════════════════════════════
 function autoSaveMCRemarks() {
