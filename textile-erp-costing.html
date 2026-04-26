@@ -910,6 +910,9 @@
             <button class="btn btn-outline btn-sm" onclick="closeSettings()">&#10005; Close</button>
         </div>
         <div class="settings-sub">Set a password to restrict access to each section. Leave blank for open access.</div>
+        <div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;padding:10px 14px;font-size:12px;color:#92400e;margin-bottom:12px;">
+            ⚠️ <strong>After saving a password, all users must reload the page for it to take effect.</strong> You will stay unlocked for the current session.
+        </div>
         <div class="settings-tab-row" id="settings-tab-row"></div>
         <div style="margin-top:20px;padding-top:16px;border-top:1px solid #e2e8f0;">
             <div style="font-size:12px;font-weight:700;color:#475569;margin-bottom:10px;">&#128196; Print / Company Settings</div>
@@ -4191,7 +4194,16 @@ const _tabLabels = {
     internalcosting:  '🏭 HO Product Costing',
     custcosting:      '👤 HO Product Costing - Customers',
     machinerycosting: '⚙️ Machinery Costing',
-    dashboard:        '📊 Cost Dashboard'
+    dashboard:        '📊 Cost Dashboard',
+    salesdispatch:    '🚚 Sales & Dispatch',
+    rminventory:      '🧶 Yarn & RM Inventory',
+    custpricehistory: '📈 Customer Price History',
+    production:       '🏭 Production Register',
+    finprofit:        '💰 Finance & Profitability',
+    analytics:        '📊 Analytics Dashboard',
+    alertsauto:       '🔔 Alerts',
+    documents:        '📄 Documents',
+    factoryutilities: '⚡ Factory Monthly Costing',
 };
 const _unlockedTabs = new Set(); // session-level unlocks
 let _pendingTab = null;          // tab waiting for password entry
@@ -10456,9 +10468,18 @@ function closeSettings() {
 }
 
 function renderSettingsRows() {
-    if (!db.tabPasswords) db.tabPasswords = { rawmaterials:'', batchprocessing:'', factorycosting:'', custcosting:'' };
+    if (!db.tabPasswords) db.tabPasswords = {};
     const tabs = [
-        { key: 'rawmaterials',     label: '🧵 Raw Materials' },
+        { key: 'salesdispatch',    label: '🚚 Sales & Dispatch' },
+        { key: 'rminventory',      label: '🧶 Yarn & RM Inventory' },
+        { key: 'custpricehistory', label: '📈 Customer Price History' },
+        { key: 'production',       label: '🏭 Production Register' },
+        { key: 'finprofit',        label: '💰 Finance & Profitability' },
+        { key: 'analytics',        label: '📊 Analytics Dashboard' },
+        { key: 'alertsauto',       label: '🔔 Alerts' },
+        { key: 'documents',        label: '📄 Documents' },
+        { key: 'factoryutilities', label: '⚡ Factory Monthly Costing' },
+        { key: 'rawmaterials',     label: '🧵 Raw Materials & Chemicals' },
         { key: 'batchprocessing',  label: '📋 Chemical Batch Processing' },
         { key: 'factorycosting',   label: '🏭 Factory Qualitywise Costing' },
         { key: 'internalcosting',  label: '🏭 HO Product Costing' },
