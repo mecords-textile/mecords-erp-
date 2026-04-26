@@ -4287,9 +4287,10 @@ function submitPW() {
     const entered = document.getElementById('pw-input').value;
     const correct = (db.tabPasswords || {})[_pendingTab] || '';
     if (entered === correct) {
-        _unlockedTabs.add(_pendingTab);
+        const tab = _pendingTab;   // capture before closePWModal() nulls it
+        _unlockedTabs.add(tab);
         closePWModal();
-        activateTab(_pendingTab);
+        activateTab(tab);
     } else {
         document.getElementById('pw-error').textContent = 'Incorrect password. Please try again.';
         document.getElementById('pw-input').value = '';
