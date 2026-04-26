@@ -3361,55 +3361,131 @@
 
     <!-- ══════════════════════════════════════════ CUSTOMER PRICE HISTORY -->
     <div id="tab-custpricehistory" class="tab-panel">
-        <div class="card">
-            <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
-                <span id="cph-form-title">New Price Record</span>
-                <button class="btn btn-outline btn-sm" onclick="newCPH()">+ New Record</button>
-            </div>
-            <input type="hidden" id="cph-id">
-            <div class="form-row" style="flex-wrap:wrap;gap:14px;margin-bottom:0;">
-                <div class="form-group"><label>Date</label><input type="date" id="cph-date"></div>
-                <div class="form-group"><label>Customer *</label><input type="text" id="cph-customer" placeholder="e.g. MRF LIMITED" style="min-width:200px;" list="cph-cust-dl"><datalist id="cph-cust-dl"></datalist></div>
-                <div class="form-group"><label>Plant</label><input type="text" id="cph-plant" placeholder="e.g. Chennai" style="min-width:130px;"></div>
-                <div class="form-group"><label>Quality *</label><input type="text" id="cph-quality" placeholder="e.g. DNCF 1616" style="min-width:150px;" list="cph-qual-dl"><datalist id="cph-qual-dl"></datalist></div>
-                <div class="form-group"><label>Description</label><input type="text" id="cph-desc" placeholder="e.g. 840D Nylon Chafer" style="min-width:180px;"></div>
-                <div class="form-group"><label>Period</label><input type="text" id="cph-period" placeholder="e.g. Q1 2026-27" style="min-width:120px;"></div>
-                <div class="form-group"><label>Price (&#8377;/KG)</label><input type="number" id="cph-price" min="0" step="0.01" placeholder="0.00" style="width:120px;"></div>
-                <div class="form-group">
-                    <label>Currency</label>
-                    <select id="cph-currency" style="min-width:80px;font-size:13px;border:1px solid #cbd5e1;border-radius:6px;padding:6px 10px;">
-                        <option>INR</option><option>USD</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Status</label>
-                    <select id="cph-status" style="min-width:120px;font-size:13px;border:1px solid #cbd5e1;border-radius:6px;padding:6px 10px;">
-                        <option>Quoted</option><option>Confirmed</option><option>Revised</option><option>Rejected</option>
-                    </select>
-                </div>
-                <div class="form-group" style="flex:1;min-width:200px;"><label>Notes</label><input type="text" id="cph-notes" placeholder="Any remarks..."></div>
-            </div>
-            <div class="form-row" style="margin-top:12px;">
-                <button class="btn btn-success" onclick="saveCPH()">&#128190; Save Record</button>
-                <button class="btn btn-outline" onclick="clearCPHForm()">&#10005; Clear</button>
-                <button class="btn btn-danger btn-sm" id="cph-del-btn" onclick="deleteCPH()" style="display:none;">&#128465; Delete</button>
-            </div>
+        <div class="sub-tabs">
+            <button class="sub-tab-btn active" data-sub="cph-our"    onclick="switchSubTab('cph-our')">&#127970; Our Prices</button>
+            <button class="sub-tab-btn"         data-sub="cph-comp"  onclick="switchSubTab('cph-comp')">&#128373; Competitor Prices</button>
+            <button class="sub-tab-btn"         data-sub="cph-vs"    onclick="switchSubTab('cph-vs')">&#9876; Price Comparison</button>
         </div>
-        <div class="card">
-            <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
-                <span>Price History</span>
-                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-                    <input type="text" id="cph-f-cust" placeholder="Customer..." style="font-size:12px;padding:5px 10px;border:1px solid #cbd5e1;border-radius:6px;width:150px;" oninput="renderCPHList()">
-                    <input type="text" id="cph-f-qual" placeholder="Quality..." style="font-size:12px;padding:5px 10px;border:1px solid #cbd5e1;border-radius:6px;width:130px;" oninput="renderCPHList()">
-                    <select id="cph-f-status" onchange="renderCPHList()" style="font-size:12px;padding:5px 10px;border:1px solid #cbd5e1;border-radius:6px;">
-                        <option value="">All Statuses</option><option>Quoted</option><option>Confirmed</option><option>Revised</option><option>Rejected</option>
-                    </select>
-                    <button class="btn btn-outline btn-sm" onclick="renderCPHCompare()">&#128202; Compare</button>
-                    <button class="btn btn-outline btn-sm" onclick="renderCPHList()">&#128203; List</button>
+
+        <!-- ── SUB 1: Our Prices ── -->
+        <div id="sub-cph-our" class="sub-panel active">
+            <div class="card">
+                <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+                    <span id="cph-form-title">New Price Record</span>
+                    <button class="btn btn-outline btn-sm" onclick="newCPH()">+ New Record</button>
+                </div>
+                <input type="hidden" id="cph-id">
+                <div class="form-row" style="flex-wrap:wrap;gap:14px;margin-bottom:0;">
+                    <div class="form-group"><label>Date</label><input type="date" id="cph-date"></div>
+                    <div class="form-group"><label>Customer *</label><input type="text" id="cph-customer" placeholder="e.g. MRF LIMITED" style="min-width:200px;" list="cph-cust-dl"><datalist id="cph-cust-dl"></datalist></div>
+                    <div class="form-group"><label>Plant</label><input type="text" id="cph-plant" placeholder="e.g. Chennai" style="min-width:130px;"></div>
+                    <div class="form-group"><label>Quality *</label><input type="text" id="cph-quality" placeholder="e.g. DNCF 1616" style="min-width:150px;" list="cph-qual-dl"><datalist id="cph-qual-dl"></datalist></div>
+                    <div class="form-group"><label>Description</label><input type="text" id="cph-desc" placeholder="e.g. 840D Nylon Chafer" style="min-width:180px;"></div>
+                    <div class="form-group"><label>Period</label><input type="text" id="cph-period" placeholder="e.g. Q1 2026-27" style="min-width:120px;" list="cph-period-dl"><datalist id="cph-period-dl"></datalist></div>
+                    <div class="form-group"><label>Price (&#8377;/KG)</label><input type="number" id="cph-price" min="0" step="0.01" placeholder="0.00" style="width:120px;"></div>
+                    <div class="form-group">
+                        <label>Currency</label>
+                        <select id="cph-currency" style="min-width:80px;font-size:13px;border:1px solid #cbd5e1;border-radius:6px;padding:6px 10px;">
+                            <option>INR</option><option>USD</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select id="cph-status" style="min-width:120px;font-size:13px;border:1px solid #cbd5e1;border-radius:6px;padding:6px 10px;">
+                            <option>Quoted</option><option>Confirmed</option><option>Revised</option><option>Rejected</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex:1;min-width:200px;"><label>Notes</label><input type="text" id="cph-notes" placeholder="Any remarks..."></div>
+                </div>
+                <div class="form-row" style="margin-top:12px;">
+                    <button class="btn btn-success" onclick="saveCPH()">&#128190; Save Record</button>
+                    <button class="btn btn-outline" onclick="clearCPHForm()">&#10005; Clear</button>
+                    <button class="btn btn-danger btn-sm" id="cph-del-btn" onclick="deleteCPH()" style="display:none;">&#128465; Delete</button>
                 </div>
             </div>
-            <div id="cph-wrap"><div style="color:#94a3b8;font-size:13px;padding:20px;">No price records yet. Add one above.</div></div>
-        </div>
+            <div class="card">
+                <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+                    <span>Our Price History</span>
+                    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                        <input type="text" id="cph-f-cust" placeholder="Customer..." style="font-size:12px;padding:5px 10px;border:1px solid #cbd5e1;border-radius:6px;width:150px;" oninput="renderCPHList()">
+                        <input type="text" id="cph-f-qual" placeholder="Quality..." style="font-size:12px;padding:5px 10px;border:1px solid #cbd5e1;border-radius:6px;width:130px;" oninput="renderCPHList()">
+                        <select id="cph-f-status" onchange="renderCPHList()" style="font-size:12px;padding:5px 10px;border:1px solid #cbd5e1;border-radius:6px;">
+                            <option value="">All Statuses</option><option>Quoted</option><option>Confirmed</option><option>Revised</option><option>Rejected</option>
+                        </select>
+                        <button class="btn btn-outline btn-sm" onclick="renderCPHList()">&#8635; Refresh</button>
+                    </div>
+                </div>
+                <div id="cph-wrap"><div style="color:#94a3b8;font-size:13px;padding:20px;">No price records yet. Add one above.</div></div>
+            </div>
+        </div><!-- /sub-cph-our -->
+
+        <!-- ── SUB 2: Competitor Prices ── -->
+        <div id="sub-cph-comp" class="sub-panel">
+            <div class="card">
+                <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+                    <span id="cp-form-title">New Competitor Price</span>
+                    <button class="btn btn-outline btn-sm" onclick="newCP()">+ New Record</button>
+                </div>
+                <input type="hidden" id="cp-id">
+                <div class="form-row" style="flex-wrap:wrap;gap:14px;margin-bottom:0;">
+                    <div class="form-group"><label>Date</label><input type="date" id="cp-date"></div>
+                    <div class="form-group"><label>Competitor *</label><input type="text" id="cp-competitor" placeholder="e.g. SRF, Century, Kordsa" style="min-width:180px;" list="cp-comp-dl"><datalist id="cp-comp-dl"></datalist></div>
+                    <div class="form-group"><label>Customer *</label><input type="text" id="cp-customer" placeholder="e.g. MRF LIMITED" style="min-width:200px;" list="cp-cust-dl"><datalist id="cp-cust-dl"></datalist></div>
+                    <div class="form-group"><label>Plant</label><input type="text" id="cp-plant" placeholder="e.g. Chennai" style="min-width:120px;"></div>
+                    <div class="form-group"><label>Quality *</label><input type="text" id="cp-quality" placeholder="e.g. DNCF 1616" style="min-width:150px;" list="cp-qual-dl"><datalist id="cp-qual-dl"></datalist></div>
+                    <div class="form-group"><label>Description</label><input type="text" id="cp-desc" placeholder="Product description" style="min-width:170px;"></div>
+                    <div class="form-group"><label>Period</label><input type="text" id="cp-period" placeholder="e.g. Q1 2026-27" style="min-width:120px;" list="cp-period-dl"><datalist id="cp-period-dl"></datalist></div>
+                    <div class="form-group"><label>Price (&#8377;/KG)</label><input type="number" id="cp-price" min="0" step="0.01" placeholder="0.00" style="width:120px;"></div>
+                    <div class="form-group">
+                        <label>Currency</label>
+                        <select id="cp-currency" style="min-width:80px;font-size:13px;border:1px solid #cbd5e1;border-radius:6px;padding:6px 10px;">
+                            <option>INR</option><option>USD</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Source</label>
+                        <select id="cp-source" style="min-width:140px;font-size:13px;border:1px solid #cbd5e1;border-radius:6px;padding:6px 10px;">
+                            <option>Market Intelligence</option><option>Customer Feedback</option><option>Tender / RFQ</option><option>Industry Report</option><option>Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex:1;min-width:200px;"><label>Notes</label><input type="text" id="cp-notes" placeholder="Any remarks..."></div>
+                </div>
+                <div class="form-row" style="margin-top:12px;">
+                    <button class="btn btn-success" onclick="saveCP()">&#128190; Save Record</button>
+                    <button class="btn btn-outline" onclick="clearCPForm()">&#10005; Clear</button>
+                    <button class="btn btn-danger btn-sm" id="cp-del-btn" onclick="deleteCP()" style="display:none;">&#128465; Delete</button>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+                    <span>Competitor Price Records</span>
+                    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                        <input type="text" id="cp-f-comp" placeholder="Competitor..." style="font-size:12px;padding:5px 10px;border:1px solid #cbd5e1;border-radius:6px;width:140px;" oninput="renderCPList()">
+                        <input type="text" id="cp-f-cust" placeholder="Customer..." style="font-size:12px;padding:5px 10px;border:1px solid #cbd5e1;border-radius:6px;width:140px;" oninput="renderCPList()">
+                        <input type="text" id="cp-f-qual" placeholder="Quality..." style="font-size:12px;padding:5px 10px;border:1px solid #cbd5e1;border-radius:6px;width:120px;" oninput="renderCPList()">
+                        <button class="btn btn-outline btn-sm" onclick="renderCPList()">&#8635; Refresh</button>
+                    </div>
+                </div>
+                <div id="cp-wrap"><div style="color:#94a3b8;font-size:13px;padding:20px;">No competitor price records yet. Add one above.</div></div>
+            </div>
+        </div><!-- /sub-cph-comp -->
+
+        <!-- ── SUB 3: Price Comparison ── -->
+        <div id="sub-cph-vs" class="sub-panel">
+            <div class="card">
+                <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+                    <span>&#9876; Our Price vs Competitor — Comparison</span>
+                    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                        <input type="text" id="cpvs-f-cust" placeholder="Filter customer..." style="font-size:12px;padding:5px 10px;border:1px solid #cbd5e1;border-radius:6px;width:160px;" oninput="renderCPVS()">
+                        <input type="text" id="cpvs-f-qual" placeholder="Filter quality..." style="font-size:12px;padding:5px 10px;border:1px solid #cbd5e1;border-radius:6px;width:140px;" oninput="renderCPVS()">
+                        <input type="text" id="cpvs-f-period" placeholder="Filter period..." style="font-size:12px;padding:5px 10px;border:1px solid #cbd5e1;border-radius:6px;width:120px;" oninput="renderCPVS()">
+                        <button class="btn btn-outline btn-sm" onclick="renderCPVS()">&#8635; Refresh</button>
+                    </div>
+                </div>
+                <div id="cpvs-wrap"><div style="color:#94a3b8;font-size:13px;padding:20px;">Add Our Prices and Competitor Prices first, then view the comparison here.</div></div>
+            </div>
+        </div><!-- /sub-cph-vs -->
+
     </div><!-- /tab-custpricehistory -->
 
     <!-- ══════════════════════════════════════════ PRODUCTION REGISTER -->
@@ -4045,6 +4121,7 @@ function _ensureDBStructure() {
     if (!Array.isArray(db.productionOrders))   db.productionOrders    = [];
     if (!Array.isArray(db.documents))          db.documents           = [];
     if (!Array.isArray(db.factoryMonthly))     db.factoryMonthly      = [];
+    if (!Array.isArray(db.competitorPrices))   db.competitorPrices    = [];
     if (!db.tabPasswords)                    db.tabPasswords      = { rawmaterials: '', batchprocessing: '', factorycosting: '', internalcosting: '', custcosting: '', machinerycosting: '', dashboard: '', salesdispatch: '', rminventory: '' };
     if (!('dashboard' in db.tabPasswords))   db.tabPasswords.dashboard = '';
     if (!('salesdispatch' in db.tabPasswords)) db.tabPasswords.salesdispatch = '';
@@ -4148,7 +4225,7 @@ function activateTab(tab) {
     if (tab === 'dashboard')        renderDashboard();
     if (tab === 'salesdispatch')    renderSOList();
     if (tab === 'rminventory')      renderRMMasterList();
-    if (tab === 'custpricehistory') { clearCPHForm(); _cphRefreshDataLists(); renderCPHList(); }
+    if (tab === 'custpricehistory') { switchSubTab('cph-our'); }
     if (tab === 'production')       renderProdList();
     if (tab === 'finprofit')        { _populateFPFY(); renderFPRevenue(); }
     if (tab === 'analytics')        { _populateFPFY(); renderAnalytics(); }
@@ -4270,6 +4347,9 @@ function switchSubTab(sub) {
     if (sub === 'fu-entry')  { _populateFUFY(); renderFUMonthList(); }
     if (sub === 'fu-ytd')    { _populateFUFY(); renderFUYTD(); }
     if (sub === 'fu-rates')  { _populateFUFY(); renderFURates(); }
+    if (sub === 'cph-our')   { _cphRefreshDataLists(); renderCPHList(); }
+    if (sub === 'cph-comp')  { _refreshCPDataLists(); renderCPList(); }
+    if (sub === 'cph-vs')    renderCPVS();
 }
 
 function gotoTab(name) {
@@ -7810,6 +7890,272 @@ function renderCPHCompare() {
     });
     html += '</tbody></table></div>';
     wrap.innerHTML = html;
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// COMPETITOR PRICES — CRUD & COMPARISON
+// ══════════════════════════════════════════════════════════════════════
+
+function _refreshCPDataLists() {
+    const competitors = [...new Set((db.competitorPrices||[]).map(r=>r.competitor).filter(Boolean))].sort();
+    const customers   = [...new Set([
+        ...(db.competitorPrices||[]).map(r=>r.customerName),
+        ...(db.custPriceHistory||[]).map(r=>r.customerName)
+    ].filter(Boolean))].sort();
+    const qualities   = [...new Set([
+        ...(db.competitorPrices||[]).map(r=>r.quality),
+        ...(db.custPriceHistory||[]).map(r=>r.quality)
+    ].filter(Boolean))].sort();
+    const periods     = [...new Set([
+        ...(db.competitorPrices||[]).map(r=>r.period),
+        ...(db.custPriceHistory||[]).map(r=>r.period)
+    ].filter(Boolean))].sort();
+    const setDL = (id, vals) => { const el=document.getElementById(id); if(el) el.innerHTML=vals.map(v=>`<option value="${esc(v)}">`).join(''); };
+    setDL('cp-comp-dl',   competitors);
+    setDL('cp-cust-dl',   customers);
+    setDL('cp-qual-dl',   qualities);
+    setDL('cp-period-dl', periods);
+}
+
+function clearCPForm() {
+    document.getElementById('cp-id').value          = '';
+    document.getElementById('cp-date').value        = new Date().toISOString().slice(0,10);
+    document.getElementById('cp-competitor').value  = '';
+    document.getElementById('cp-customer').value    = '';
+    document.getElementById('cp-plant').value       = '';
+    document.getElementById('cp-quality').value     = '';
+    document.getElementById('cp-desc').value        = '';
+    document.getElementById('cp-period').value      = '';
+    document.getElementById('cp-price').value       = '';
+    document.getElementById('cp-currency').value    = 'INR';
+    document.getElementById('cp-source').value      = 'Market Intelligence';
+    document.getElementById('cp-notes').value       = '';
+    document.getElementById('cp-form-title').textContent   = 'New Competitor Price';
+    document.getElementById('cp-del-btn').style.display    = 'none';
+}
+
+function newCP() { clearCPForm(); }
+
+function openCP(id) {
+    const r = (db.competitorPrices||[]).find(x=>x.id===id); if(!r) return;
+    document.getElementById('cp-id').value          = r.id;
+    document.getElementById('cp-date').value        = r.date||'';
+    document.getElementById('cp-competitor').value  = r.competitor||'';
+    document.getElementById('cp-customer').value    = r.customerName||'';
+    document.getElementById('cp-plant').value       = r.plant||'';
+    document.getElementById('cp-quality').value     = r.quality||'';
+    document.getElementById('cp-desc').value        = r.description||'';
+    document.getElementById('cp-period').value      = r.period||'';
+    document.getElementById('cp-price').value       = r.pricePerKg||'';
+    document.getElementById('cp-currency').value    = r.currency||'INR';
+    document.getElementById('cp-source').value      = r.source||'Market Intelligence';
+    document.getElementById('cp-notes').value       = r.notes||'';
+    document.getElementById('cp-form-title').textContent   = 'Edit: ' + (r.competitor||'') + ' — ' + (r.quality||'');
+    document.getElementById('cp-del-btn').style.display    = '';
+    window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function saveCP() {
+    const competitor = document.getElementById('cp-competitor').value.trim();
+    const customer   = document.getElementById('cp-customer').value.trim();
+    const quality    = document.getElementById('cp-quality').value.trim();
+    if (!competitor) { showToast('Competitor name is required'); return; }
+    if (!customer)   { showToast('Customer name is required'); return; }
+    if (!quality)    { showToast('Quality is required'); return; }
+    const eid = document.getElementById('cp-id').value;
+    const rec = {
+        id:           eid||nid(),
+        date:         document.getElementById('cp-date').value,
+        competitor,
+        customerName: customer,
+        plant:        document.getElementById('cp-plant').value.trim(),
+        quality,
+        description:  document.getElementById('cp-desc').value.trim(),
+        period:       document.getElementById('cp-period').value.trim(),
+        pricePerKg:   parseFloat(document.getElementById('cp-price').value)||0,
+        currency:     document.getElementById('cp-currency').value,
+        source:       document.getElementById('cp-source').value,
+        notes:        document.getElementById('cp-notes').value.trim(),
+    };
+    if (eid) {
+        const i = (db.competitorPrices||[]).findIndex(r=>r.id===eid);
+        if (i>=0) db.competitorPrices[i] = rec;
+        else (db.competitorPrices = db.competitorPrices||[]).push(rec);
+    } else {
+        (db.competitorPrices = db.competitorPrices||[]).push(rec);
+    }
+    persist(); showToast('Competitor price saved');
+    clearCPForm(); _refreshCPDataLists(); renderCPList();
+}
+
+function deleteCP() {
+    const eid = document.getElementById('cp-id').value; if(!eid) return;
+    if(!confirm('Delete this competitor price record?')) return;
+    db.competitorPrices = (db.competitorPrices||[]).filter(r=>r.id!==eid);
+    persist(); showToast('Deleted'); clearCPForm(); renderCPList();
+}
+
+function renderCPList() {
+    _refreshCPDataLists();
+    const wrap = document.getElementById('cp-wrap'); if(!wrap) return;
+    const fc = (document.getElementById('cp-f-comp')?.value||'').toLowerCase();
+    const fu = (document.getElementById('cp-f-cust')?.value||'').toLowerCase();
+    const fq = (document.getElementById('cp-f-qual')?.value||'').toLowerCase();
+    let list = (db.competitorPrices||[]).slice().reverse();
+    if(fc) list = list.filter(r=>(r.competitor||'').toLowerCase().includes(fc));
+    if(fu) list = list.filter(r=>(r.customerName||'').toLowerCase().includes(fu));
+    if(fq) list = list.filter(r=>(r.quality||'').toLowerCase().includes(fq));
+    if(!list.length) { wrap.innerHTML='<div style="color:#94a3b8;font-size:13px;padding:20px;">No competitor price records match the filter.</div>'; return; }
+    const srcColor = { 'Market Intelligence':'#2563eb','Customer Feedback':'#16a34a','Tender / RFQ':'#d97706','Industry Report':'#7c3aed','Other':'#64748b' };
+    wrap.innerHTML = `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead><tr style="background:#1e293b;color:white;">
+            <th style="padding:9px 12px;">Date</th>
+            <th style="padding:9px 12px;">Competitor</th>
+            <th style="padding:9px 12px;">Customer</th>
+            <th style="padding:9px 12px;">Plant</th>
+            <th style="padding:9px 12px;">Quality</th>
+            <th style="padding:9px 12px;">Period</th>
+            <th style="padding:9px 12px;text-align:right;">Price/KG</th>
+            <th style="padding:9px 12px;">Curr.</th>
+            <th style="padding:9px 12px;">Source</th>
+            <th style="padding:9px 12px;">Notes</th>
+            <th style="padding:9px 12px;text-align:center;">Action</th>
+        </tr></thead><tbody>` +
+        list.map(r=>`<tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:8px 12px;">${r.date||'—'}</td>
+            <td style="padding:8px 12px;font-weight:700;color:#0f172a;">${esc(r.competitor||'—')}</td>
+            <td style="padding:8px 12px;">${esc(r.customerName||'—')}</td>
+            <td style="padding:8px 12px;">${esc(r.plant||'—')}</td>
+            <td style="padding:8px 12px;">${esc(r.quality||'—')}</td>
+            <td style="padding:8px 12px;">${esc(r.period||'—')}</td>
+            <td style="padding:8px 12px;text-align:right;font-weight:700;">${r.pricePerKg?r.pricePerKg.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'}</td>
+            <td style="padding:8px 12px;">${esc(r.currency||'INR')}</td>
+            <td style="padding:8px 12px;"><span style="background:${srcColor[r.source]||'#64748b'};color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;">${esc(r.source||'—')}</span></td>
+            <td style="padding:8px 12px;font-size:12px;color:#64748b;">${esc(r.notes||'—')}</td>
+            <td style="padding:8px 12px;text-align:center;"><button class="btn btn-sm btn-outline" onclick="openCP('${r.id}')">&#9998; Edit</button></td>
+        </tr>`).join('') + '</tbody></table></div>';
+}
+
+// ── Price Comparison: Our Price vs Competitor, Quality × Customer pivot ──────
+
+function renderCPVS() {
+    const wrap = document.getElementById('cpvs-wrap'); if(!wrap) return;
+    const fc = (document.getElementById('cpvs-f-cust')?.value||'').toLowerCase();
+    const fq = (document.getElementById('cpvs-f-qual')?.value||'').toLowerCase();
+    const fp = (document.getElementById('cpvs-f-period')?.value||'').toLowerCase();
+
+    // Filter our prices (Confirmed or Quoted)
+    let ourList = (db.custPriceHistory||[]).filter(r=>r.status==='Confirmed'||r.status==='Quoted');
+    // Filter competitor prices
+    let compList = (db.competitorPrices||[]).slice();
+
+    if(fc) { ourList  = ourList.filter(r=>(r.customerName||'').toLowerCase().includes(fc)); compList = compList.filter(r=>(r.customerName||'').toLowerCase().includes(fc)); }
+    if(fq) { ourList  = ourList.filter(r=>(r.quality||'').toLowerCase().includes(fq));      compList = compList.filter(r=>(r.quality||'').toLowerCase().includes(fq)); }
+    if(fp) { ourList  = ourList.filter(r=>(r.period||'').toLowerCase().includes(fp));        compList = compList.filter(r=>(r.period||'').toLowerCase().includes(fp)); }
+
+    if(!ourList.length && !compList.length) {
+        wrap.innerHTML = '<div style="color:#94a3b8;font-size:13px;padding:20px;">No data found. Add Our Prices (Customer Price History → Our Prices tab) and Competitor Prices first.</div>';
+        return;
+    }
+
+    // Unique dimensions
+    const allCusts  = [...new Set([...ourList.map(r=>r.customerName), ...compList.map(r=>r.customerName)].filter(Boolean))].sort();
+    const allQuals  = [...new Set([...ourList.map(r=>r.quality),      ...compList.map(r=>r.quality)     ].filter(Boolean))].sort();
+    const allComps  = [...new Set(compList.map(r=>r.competitor).filter(Boolean))].sort();
+
+    // Helper: latest price for a customer+quality from a list
+    const latestPrice = (list, cust, qual) => {
+        const hits = list.filter(r=>r.customerName===cust && r.quality===qual);
+        if(!hits.length) return null;
+        return hits.sort((a,b)=>(b.date||'').localeCompare(a.date||''))[0];
+    };
+    const latestCompPrice = (competitor, cust, qual) => {
+        const hits = compList.filter(r=>r.competitor===competitor && r.customerName===cust && r.quality===qual);
+        if(!hits.length) return null;
+        return hits.sort((a,b)=>(b.date||'').localeCompare(a.date||''))[0];
+    };
+
+    const fmt = v => v != null ? `&#8377;${(+v).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}` : '<span style="color:#cbd5e1;">—</span>';
+    const diffStyle = d => d < 0 ? 'color:#16a34a;font-weight:700;' : d > 0 ? 'color:#dc2626;font-weight:700;' : 'color:#64748b;';
+
+    // Build a row for each quality × customer combination that has data
+    let rows = '';
+    allQuals.forEach(qual => {
+        allCusts.forEach(cust => {
+            const ourRec  = latestPrice(ourList, cust, qual);
+            const compRecs = allComps.map(comp => latestCompPrice(comp, cust, qual));
+            // Skip rows with no data at all
+            if(!ourRec && compRecs.every(r=>r===null)) return;
+
+            const ourP = ourRec ? ourRec.pricePerKg : null;
+
+            // Best competitor price (lowest)
+            const validCompPrices = compRecs.filter(r=>r!==null).map(r=>r.pricePerKg);
+            const bestCompP = validCompPrices.length ? Math.min(...validCompPrices) : null;
+
+            // Advantage = Our Price − Best Competitor (negative = we are cheaper = good)
+            const advAbs = (ourP != null && bestCompP != null) ? (ourP - bestCompP) : null;
+            const advPct = (advAbs != null && bestCompP > 0)   ? (advAbs / bestCompP * 100) : null;
+
+            let compCells = allComps.map((comp, i) => {
+                const cr = compRecs[i];
+                if(!cr) return `<td style="padding:8px 12px;text-align:right;color:#cbd5e1;">—</td>`;
+                const diff = ourP != null ? (ourP - cr.pricePerKg) : null;
+                const sign = diff != null ? (diff < 0 ? '▼ ' : diff > 0 ? '▲ ' : '') : '';
+                const diffStr = diff != null ? `<br><span style="font-size:10px;${diffStyle(diff)}">${sign}${Math.abs(diff).toFixed(2)}</span>` : '';
+                return `<td style="padding:8px 12px;text-align:right;">${fmt(cr.pricePerKg)}<br><span style="font-size:10px;color:#64748b;">${esc(cr.period||cr.date)}</span>${diffStr}</td>`;
+            }).join('');
+
+            let advCell = '';
+            if(advAbs != null) {
+                const s = diffStyle(advAbs);
+                const sign = advAbs < 0 ? '▼ ' : advAbs > 0 ? '▲ ' : '';
+                const label = advAbs < 0 ? 'CHEAPER' : advAbs > 0 ? 'COSTLIER' : 'SAME';
+                const labelBg = advAbs < 0 ? '#16a34a' : advAbs > 0 ? '#dc2626' : '#64748b';
+                advCell = `<td style="padding:8px 12px;text-align:right;">
+                    <span style="font-size:11px;font-weight:700;${s}">${sign}&#8377;${Math.abs(advAbs).toFixed(2)}</span>
+                    ${advPct!=null?`<br><span style="font-size:10px;${s}">(${Math.abs(advPct).toFixed(1)}%)</span>`:''}
+                    <br><span style="background:${labelBg};color:#fff;padding:1px 7px;border-radius:9px;font-size:10px;font-weight:700;">${label}</span>
+                </td>`;
+            } else {
+                advCell = `<td style="padding:8px 12px;text-align:center;color:#cbd5e1;">—</td>`;
+            }
+
+            rows += `<tr style="border-bottom:1px solid #f1f5f9;">
+                <td style="padding:8px 12px;font-weight:700;">${esc(qual)}</td>
+                <td style="padding:8px 12px;">${esc(cust)}</td>
+                <td style="padding:8px 12px;text-align:right;">${ourP!=null?fmt(ourP)+'<br><span style="font-size:10px;color:#64748b;">'+(ourRec.period||ourRec.date||'')+'</span>':'<span style="color:#cbd5e1;">—</span>'}</td>
+                ${compCells}
+                ${advCell}
+            </tr>`;
+        });
+    });
+
+    if(!rows) {
+        wrap.innerHTML = '<div style="color:#94a3b8;font-size:13px;padding:20px;">No overlapping data found for the applied filters. Adjust filters or add more records.</div>';
+        return;
+    }
+
+    const compHeaders = allComps.map(c=>`<th style="padding:9px 12px;text-align:right;background:#7c3aed;">${esc(c)}<br><span style="font-size:10px;font-weight:400;opacity:.8;">(Competitor)</span></th>`).join('');
+
+    wrap.innerHTML = `
+        <div style="margin-bottom:12px;font-size:12px;color:#64748b;">
+            Showing latest price per Quality × Customer combination. <strong style="color:#0f172a;">▼ green = we are cheaper; ▲ red = competitor is cheaper.</strong>
+            Advantage column compares Our Price vs the best (lowest) competitor price for that combination.
+        </div>
+        <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead>
+            <tr style="color:white;">
+                <th style="padding:9px 12px;background:#1e293b;text-align:left;">Quality</th>
+                <th style="padding:9px 12px;background:#1e293b;text-align:left;">Customer</th>
+                <th style="padding:9px 12px;background:#0f766e;text-align:right;">Our Price<br><span style="font-size:10px;font-weight:400;opacity:.8;">(₹/KG)</span></th>
+                ${compHeaders}
+                <th style="padding:9px 12px;background:#92400e;text-align:right;">Our Advantage<br><span style="font-size:10px;font-weight:400;opacity:.8;">vs Best Competitor</span></th>
+            </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+        </table></div>`;
 }
 
 // ══════════════════════════════════════════════════════════════════════
