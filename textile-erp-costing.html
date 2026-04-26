@@ -3935,8 +3935,9 @@
     z-index:9999; white-space:nowrap;
 "></div>
 
-<!-- Firebase Realtime Database SDK (compat v9) -->
+<!-- Firebase SDKs (compat v9) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <script>
@@ -3968,6 +3969,10 @@ function _fbInit() {
     try {
         if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
         _fbDB = firebase.database();
+        // Sign in anonymously so Firebase rules can verify auth != null
+        if (firebase.auth().currentUser === null) {
+            firebase.auth().signInAnonymously().catch(e => console.warn('Firebase anon auth failed:', e));
+        }
         return true;
     } catch(e) { console.warn('Firebase init failed:', e); return false; }
 }
