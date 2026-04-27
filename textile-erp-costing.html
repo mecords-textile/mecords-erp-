@@ -9146,16 +9146,19 @@ function handleFUImport(event) {
     const reader = new FileReader();
     reader.onload = function(e) {
         try {
-            const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
-            // Prefer sheet with 'ytd', 'costing', or '25' in name; else first sheet
-            const sn = wb.SheetNames.find(n =>
-                /ytd|costing|25-26|25_26/i.test(n)
-            ) || wb.SheetNames[0];
-            const ws = wb.Sheets[sn];
-            const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
-            const parsed = _fuParseExcelRows(rows, sn);
+            // cellDates:true converts serial dates to JS Date objects
+            const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array', cellDates: true });
+            // Prefer sheet with 'ytd', 'costing', '25-26' in name; else first sheet
+            const sn = wb.SheetNames.find(n => /ytd|costing|25-26|25_26/i.test(n)) || wb.SheetNames[0];
+            const ws  = wb.Sheets[sn];
+            // raw:false lets SheetJS format dates; also get raw for numbers
+            const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null, raw: false });
+            const rawRows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null, raw: true });
+            const parsed = _fuParseExcelRows(rows, rawRows, sn);
             if (!parsed.length) {
-                alert('No monthly data detected.\n\nMake sure the Excel has month names (e.g. "Apr 25", "May 25") in the first column.');
+                // Build a debug snippet to help diagnose
+                const sample = (rows.slice(0,8)).map((r,i)=>`Row ${i}: ${(r||[]).slice(0,4).map(c=>JSON.stringify(c)).join(' | ')}`).join('\n');
+                alert('No monthly data detected.\n\nFirst 8 rows of your sheet:\n' + sample + '\n\nIf you see month names above, please share this with support.');
                 return;
             }
             _fuShowImportPreview(parsed, sn);
@@ -9166,26 +9169,45 @@ function handleFUImport(event) {
     reader.readAsArrayBuffer(file);
 }
 
-// ── Parse month cell: "Apr 25", "Apr-25", "April 2025", "2025-04" → "2025-04"
+// ── Parse a cell value into "YYYY-MM" — handles text, JS Date, serial numbers, slash dates
 function _fuParseYM(val) {
     if (val == null) return null;
+
+    // JS Date object (from cellDates:true)
+    if (val instanceof Date && !isNaN(val)) {
+        return `${val.getFullYear()}-${String(val.getMonth()+1).padStart(2,'0')}`;
+    }
+
+    // Excel serial number (raw:true path)
+    if (typeof val === 'number' && val > 1000 && val < 200000) {
+        try {
+            const d = XLSX.SSF.parse_date_code(val);
+            if (d && d.y > 2000) return `${d.y}-${String(d.m).padStart(2,'0')}`;
+        } catch(e) {}
+    }
+
     const s = String(val).trim().toLowerCase().replace(/\s+/g,' ');
-    if (!s || s==='month' || s.includes('total') || s.includes('avg') || s.includes('average')) return null;
-    // "Apr 25" / "Apr-25"
-    let m = s.match(/^([a-z]{3,})[- ](\d{2})$/);
+    if (!s || s==='month' || s.includes('total') || s.includes('avg') || s.includes('average') || s.includes('year')) return null;
+
+    // "Apr 25" / "Apr-25" / "Apr'25"
+    let m = s.match(/^([a-z]{3,})[^a-z]?(\d{2})$/);
     if (m) {
         const mi = _FU_MON.findIndex(x => m[1].startsWith(x));
         if (mi >= 0) { let yr = parseInt(m[2]); yr += yr < 50 ? 2000 : 1900; return `${yr}-${String(mi+1).padStart(2,'0')}`; }
     }
-    // "Apr 2025" / "April 2025"
+    // "Apr 2025" / "April 2025" / "April-2025"
     m = s.match(/^([a-z]{3,})[- ](\d{4})$/);
     if (m) {
         const mi = _FU_MON.findIndex(x => m[1].startsWith(x));
         if (mi >= 0) return `${m[2]}-${String(mi+1).padStart(2,'0')}`;
     }
-    // "2025-04"
-    m = s.match(/^(\d{4})-(\d{1,2})$/);
+    // "2025-04" or "2025/04"
+    m = s.match(/^(\d{4})[-\/](\d{1,2})$/);
     if (m) return `${m[1]}-${String(parseInt(m[2])).padStart(2,'0')}`;
+    // "04/2025" or "04-2025"
+    m = s.match(/^(\d{1,2})[-\/](\d{4})$/);
+    if (m) return `${m[2]}-${String(parseInt(m[1])).padStart(2,'0')}`;
+
     return null;
 }
 
@@ -9269,22 +9291,49 @@ function _fuBuildColMap(rows) {
     return map;
 }
 
-function _fuParseExcelRows(rows, sheetName) {
+function _fuParseExcelRows(rows, rawRows, sheetName) {
     const colMap = _fuBuildColMap(rows);
     const dept   = colMap._dept || 'Maintenance';
     const results = [];
 
-    rows.forEach(row => {
+    // Auto-detect which column contains month names (scan cols 0-5)
+    let monthCol = 0;
+    outer: for (let c = 0; c <= 5; c++) {
+        for (let i = 0; i < Math.min(30, rows.length); i++) {
+            const row = rows[i] || [];
+            if (_fuParseYM(row[c])) { monthCol = c; break outer; }
+        }
+    }
+    // Also try raw rows for serial-date detection
+    if (monthCol === 0) {
+        outer2: for (let c = 0; c <= 5; c++) {
+            for (let i = 0; i < Math.min(30, (rawRows||[]).length); i++) {
+                const row = rawRows[i] || [];
+                if (_fuParseYM(row[c])) { monthCol = c; break outer2; }
+            }
+        }
+    }
+
+    // Production column is assumed to be the column right after the month column
+    const prodColDefault = monthCol + 1;
+
+    rows.forEach((row, ri) => {
         if (!row) return;
-        const ym = _fuParseYM(row[0]);
+        // Try formatted row first, then raw for date serials
+        const ym = _fuParseYM(row[monthCol]) || _fuParseYM((rawRows[ri]||[])[monthCol]);
         if (!ym) return;
 
-        const num = (col) => col != null ? (parseFloat(row[col]) || 0) : 0;
+        const num = (col) => {
+            if (col == null) return 0;
+            const v = parseFloat(row[col]);
+            return isNaN(v) ? 0 : v;
+        };
 
+        const prodCol = colMap.prod != null ? colMap.prod : prodColDefault;
         const rec = {
             yearMonth:  ym,
             department: dept,
-            prodKg:     num(colMap.prod),
+            prodKg:     num(prodCol),
             utils: {
                 water:  { units_act: num(colMap.water_units),  units_bud:0, cost_act: num(colMap.water_cost),  cost_bud:0, remarks:'' },
                 power:  { units_act: num(colMap.power_units),  units_bud:0, cost_act: num(colMap.power_cost),  cost_bud:0, remarks:'' },
