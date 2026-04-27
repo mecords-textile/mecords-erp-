@@ -9247,12 +9247,17 @@ function _fuOpenMapper() {
     const rows = _fuImportRows;
     if (!rows.length) { alert('No data found in file.'); return; }
 
-    // Build column headers: scan first 10 rows, collect non-empty unique values per column
+    // Build column labels: scan first 15 rows, show header text + first data value
     const maxCols = Math.max(...rows.slice(0,15).map(r=>(r||[]).length));
     const colLabels = [];
     for (let c = 0; c < maxCols; c++) {
-        const vals = rows.slice(0,10).map(r=>(r||[])[c]).filter(v=>v!=null&&String(v).trim()!=='');
-        colLabels.push(vals.slice(0,2).map(v=>String(v).substring(0,18)).join(' / ') || `Col ${c+1}`);
+        // Header text: first non-empty text from formatted rows
+        const hdrVals = rows.slice(0,10).map(r=>(r||[])[c]).filter(v=>v!=null&&String(v).trim()!==''&&isNaN(parseFloat(String(v).replace(/,/g,''))));
+        // Data value: first numeric value from raw rows
+        const dataVals = _fuImportRawRows.slice(0,20).map(r=>(r||[])[c]).filter(v=>typeof v==='number'&&!isNaN(v));
+        const hdr  = hdrVals.length ? String(hdrVals[0]).substring(0,20) : '';
+        const data = dataVals.length ? dataVals[0].toLocaleString('en-IN',{maximumFractionDigits:0}) : '';
+        colLabels.push([hdr, data].filter(Boolean).join(' → ') || `Col ${c+1}`);
     }
 
     // Auto-guess mappings
@@ -9404,9 +9409,15 @@ function _fuRunFromMapper() {
     const results = [];
     _fuImportRows.forEach((row, ri) => {
         if (!row) return;
-        const ym = _fuParseYM(row[colMap.month]) || _fuParseYM((_fuImportRawRows[ri]||[])[colMap.month]);
+        const rawRow = _fuImportRawRows[ri] || [];
+        const ym = _fuParseYM(row[colMap.month]) || _fuParseYM(rawRow[colMap.month]);
         if (!ym) return;
-        const num = col => col!=null ? (parseFloat(row[col])||0) : 0;
+        // Always read numbers from rawRow (raw:true) — avoids comma-formatted strings like "1,42,623"
+        const num = col => {
+            if (col == null) return 0;
+            const v = parseFloat(rawRow[col]);
+            return isNaN(v) ? 0 : v;
+        };
         const rec = {
             yearMonth: ym, department: dept,
             prodKg: num(colMap.prod),
@@ -9541,13 +9552,15 @@ function _fuParseExcelRows(rows, rawRows, sheetName) {
 
     rows.forEach((row, ri) => {
         if (!row) return;
+        const rawRow = rawRows[ri] || [];
         // Try formatted row first, then raw for date serials
-        const ym = _fuParseYM(row[monthCol]) || _fuParseYM((rawRows[ri]||[])[monthCol]);
+        const ym = _fuParseYM(row[monthCol]) || _fuParseYM(rawRow[monthCol]);
         if (!ym) return;
 
+        // Use rawRow for numbers — avoids comma-formatted strings like "1,42,623"
         const num = (col) => {
             if (col == null) return 0;
-            const v = parseFloat(row[col]);
+            const v = parseFloat(rawRow[col]);
             return isNaN(v) ? 0 : v;
         };
 
