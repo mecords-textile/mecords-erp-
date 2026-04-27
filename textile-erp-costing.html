@@ -8766,6 +8766,13 @@ const _FU_UTILS = [
 let _fuId = null;
 let _fuSpares = []; // [{id, item, actual, budget, remarks}]
 
+// ── Month display helper: "2025-04" → "April 2025" ────────────────────
+function _fuFmtMonth(ym) {
+    if (!ym) return '—';
+    try { return new Date(ym + '-01').toLocaleString('en-IN', { month: 'long', year: 'numeric' }); }
+    catch(e) { return ym; }
+}
+
 // ── FY helpers ────────────────────────────────────────────────────────
 function _fuFYFromMonth(ym) { // ym = "2025-04"
     if (!ym) return '';
@@ -8965,7 +8972,7 @@ function renderFUMonthList() {
         const cpkg=r.prodKg>0?'₹ '+(grand/r.prodKg).toFixed(2):'—';
         const wu=k=>(r.utils&&r.utils[k]&&r.utils[k].cost_act)||0;
         return `<tr style="border-bottom:1px solid #f1f5f9;">
-            <td style="padding:8px 12px;font-weight:600;">${r.yearMonth}</td>
+            <td style="padding:8px 12px;font-weight:600;">${_fuFmtMonth(r.yearMonth)}</td>
             <td style="padding:8px 12px;">${esc(r.department||'—')}</td>
             <td style="padding:8px 12px;text-align:right;">${wu('water')?inrC(wu('water')):'—'}</td>
             <td style="padding:8px 12px;text-align:right;">${wu('power')?inrC(wu('power')):'—'}</td>
@@ -9052,7 +9059,7 @@ function renderFUYTD() {
     </thead><tbody>` +
     fyMonths.map(ym=>{
         const r=monthMap[ym];
-        const mLabel=new Date(ym+'-01').toLocaleString('en-IN',{month:'short',year:'2-digit'});
+        const mLabel=_fuFmtMonth(ym);
         if(!r) return `<tr style="background:#f8fafc;"><td style="${cellStyle}text-align:left;color:#94a3b8;">${mLabel}</td>${Array(11).fill(`<td style="${cellStyle}color:#e2e8f0;">—</td>`).join('')}</tr>`;
         const spAct=_fuTotalSpares(r);
         const spBud=(r.spares||[]).reduce((s,sp)=>s+(parseFloat(sp.budget)||0),0);
@@ -9116,7 +9123,7 @@ function renderFURates() {
         const cpkgS=r.prodKg>0?(sa/r.prodKg).toFixed(2):'—';
         const cpkgG=r.prodKg>0?(ga/r.prodKg).toFixed(2):'—';
         return `<tr style="border-bottom:1px solid #f1f5f9;">
-            <td style="${cellStyle}text-align:left;font-weight:600;">${r.yearMonth}</td>
+            <td style="${cellStyle}text-align:left;font-weight:600;">${_fuFmtMonth(r.yearMonth)}</td>
             <td style="${cellStyle}text-align:left;">${esc(r.department||'—')}</td>
             <td style="${cellStyle}">${r.prodKg.toLocaleString('en-IN',{maximumFractionDigits:0})}</td>
             <td style="${cellStyle}">₹ ${ua.toLocaleString('en-IN',{maximumFractionDigits:0})}</td>
@@ -9371,7 +9378,7 @@ function _fuShowImportPreview(parsed, sheetName) {
         const fmtU  = (u, unit) => u ? `${u.toLocaleString('en-IN',{maximumFractionDigits:0})} ${unit}` : '—';
         const fmtC  = v => v ? '₹'+v.toLocaleString('en-IN',{maximumFractionDigits:0}) : '—';
         return `<tr style="border-bottom:1px solid #f1f5f9;background:${rowBg};">
-            <td style="padding:6px 10px;font-weight:700;">${r.yearMonth}</td>
+            <td style="padding:6px 10px;font-weight:700;">${_fuFmtMonth(r.yearMonth)}</td>
             <td style="padding:6px 10px;font-size:11px;">${esc(r.department)}</td>
             <td style="padding:6px 10px;text-align:right;">${r.prodKg ? r.prodKg.toLocaleString('en-IN',{maximumFractionDigits:0}) : '—'}</td>
             <td style="padding:6px 10px;text-align:right;font-size:11px;">${fmtU(wu.units_act,'KL')}<br>${fmtC(wu.cost_act)}</td>
