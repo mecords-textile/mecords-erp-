@@ -4185,6 +4185,21 @@ async function hydrate() {
     if (fbOk) {
         // ── Firebase path ───────────────────────────────────────────────
         _fbSetStatus('syncing');
+
+        // Wait for anonymous auth to complete before reading data.
+        // Rules require auth != null — reading before sign-in finishes
+        // gives Permission Denied and leaves other users with a blank app.
+        try {
+            await new Promise((resolve) => {
+                const timeout = setTimeout(resolve, 8000); // max 8s wait
+                const unsub = firebase.auth().onAuthStateChanged(user => {
+                    clearTimeout(timeout);
+                    unsub();
+                    resolve(user);
+                });
+            });
+        } catch(e) { console.warn('Auth state wait failed:', e); }
+
         const loadedFromCloud = await _fbLoad();
         if (loadedFromCloud) {
             _fbSetStatus('synced');
