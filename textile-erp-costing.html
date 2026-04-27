@@ -65,7 +65,7 @@
         .settings-overlay { display:none; position:fixed; inset:0; background:rgba(15,23,42,.55);
             z-index:10000; align-items:center; justify-content:center; }
         .settings-overlay.show { display:flex; }
-        .settings-box { background:white; border-radius:14px; padding:28px 32px; width:480px;
+        .settings-box { background:white; border-radius:14px; padding:28px 32px; width:480px; position:relative; overflow:hidden;
             max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,.3); }
         .settings-box h3 { font-size:16px; font-weight:800; color:#1e293b; margin-bottom:4px; }
         .settings-box .settings-sub { font-size:12px; color:#64748b; margin-bottom:20px; }
@@ -939,31 +939,51 @@
 <!-- ── Settings Modal ── -->
 <div class="settings-overlay" id="settings-overlay">
     <div class="settings-box">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-            <h3>&#9881; Settings &amp; Access Control</h3>
-            <button class="btn btn-outline btn-sm" onclick="closeSettings()">&#10005; Close</button>
+
+        <!-- ── Admin Password Gate ── -->
+        <div id="settings-admin-gate" style="display:none;position:absolute;inset:0;background:white;border-radius:14px;z-index:10;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:40px;text-align:center;">
+            <div style="font-size:40px;">🔐</div>
+            <div style="font-size:16px;font-weight:800;color:#1e293b;">Admin Access Required</div>
+            <div style="font-size:13px;color:#64748b;">Enter the admin password to manage settings</div>
+            <input type="password" id="admin-gate-pw" placeholder="Admin password..."
+                style="width:100%;max-width:280px;padding:10px 14px;border:2px solid #e2e8f0;border-radius:8px;font-size:14px;outline:none;"
+                onkeydown="if(event.key==='Enter')submitAdminPW()">
+            <div id="admin-gate-error" style="color:#dc2626;font-size:12px;display:none;">❌ Incorrect password. Try again.</div>
+            <div style="display:flex;gap:10px;">
+                <button class="btn btn-primary" onclick="submitAdminPW()">&#128275; Unlock Settings</button>
+                <button class="btn btn-outline btn-sm" onclick="closeSettings()">Cancel</button>
+            </div>
         </div>
-        <div class="settings-sub">Set a password to restrict access to each section. Leave blank for open access.</div>
-        <div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;padding:10px 14px;font-size:12px;color:#92400e;margin-bottom:12px;">
-            ⚠️ <strong>After saving a password, all users must reload the page for it to take effect.</strong> You will stay unlocked for the current session.
-        </div>
-        <div class="settings-tab-row" id="settings-tab-row"></div>
-        <div style="margin-top:20px;padding-top:16px;border-top:1px solid #e2e8f0;">
-            <div style="font-size:12px;font-weight:700;color:#475569;margin-bottom:10px;">&#128196; Print / Company Settings</div>
-            <div class="form-row" style="gap:10px;flex-wrap:wrap;">
-                <div class="form-group" style="flex:1;min-width:180px;">
-                    <label>Company Name</label>
-                    <input type="text" id="ps-company-name" placeholder="e.g. Apex Yarns Pvt Ltd" style="width:100%;" oninput="savePrintSettings()">
-                </div>
-                <div class="form-group" style="align-self:flex-end;">
-                    <label>Company Logo</label>
-                    <input type="file" id="ps-logo-file" accept="image/*" onchange="uploadLogo(event)" style="font-size:12px;">
-                </div>
-                <div class="form-group" style="align-self:flex-end;">
-                    <button class="btn btn-outline btn-sm" onclick="clearLogo()">&#128465; Clear Logo</button>
+
+        <!-- ── Main Settings Content ── -->
+        <div id="settings-main-content">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                <h3>&#9881; Settings &amp; Access Control</h3>
+                <button class="btn btn-outline btn-sm" onclick="closeSettings()">&#10005; Close</button>
+            </div>
+            <div class="settings-sub">Set a password to restrict access to each section. Leave blank for open access.</div>
+            <div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;padding:10px 14px;font-size:12px;color:#92400e;margin-bottom:12px;">
+                ⚠️ <strong>After saving a password, all users must reload the page for it to take effect.</strong> You will stay unlocked for the current session.
+            </div>
+            <div class="settings-tab-row" id="settings-tab-row"></div>
+            <div style="margin-top:20px;padding-top:16px;border-top:1px solid #e2e8f0;">
+                <div style="font-size:12px;font-weight:700;color:#475569;margin-bottom:10px;">&#128196; Print / Company Settings</div>
+                <div class="form-row" style="gap:10px;flex-wrap:wrap;">
+                    <div class="form-group" style="flex:1;min-width:180px;">
+                        <label>Company Name</label>
+                        <input type="text" id="ps-company-name" placeholder="e.g. Apex Yarns Pvt Ltd" style="width:100%;" oninput="savePrintSettings()">
+                    </div>
+                    <div class="form-group" style="align-self:flex-end;">
+                        <label>Company Logo</label>
+                        <input type="file" id="ps-logo-file" accept="image/*" onchange="uploadLogo(event)" style="font-size:12px;">
+                    </div>
+                    <div class="form-group" style="align-self:flex-end;">
+                        <button class="btn btn-outline btn-sm" onclick="clearLogo()">&#128465; Clear Logo</button>
+                    </div>
                 </div>
             </div>
         </div>
+
     </div>
 </div>
 
@@ -4168,6 +4188,7 @@ function _ensureDBStructure() {
     if (!Array.isArray(db.factoryMonthly))     db.factoryMonthly      = [];
     if (!Array.isArray(db.competitorPrices))   db.competitorPrices    = [];
     if (!db.tabPasswords)                    db.tabPasswords      = { rawmaterials: '', batchprocessing: '', factorycosting: '', internalcosting: '', custcosting: '', machinerycosting: '', dashboard: '', salesdispatch: '', rminventory: '' };
+    if (!('adminPassword' in db))            db.adminPassword     = '';
     if (!('dashboard' in db.tabPasswords))   db.tabPasswords.dashboard = '';
     if (!('salesdispatch' in db.tabPasswords)) db.tabPasswords.salesdispatch = '';
     if (!('rminventory' in db.tabPasswords))      db.tabPasswords.rminventory      = '';
@@ -4259,6 +4280,7 @@ const _tabLabels = {
 };
 const _unlockedTabs = new Set(); // session-level unlocks
 let _pendingTab = null;          // tab waiting for password entry
+let _adminUnlocked = false;      // admin unlocked settings this session
 
 function isTabLocked(tab) {
     const pw = (db.tabPasswords || {})[tab];
@@ -11091,10 +11113,39 @@ function renderCustComparison() {
 // ─────────────────────────────── Settings Modal (Password + Print Settings)
 
 function openSettings() {
-    renderSettingsRows();
-    const nameEl = document.getElementById('ps-company-name');
-    if (nameEl) nameEl.value = (db.printSettings || {}).companyName || '';
     document.getElementById('settings-overlay').classList.add('show');
+    if (db.adminPassword && !_adminUnlocked) {
+        // Show admin gate
+        document.getElementById('settings-admin-gate').style.display = 'flex';
+        document.getElementById('settings-main-content').style.display = 'none';
+        const inp = document.getElementById('admin-gate-pw');
+        if (inp) { inp.value = ''; setTimeout(() => inp.focus(), 100); }
+        document.getElementById('admin-gate-error').style.display = 'none';
+    } else {
+        // No admin password or already unlocked — show settings directly
+        document.getElementById('settings-admin-gate').style.display = 'none';
+        document.getElementById('settings-main-content').style.display = 'block';
+        renderSettingsRows();
+        const nameEl = document.getElementById('ps-company-name');
+        if (nameEl) nameEl.value = (db.printSettings || {}).companyName || '';
+    }
+}
+
+function submitAdminPW() {
+    const entered = (document.getElementById('admin-gate-pw')?.value || '').trim();
+    if (entered === (db.adminPassword || '')) {
+        _adminUnlocked = true;
+        document.getElementById('settings-admin-gate').style.display = 'none';
+        document.getElementById('settings-main-content').style.display = 'block';
+        renderSettingsRows();
+        const nameEl = document.getElementById('ps-company-name');
+        if (nameEl) nameEl.value = (db.printSettings || {}).companyName || '';
+    } else {
+        const err = document.getElementById('admin-gate-error');
+        if (err) err.style.display = 'block';
+        const inp = document.getElementById('admin-gate-pw');
+        if (inp) { inp.value = ''; inp.focus(); }
+    }
 }
 
 function closeSettings() {
@@ -11102,8 +11153,47 @@ function closeSettings() {
     updateTabLockIcons();
 }
 
+function saveAdminPassword() {
+    const inp = document.getElementById('pw-set-adminPassword');
+    if (!inp) return;
+    const val = inp.value.trim();
+    if (!val) { alert('Please enter an admin password.'); return; }
+    db.adminPassword = val;
+    _adminUnlocked = true; // stay unlocked this session
+    persist();
+    renderSettingsRows();
+    flash('Admin password saved. Settings are now protected.');
+}
+
+function clearAdminPassword() {
+    if (!confirm('Remove admin password? Anyone will be able to open Settings.')) return;
+    db.adminPassword = '';
+    _adminUnlocked = false;
+    persist();
+    renderSettingsRows();
+    flash('Admin password removed.');
+}
+
 function renderSettingsRows() {
     if (!db.tabPasswords) db.tabPasswords = {};
+
+    // ── Admin Password card at top ──
+    const adminHasPw = !!(db.adminPassword);
+    const adminCard = `
+    <div class="settings-tab-item" style="border:2px solid #6366f1;background:#f5f3ff;margin-bottom:4px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <div class="settings-tab-name" style="color:#4f46e5;">&#128274; Admin Password <span style="font-size:11px;font-weight:400;color:#7c3aed;">(protects this Settings page)</span></div>
+            <span class="pw-status ${adminHasPw ? 'locked' : 'open'}">${adminHasPw ? '🔒 Protected' : '🔓 No Password'}</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-bottom:10px;">Only you (the admin) will be able to open Settings. Other users can still use the ERP normally.</div>
+        <div class="pw-field-row">
+            <input type="password" id="pw-set-adminPassword" placeholder="${adminHasPw ? 'Enter new admin password' : 'Set admin password...'}" autocomplete="new-password">
+            <button class="btn btn-primary btn-sm" onclick="saveAdminPassword()">&#128190; Save</button>
+            ${adminHasPw ? `<button class="btn btn-outline btn-sm" onclick="clearAdminPassword()">&#128275; Remove</button>` : ''}
+        </div>
+    </div>
+    <div style="font-size:11px;font-weight:700;color:#64748b;margin:12px 0 8px;text-transform:uppercase;letter-spacing:.5px;">Module Access Passwords</div>`;
+
     const tabs = [
         { key: 'salesdispatch',    label: '🚚 Sales & Dispatch' },
         { key: 'rminventory',      label: '🧶 Yarn & RM Inventory' },
@@ -11122,7 +11212,7 @@ function renderSettingsRows() {
         { key: 'machinerycosting', label: '⚙️ Machinery Costing' },
         { key: 'dashboard',        label: '📊 Cost Dashboard' },
     ];
-    document.getElementById('settings-tab-row').innerHTML = tabs.map(t => {
+    document.getElementById('settings-tab-row').innerHTML = adminCard + tabs.map(t => {
         const hasPw = !!(db.tabPasswords[t.key]);
         return `
         <div class="settings-tab-item">
