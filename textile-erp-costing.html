@@ -9141,6 +9141,7 @@ function renderFURates() {
 // ══════════════════════════════════════════════════════════════════════
 
 const _FU_MON = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+let _fuImportRows = [], _fuImportRawRows = [], _fuImportSheetName = '';
 
 function openFUImport() {
     document.getElementById('fu-import-input').click();
@@ -9153,22 +9154,13 @@ function handleFUImport(event) {
     const reader = new FileReader();
     reader.onload = function(e) {
         try {
-            // cellDates:true converts serial dates to JS Date objects
             const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array', cellDates: true });
-            // Prefer sheet with 'ytd', 'costing', '25-26' in name; else first sheet
             const sn = wb.SheetNames.find(n => /ytd|costing|25-26|25_26/i.test(n)) || wb.SheetNames[0];
-            const ws  = wb.Sheets[sn];
-            // raw:false lets SheetJS format dates; also get raw for numbers
-            const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null, raw: false });
-            const rawRows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null, raw: true });
-            const parsed = _fuParseExcelRows(rows, rawRows, sn);
-            if (!parsed.length) {
-                // Build a debug snippet to help diagnose
-                const sample = (rows.slice(0,8)).map((r,i)=>`Row ${i}: ${(r||[]).slice(0,4).map(c=>JSON.stringify(c)).join(' | ')}`).join('\n');
-                alert('No monthly data detected.\n\nFirst 8 rows of your sheet:\n' + sample + '\n\nIf you see month names above, please share this with support.');
-                return;
-            }
-            _fuShowImportPreview(parsed, sn);
+            const ws = wb.Sheets[sn];
+            _fuImportRows     = XLSX.utils.sheet_to_json(ws, { header:1, defval:null, raw:false });
+            _fuImportRawRows  = XLSX.utils.sheet_to_json(ws, { header:1, defval:null, raw:true  });
+            _fuImportSheetName = sn;
+            _fuOpenMapper();
         } catch(err) {
             alert('Could not read file: ' + err.message);
         }
@@ -9216,6 +9208,211 @@ function _fuParseYM(val) {
     if (m) return `${m[2]}-${String(parseInt(m[1])).padStart(2,'0')}`;
 
     return null;
+}
+
+// ── Column mapper: opens a step-by-step modal ─────────────────────────
+const _FU_MAP_FIELDS = [
+    { key:'month',        label:'Month Column *',            hint:'e.g. Apr 25, May 25' },
+    { key:'prod',         label:'Production (KG)',           hint:'Total output in KG' },
+    { key:'water_units',  label:'Water — Units (KL)',        hint:'Water consumption' },
+    { key:'water_cost',   label:'Water — Cost (₹)',          hint:'Water expenditure' },
+    { key:'power_units',  label:'Power — Units (kWh)',       hint:'EB Grid units consumed' },
+    { key:'power_cost',   label:'Power — Cost (₹)',          hint:'Power bill amount' },
+    { key:'dg_units',     label:'DG — Units (Ltrs)',         hint:'Diesel consumed' },
+    { key:'dg_cost',      label:'DG — Cost (₹)',             hint:'DG fuel cost' },
+    { key:'thermo_units', label:'Thermopack — Units (Ltrs)', hint:'Thermopack/fuel consumed' },
+    { key:'thermo_cost',  label:'Thermopack — Cost (₹)',     hint:'Thermopack fuel cost' },
+    { key:'spares_cost',  label:'Spares & Repairs — Cost (₹)',hint:'Total spares/repairs spend' },
+];
+
+function _fuOpenMapper() {
+    const rows = _fuImportRows;
+    if (!rows.length) { alert('No data found in file.'); return; }
+
+    // Build column headers: scan first 10 rows, collect non-empty unique values per column
+    const maxCols = Math.max(...rows.slice(0,15).map(r=>(r||[]).length));
+    const colLabels = [];
+    for (let c = 0; c < maxCols; c++) {
+        const vals = rows.slice(0,10).map(r=>(r||[])[c]).filter(v=>v!=null&&String(v).trim()!=='');
+        colLabels.push(vals.slice(0,2).map(v=>String(v).substring(0,18)).join(' / ') || `Col ${c+1}`);
+    }
+
+    // Auto-guess mappings
+    const guess = _fuAutoGuess(rows, colLabels);
+
+    // Build dropdown options
+    const opts = (sel) => ['— Skip —', ...colLabels.map((l,i)=>`Col ${i+1}: ${l}`)].map((l,i)=>`<option value="${i-1}" ${sel===i-1?'selected':''}>${l}</option>`).join('');
+
+    const modal = document.getElementById('fu-import-modal');
+    document.getElementById('fu-import-info').innerHTML =
+        `<strong>Step 1 of 2 — Map your Excel columns</strong><br>
+        Sheet: <em>${_fuImportSheetName}</em> &nbsp;|&nbsp; ${maxCols} columns detected.<br>
+        Auto-detection has pre-filled the dropdowns. Check each one and correct if needed, then click <strong>Preview →</strong>.`;
+
+    document.getElementById('fu-import-tbody').innerHTML = '';
+    document.getElementById('fu-import-warn').innerHTML  = '';
+    modal.querySelector('.btn-success').textContent      = '▶ Preview →';
+    modal.querySelector('.btn-success').onclick          = _fuRunFromMapper;
+
+    // Build mapper form inside tbody placeholder
+    const wrap = document.getElementById('fu-import-tbody');
+    const tbl  = wrap.closest('table');
+    // Replace the whole table with the mapper form
+    tbl.style.display = 'none';
+    let mapperEl = document.getElementById('fu-mapper-form');
+    if (!mapperEl) {
+        mapperEl = document.createElement('div');
+        mapperEl.id = 'fu-mapper-form';
+        tbl.parentNode.insertBefore(mapperEl, tbl);
+    }
+    mapperEl.style.display = '';
+    mapperEl.innerHTML = `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        ${_FU_MAP_FIELDS.map(f=>`
+            <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px;">
+                <div style="font-size:12px;font-weight:700;color:#0f172a;margin-bottom:2px;">${f.label}</div>
+                <div style="font-size:10px;color:#94a3b8;margin-bottom:6px;">${f.hint}</div>
+                <select id="fu-map-${f.key}" style="width:100%;font-size:12px;border:1px solid #cbd5e1;border-radius:6px;padding:5px 8px;">
+                    ${opts(guess[f.key])}
+                </select>
+            </div>`).join('')}
+        </div>
+        <div style="margin-top:12px;font-size:11px;color:#64748b;">
+            ℹ️ "— Skip —" means that field won't be imported. Month column is required.
+        </div>`;
+
+    document.getElementById('fu-import-modal').style.display = 'flex';
+}
+
+function _fuAutoGuess(rows, colLabels) {
+    // Try to auto-detect the month column first
+    const guess = {};
+    // Month col: scan cols 0-5 for a cell that parses as a month
+    for (let c = 0; c <= Math.min(5, colLabels.length-1); c++) {
+        for (let r = 0; r < Math.min(30, rows.length); r++) {
+            if (_fuParseYM((rows[r]||[])[c]) || _fuParseYM((_fuImportRawRows[r]||[])[c])) {
+                guess.month = c; break;
+            }
+        }
+        if (guess.month != null) break;
+    }
+    if (guess.month == null) guess.month = 0;
+    guess.prod = guess.month + 1;
+
+    // For utilities: scan all column labels for keywords
+    const lbl = (c) => (colLabels[c]||'').toLowerCase();
+    const find = (keywords, exclude) => {
+        for (let c = 0; c < colLabels.length; c++) {
+            const l = lbl(c);
+            if (keywords.some(k=>l.includes(k)) && (!exclude||!exclude.some(k=>l.includes(k)))) return c;
+        }
+        return -1; // -1 = skip
+    };
+
+    // Try header rows for keyword matches
+    const flatHdr = rows.slice(0,12).map(r=>(r||[]).map((v,c)=>({v:String(v||'').toLowerCase(),c})));
+
+    const findInHdrs = (keywords, startAfterCol, notKeywords) => {
+        for (const hdrRow of flatHdr) {
+            for (const {v,c} of hdrRow) {
+                if (c <= (startAfterCol||0)) continue;
+                if (keywords.some(k=>v.includes(k)) && (!notKeywords||!notKeywords.some(k=>v.includes(k)))) return c;
+            }
+        }
+        return -1;
+    };
+
+    // Water section
+    const waterStart = findInHdrs(['water'],0);
+    if (waterStart>=0) {
+        guess.water_units = findInHdrs(['consump','unit','kl'], waterStart);
+        guess.water_cost  = findInHdrs(['cost','rs','amount','expend'], waterStart);
+        if (guess.water_units < 0) guess.water_units = waterStart;
+        if (guess.water_cost  < 0) guess.water_cost  = waterStart + 1;
+    }
+    // Power section
+    const powerStart = findInHdrs(['power','eb grid'], waterStart>=0?waterStart:0);
+    if (powerStart>=0) {
+        guess.power_units = findInHdrs(['unit','kwh','consump'], powerStart);
+        guess.power_cost  = findInHdrs(['cost','rs','amount'],   powerStart);
+        if (guess.power_units < 0) guess.power_units = powerStart;
+        if (guess.power_cost  < 0) guess.power_cost  = powerStart + 2;
+    }
+    // DG section
+    const dgStart = findInHdrs(['dg','diesel'], powerStart>=0?powerStart:0);
+    if (dgStart>=0) {
+        guess.dg_units = findInHdrs(['litre','ltr','consump','unit'], dgStart);
+        guess.dg_cost  = findInHdrs(['cost','rs','amount'], dgStart);
+        if (guess.dg_units < 0) guess.dg_units = dgStart;
+        if (guess.dg_cost  < 0) guess.dg_cost  = dgStart + 2;
+    }
+    // Thermopack
+    const thermoStart = findInHdrs(['thermo','fuel oil'], dgStart>=0?dgStart:0);
+    if (thermoStart>=0) {
+        guess.thermo_units = findInHdrs(['litre','ltr','consump','unit'], thermoStart);
+        guess.thermo_cost  = findInHdrs(['cost','rs','amount'], thermoStart);
+        if (guess.thermo_units < 0) guess.thermo_units = thermoStart;
+        if (guess.thermo_cost  < 0) guess.thermo_cost  = thermoStart + 2;
+    }
+    // Spares
+    const sparesStart = findInHdrs(['spare','repair'], thermoStart>=0?thermoStart:0);
+    if (sparesStart>=0) {
+        guess.spares_cost = findInHdrs(['total','cost','rs','actual','amount'], sparesStart);
+        if (guess.spares_cost < 0) guess.spares_cost = sparesStart + 1;
+    }
+
+    return guess;
+}
+
+function _fuRunFromMapper() {
+    // Read column assignments from dropdowns
+    const colMap = {};
+    _FU_MAP_FIELDS.forEach(f => {
+        const v = parseInt(document.getElementById('fu-map-'+f.key)?.value);
+        colMap[f.key] = isNaN(v) || v < 0 ? null : v;
+    });
+    if (colMap.month == null) { alert('Please select the Month column.'); return; }
+
+    // Detect department from first few header rows
+    let dept = 'Maintenance';
+    for (let i=0; i<Math.min(6,_fuImportRows.length); i++) {
+        const flat=(_fuImportRows[i]||[]).map(c=>String(c||'').toLowerCase()).join(' ');
+        if (flat.includes('weaving'))    { dept='Weaving';   break; }
+        if (flat.includes('dipping'))    { dept='Dipping';   break; }
+        if (flat.includes('finishing'))  { dept='Finishing'; break; }
+        if (flat.includes('utility'))    { dept='Utility';   break; }
+    }
+
+    const results = [];
+    _fuImportRows.forEach((row, ri) => {
+        if (!row) return;
+        const ym = _fuParseYM(row[colMap.month]) || _fuParseYM((_fuImportRawRows[ri]||[])[colMap.month]);
+        if (!ym) return;
+        const num = col => col!=null ? (parseFloat(row[col])||0) : 0;
+        const rec = {
+            yearMonth: ym, department: dept,
+            prodKg: num(colMap.prod),
+            utils: {
+                water:  { units_act:num(colMap.water_units),  units_bud:0, cost_act:num(colMap.water_cost),  cost_bud:0, remarks:'' },
+                power:  { units_act:num(colMap.power_units),  units_bud:0, cost_act:num(colMap.power_cost),  cost_bud:0, remarks:'' },
+                dg:     { units_act:num(colMap.dg_units),     units_bud:0, cost_act:num(colMap.dg_cost),     cost_bud:0, remarks:'' },
+                thermo: { units_act:num(colMap.thermo_units), units_bud:0, cost_act:num(colMap.thermo_cost), cost_bud:0, remarks:'' },
+                other:  { units_act:0, units_bud:0, cost_act:0, cost_bud:0, remarks:'' },
+            },
+            spares: []
+        };
+        const sc = num(colMap.spares_cost);
+        if (sc>0) rec.spares=[{id:nid(),item:'Spares & Repairs',actual:sc,budget:0,remarks:'Imported'}];
+        results.push(rec);
+    });
+
+    if (!results.length) { alert('No month rows found with the selected Month column. Please check your selection.'); return; }
+
+    // Hide mapper, show preview
+    const mapperEl = document.getElementById('fu-mapper-form');
+    if (mapperEl) mapperEl.style.display='none';
+    document.getElementById('fu-import-modal').querySelector('table').style.display='';
+    _fuShowImportPreview(results, _fuImportSheetName);
 }
 
 // ── Scan header rows to build column map {prod, water_units, water_cost, power_units, power_cost, dg_units, dg_cost, thermo_units, thermo_cost, spares_cost}
@@ -9367,7 +9564,10 @@ function _fuShowImportPreview(parsed, sheetName) {
     const existing = db.factoryMonthly || [];
     let dupCount = 0;
 
-    info.textContent = `Detected ${parsed.length} month record(s) from sheet "${sheetName}". Review below then click Import.`;
+    info.innerHTML = `<strong>Step 2 of 2 — Preview</strong><br>
+        ${parsed.length} month record(s) detected from sheet "<em>${sheetName}</em>". Review the values below, then click Import.`;
+    modal.querySelector('.btn-success').textContent = '✓ Import All Valid Rows';
+    modal.querySelector('.btn-success').onclick     = confirmFUImport;
 
     tbody.innerHTML = parsed.map((r, i) => {
         const wu = r.utils.water, pu = r.utils.power, dg = r.utils.dg, th = r.utils.thermo;
@@ -9404,6 +9604,10 @@ function _fuShowImportPreview(parsed, sheetName) {
 function closeFUImportModal() {
     document.getElementById('fu-import-modal').style.display = 'none';
     window._fuImportPending = null;
+    const mapperEl = document.getElementById('fu-mapper-form');
+    if (mapperEl) mapperEl.style.display = 'none';
+    const tbl = document.getElementById('fu-import-tbody')?.closest('table');
+    if (tbl) tbl.style.display = '';
 }
 
 function confirmFUImport() {
