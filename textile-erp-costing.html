@@ -3766,6 +3766,7 @@
                 <button class="btn btn-outline" onclick="openFUImport()">&#128229; Import from Excel</button>
                 <input type="file" id="fu-import-input" accept=".xlsx,.xls" style="display:none;" onchange="handleFUImport(event)">
                 <button class="btn btn-danger btn-sm" onclick="deleteFUEntry()">Delete</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteAllFUEntries()" style="background:#7f1d1d;">&#128465; Delete All Visible</button>
             </div>
 
             <!-- Entry form (hidden by default) -->
@@ -8947,6 +8948,23 @@ function deleteFUEntry() {
     if(!confirm('Delete this monthly entry?')) return;
     db.factoryMonthly=(db.factoryMonthly||[]).filter(r=>r.id!==_fuId);
     persist(); showToast('Deleted'); cancelFUEntry(); renderFUMonthList();
+}
+
+function deleteAllFUEntries() {
+    const fy   = document.getElementById('fu-fy-sel')?.value   || '';
+    const dept = document.getElementById('fu-dept-sel')?.value || '';
+    const {start, end} = fy ? _fyDates(fy) : {start:'0000-01-01', end:'9999-12-31'};
+    let toDelete = (db.factoryMonthly||[]).filter(r =>
+        r.yearMonth && r.yearMonth+'-01' >= start && r.yearMonth+'-01' <= end
+    );
+    if (dept) toDelete = toDelete.filter(r => r.department === dept);
+    if (!toDelete.length) { showToast('No entries to delete for current filter.'); return; }
+    const label = (fy ? 'FY '+fy : 'all years') + (dept ? ', '+dept : ', all departments');
+    if (!confirm(`Delete ALL ${toDelete.length} entr${toDelete.length===1?'y':'ies'} for ${label}?\n\nThis cannot be undone.`)) return;
+    const ids = new Set(toDelete.map(r=>r.id));
+    db.factoryMonthly = (db.factoryMonthly||[]).filter(r=>!ids.has(r.id));
+    persist(); cancelFUEntry(); renderFUMonthList();
+    showToast(`Deleted ${toDelete.length} entr${toDelete.length===1?'y':'ies'}.`);
 }
 
 function _fuTotalUtil(r) {
