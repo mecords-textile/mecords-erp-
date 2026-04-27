@@ -902,6 +902,40 @@
     </div>
 </div>
 
+<!-- ── Factory Monthly Costing — Excel Import Modal ── -->
+<div id="fu-import-modal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:2000;align-items:flex-start;justify-content:center;padding:30px 16px;overflow-y:auto;">
+    <div style="background:#fff;border-radius:14px;max-width:960px;width:100%;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.25);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <h3 style="margin:0;font-size:17px;color:#0f172a;">&#128229; Import — Factory Monthly Costing (Utilities &amp; Spares)</h3>
+            <button onclick="closeFUImportModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#64748b;">&#10005;</button>
+        </div>
+        <div id="fu-import-info" style="font-size:13px;color:#475569;margin-bottom:16px;padding:10px 14px;background:#f0f9ff;border-radius:8px;border:1px solid #bae6fd;"></div>
+        <div style="overflow-x:auto;max-height:55vh;overflow-y:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:12.5px;">
+                <thead style="position:sticky;top:0;">
+                    <tr style="background:#1e293b;color:white;">
+                        <th style="padding:8px 10px;text-align:left;">Month</th>
+                        <th style="padding:8px 10px;">Dept</th>
+                        <th style="padding:8px 10px;text-align:right;">Prod (KG)</th>
+                        <th style="padding:8px 10px;text-align:right;">Water<br><span style="font-size:10px;font-weight:400;">Units / ₹ Cost</span></th>
+                        <th style="padding:8px 10px;text-align:right;">Power<br><span style="font-size:10px;font-weight:400;">Units / ₹ Cost</span></th>
+                        <th style="padding:8px 10px;text-align:right;">DG<br><span style="font-size:10px;font-weight:400;">Ltrs / ₹ Cost</span></th>
+                        <th style="padding:8px 10px;text-align:right;">Thermopack<br><span style="font-size:10px;font-weight:400;">Ltrs / ₹ Cost</span></th>
+                        <th style="padding:8px 10px;text-align:right;">Spares ₹</th>
+                        <th style="padding:8px 10px;text-align:center;">Status</th>
+                    </tr>
+                </thead>
+                <tbody id="fu-import-tbody"></tbody>
+            </table>
+        </div>
+        <div style="margin-top:18px;display:flex;gap:10px;justify-content:flex-end;align-items:center;">
+            <span id="fu-import-warn" style="font-size:12px;color:#d97706;flex:1;"></span>
+            <button class="btn btn-outline" onclick="closeFUImportModal()">Cancel</button>
+            <button class="btn btn-success" onclick="confirmFUImport()">&#10003; Import All Valid Rows</button>
+        </div>
+    </div>
+</div>
+
 <!-- ── Settings Modal ── -->
 <div class="settings-overlay" id="settings-overlay">
     <div class="settings-box">
@@ -3729,6 +3763,8 @@
                     <option>Finishing</option><option>Utility</option><option>QC Lab</option><option>Admin</option>
                 </select>
                 <button class="btn btn-primary" onclick="openFUEntry()">+ New Month Entry</button>
+                <button class="btn btn-outline" onclick="openFUImport()">&#128229; Import from Excel</button>
+                <input type="file" id="fu-import-input" accept=".xlsx,.xls" style="display:none;" onchange="handleFUImport(event)">
                 <button class="btn btn-danger btn-sm" onclick="deleteFUEntry()">Delete</button>
             </div>
 
@@ -9091,6 +9127,246 @@ function renderFURates() {
             <td style="${cellStyle}color:#7c3aed;font-weight:800;">₹ ${cpkgG}</td>
         </tr>`;
     }).join('') + '</tbody></table>';
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// FACTORY MONTHLY COSTING — EXCEL IMPORT
+// ══════════════════════════════════════════════════════════════════════
+
+const _FU_MON = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+
+function openFUImport() {
+    document.getElementById('fu-import-input').click();
+}
+
+function handleFUImport(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    event.target.value = '';
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+            // Prefer sheet with 'ytd', 'costing', or '25' in name; else first sheet
+            const sn = wb.SheetNames.find(n =>
+                /ytd|costing|25-26|25_26/i.test(n)
+            ) || wb.SheetNames[0];
+            const ws = wb.Sheets[sn];
+            const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
+            const parsed = _fuParseExcelRows(rows, sn);
+            if (!parsed.length) {
+                alert('No monthly data detected.\n\nMake sure the Excel has month names (e.g. "Apr 25", "May 25") in the first column.');
+                return;
+            }
+            _fuShowImportPreview(parsed, sn);
+        } catch(err) {
+            alert('Could not read file: ' + err.message);
+        }
+    };
+    reader.readAsArrayBuffer(file);
+}
+
+// ── Parse month cell: "Apr 25", "Apr-25", "April 2025", "2025-04" → "2025-04"
+function _fuParseYM(val) {
+    if (val == null) return null;
+    const s = String(val).trim().toLowerCase().replace(/\s+/g,' ');
+    if (!s || s==='month' || s.includes('total') || s.includes('avg') || s.includes('average')) return null;
+    // "Apr 25" / "Apr-25"
+    let m = s.match(/^([a-z]{3,})[- ](\d{2})$/);
+    if (m) {
+        const mi = _FU_MON.findIndex(x => m[1].startsWith(x));
+        if (mi >= 0) { let yr = parseInt(m[2]); yr += yr < 50 ? 2000 : 1900; return `${yr}-${String(mi+1).padStart(2,'0')}`; }
+    }
+    // "Apr 2025" / "April 2025"
+    m = s.match(/^([a-z]{3,})[- ](\d{4})$/);
+    if (m) {
+        const mi = _FU_MON.findIndex(x => m[1].startsWith(x));
+        if (mi >= 0) return `${m[2]}-${String(mi+1).padStart(2,'0')}`;
+    }
+    // "2025-04"
+    m = s.match(/^(\d{4})-(\d{1,2})$/);
+    if (m) return `${m[1]}-${String(parseInt(m[2])).padStart(2,'0')}`;
+    return null;
+}
+
+// ── Scan header rows to build column map {prod, water_units, water_cost, power_units, power_cost, dg_units, dg_cost, thermo_units, thermo_cost, spares_cost}
+function _fuBuildColMap(rows) {
+    const map = {};
+    // Find the row that mentions Water AND (Power OR DG) — this is the utility section header row
+    let utilHdrRow = -1;
+    for (let i = 0; i < Math.min(20, rows.length); i++) {
+        const flat = (rows[i]||[]).map(c=>String(c||'').toLowerCase()).join('|');
+        if (flat.includes('water') && (flat.includes('power') || flat.includes('dg'))) {
+            utilHdrRow = i; break;
+        }
+    }
+
+    // Detect department from first few rows
+    let dept = 'Maintenance';
+    for (let i = 0; i < Math.min(6, rows.length); i++) {
+        const flat = (rows[i]||[]).map(c=>String(c||'').toLowerCase()).join(' ');
+        if (flat.includes('weaving'))    { dept='Weaving'; break; }
+        if (flat.includes('dipping'))    { dept='Dipping'; break; }
+        if (flat.includes('finishing'))  { dept='Finishing'; break; }
+        if (flat.includes('utility'))    { dept='Utility'; break; }
+        if (flat.includes('maintenance')){ dept='Maintenance'; break; }
+    }
+    map._dept = dept;
+
+    // Find production column: scan first data row's neighbours for a large number (>1000) in col 1 or 2
+    map.prod = 1; // default col B
+
+    if (utilHdrRow < 0) return map; // can't build detailed map, use positional fallback
+
+    const hdr  = rows[utilHdrRow]     || [];
+    const sub1 = rows[utilHdrRow + 1] || [];
+    const sub2 = rows[utilHdrRow + 2] || [];
+
+    // Find section start columns
+    const sections = [];
+    hdr.forEach((cell, c) => {
+        const v = String(cell||'').toLowerCase();
+        if (v.includes('water'))                                     sections.push({ key:'water',  col:c });
+        else if (v.includes('power') || v.includes('eb grid'))       sections.push({ key:'power',  col:c });
+        else if ((v.includes('dg') || v.includes('diesel')) && !sections.find(s=>s.key==='dg'))
+                                                                     sections.push({ key:'dg',     col:c });
+        else if (v.includes('thermo') || v.includes('fuel'))         sections.push({ key:'thermo', col:c });
+        else if (v.includes('spare') || v.includes('repair'))        sections.push({ key:'spares', col:c });
+    });
+    sections.sort((a,b) => a.col - b.col);
+
+    // For each section, scan sub-header rows to find units and cost columns
+    sections.forEach((sec, si) => {
+        const endCol = si + 1 < sections.length ? sections[si+1].col : sec.col + 12;
+        if (sec.key === 'spares') {
+            // For spares just grab the first numeric-looking column (total cost)
+            for (let c = sec.col; c < endCol; c++) {
+                const v = String(sub1[c]||'').toLowerCase() + String(sub2[c]||'').toLowerCase();
+                if (v.includes('total') || v.includes('cost') || v.includes('rs') || v.includes('amount') || v.includes('actual')) {
+                    map.spares_cost = c; break;
+                }
+            }
+            if (map.spares_cost == null) map.spares_cost = sec.col + 1;
+            return;
+        }
+        let unitsCol = null, costCol = null;
+        for (let c = sec.col; c < endCol; c++) {
+            const v = (String(sub1[c]||'')+' '+String(sub2[c]||'')).toLowerCase();
+            if (unitsCol == null && (v.includes('consump') || v.includes('unit') || v.includes('litre') || v.includes('kl') || v.includes('kwh') || v.includes('ltr') || v.match(/\b(kl|l|lts)\b/)) && !v.includes('cost') && !v.includes('rs')) {
+                unitsCol = c;
+            }
+            if (costCol == null && (v.includes('cost') || v.includes('rs') || v.includes('₹') || v.includes('amount') || v.includes('expenditure'))) {
+                costCol = c;
+            }
+        }
+        // Fallbacks: first col = units, second col = cost
+        if (unitsCol == null) unitsCol = sec.col;
+        if (costCol == null)  costCol  = sec.col + 1;
+        map[sec.key + '_units'] = unitsCol;
+        map[sec.key + '_cost']  = costCol;
+    });
+
+    return map;
+}
+
+function _fuParseExcelRows(rows, sheetName) {
+    const colMap = _fuBuildColMap(rows);
+    const dept   = colMap._dept || 'Maintenance';
+    const results = [];
+
+    rows.forEach(row => {
+        if (!row) return;
+        const ym = _fuParseYM(row[0]);
+        if (!ym) return;
+
+        const num = (col) => col != null ? (parseFloat(row[col]) || 0) : 0;
+
+        const rec = {
+            yearMonth:  ym,
+            department: dept,
+            prodKg:     num(colMap.prod),
+            utils: {
+                water:  { units_act: num(colMap.water_units),  units_bud:0, cost_act: num(colMap.water_cost),  cost_bud:0, remarks:'' },
+                power:  { units_act: num(colMap.power_units),  units_bud:0, cost_act: num(colMap.power_cost),  cost_bud:0, remarks:'' },
+                dg:     { units_act: num(colMap.dg_units),     units_bud:0, cost_act: num(colMap.dg_cost),     cost_bud:0, remarks:'' },
+                thermo: { units_act: num(colMap.thermo_units), units_bud:0, cost_act: num(colMap.thermo_cost), cost_bud:0, remarks:'' },
+                other:  { units_act:0, units_bud:0, cost_act:0, cost_bud:0, remarks:'' },
+            },
+            spares: []
+        };
+        const sc = num(colMap.spares_cost);
+        if (sc > 0) rec.spares = [{ id: nid(), item: 'Spares & Repairs', actual: sc, budget: 0, remarks: 'Imported from Excel' }];
+        results.push(rec);
+    });
+
+    return results;
+}
+
+function _fuShowImportPreview(parsed, sheetName) {
+    const modal = document.getElementById('fu-import-modal');
+    const info  = document.getElementById('fu-import-info');
+    const tbody = document.getElementById('fu-import-tbody');
+    const warn  = document.getElementById('fu-import-warn');
+
+    const existing = db.factoryMonthly || [];
+    let dupCount = 0;
+
+    info.textContent = `Detected ${parsed.length} month record(s) from sheet "${sheetName}". Review below then click Import.`;
+
+    tbody.innerHTML = parsed.map((r, i) => {
+        const wu = r.utils.water, pu = r.utils.power, dg = r.utils.dg, th = r.utils.thermo;
+        const sc = r.spares.reduce((s,sp) => s + (parseFloat(sp.actual)||0), 0);
+        const isDup = existing.some(e => e.yearMonth === r.yearMonth && e.department === r.department);
+        if (isDup) dupCount++;
+        const rowBg = isDup ? '#fff7ed' : (i%2===0 ? '#fff' : '#f8fafc');
+        const fmtU  = (u, unit) => u ? `${u.toLocaleString('en-IN',{maximumFractionDigits:0})} ${unit}` : '—';
+        const fmtC  = v => v ? '₹'+v.toLocaleString('en-IN',{maximumFractionDigits:0}) : '—';
+        return `<tr style="border-bottom:1px solid #f1f5f9;background:${rowBg};">
+            <td style="padding:6px 10px;font-weight:700;">${r.yearMonth}</td>
+            <td style="padding:6px 10px;font-size:11px;">${esc(r.department)}</td>
+            <td style="padding:6px 10px;text-align:right;">${r.prodKg ? r.prodKg.toLocaleString('en-IN',{maximumFractionDigits:0}) : '—'}</td>
+            <td style="padding:6px 10px;text-align:right;font-size:11px;">${fmtU(wu.units_act,'KL')}<br>${fmtC(wu.cost_act)}</td>
+            <td style="padding:6px 10px;text-align:right;font-size:11px;">${fmtU(pu.units_act,'kWh')}<br>${fmtC(pu.cost_act)}</td>
+            <td style="padding:6px 10px;text-align:right;font-size:11px;">${fmtU(dg.units_act,'L')}<br>${fmtC(dg.cost_act)}</td>
+            <td style="padding:6px 10px;text-align:right;font-size:11px;">${fmtU(th.units_act,'L')}<br>${fmtC(th.cost_act)}</td>
+            <td style="padding:6px 10px;text-align:right;">${fmtC(sc)}</td>
+            <td style="padding:6px 10px;text-align:center;">${isDup
+                ? '<span style="background:#f59e0b;color:#fff;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;">SKIP (exists)</span>'
+                : '<span style="background:#16a34a;color:#fff;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;">NEW</span>'
+            }</td>
+        </tr>`;
+    }).join('');
+
+    warn.textContent = dupCount > 0
+        ? `⚠️ ${dupCount} record(s) already exist and will be skipped.`
+        : '';
+
+    window._fuImportPending = parsed;
+    modal.style.display = 'flex';
+}
+
+function closeFUImportModal() {
+    document.getElementById('fu-import-modal').style.display = 'none';
+    window._fuImportPending = null;
+}
+
+function confirmFUImport() {
+    const pending = window._fuImportPending;
+    if (!pending || !pending.length) return;
+    const existing = db.factoryMonthly || [];
+    let added = 0, skipped = 0;
+    pending.forEach(rec => {
+        const dup = existing.some(e => e.yearMonth === rec.yearMonth && e.department === rec.department);
+        if (dup) { skipped++; return; }
+        rec.id = nid();
+        (db.factoryMonthly = db.factoryMonthly || []).push(rec);
+        added++;
+    });
+    persist();
+    closeFUImportModal();
+    _populateFUFY();
+    renderFUMonthList();
+    showToast(`✅ Imported ${added} month${added!==1?'s':''}${skipped?' | '+skipped+' skipped (already exist)':''}`);
 }
 
 // ══════════════════════════════════════════════════════════════════════
