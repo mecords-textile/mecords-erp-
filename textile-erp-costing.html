@@ -848,10 +848,88 @@
             border-radius:4px; padding:2px 6px; text-align:center; margin-bottom:3px; }
         .yw-rem-btn { background:rgba(220,38,38,.75); border:none; border-radius:3px; color:white;
             font-size:9px; padding:1px 6px; cursor:pointer; }
+
+        /* ── Login Screen ── */
+        #login-screen { display:none; position:fixed; inset:0;
+            background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 50%,#0f172a 100%);
+            z-index:99999; align-items:center; justify-content:center; }
+        #login-screen.show { display:flex; }
+        .login-card { background:white; border-radius:20px; padding:44px 40px 36px;
+            width:400px; max-width:95vw;
+            box-shadow:0 25px 70px rgba(0,0,0,.5); text-align:center; }
+        .login-logo-text { font-size:28px; font-weight:900; color:#1e293b; letter-spacing:-1px; line-height:1; }
+        .login-logo-img  { max-height:72px; max-width:210px; object-fit:contain; }
+        .login-subtitle  { font-size:12px; color:#64748b; margin-top:5px; letter-spacing:.5px; text-transform:uppercase; }
+        .login-divider   { border:none; border-top:1px solid #e2e8f0; margin:20px 0 22px; }
+        .login-heading   { font-size:15px; font-weight:700; color:#1e293b; margin-bottom:18px; }
+        .login-inp { width:100%; padding:11px 15px; border:2px solid #e2e8f0; border-radius:10px;
+            font-size:14px; color:#1e293b; outline:none; box-sizing:border-box; margin-bottom:10px;
+            transition:border-color .2s; font-family:inherit; }
+        .login-inp:focus { border-color:#2563eb; }
+        .login-btn { width:100%; padding:13px; background:#2563eb; color:white; border:none;
+            border-radius:10px; font-size:15px; font-weight:700; cursor:pointer; margin-top:6px;
+            transition:background .2s; font-family:inherit; }
+        .login-btn:hover { background:#1d4ed8; }
+        .login-btn:disabled { background:#94a3b8; cursor:not-allowed; }
+        .login-err { color:#dc2626; font-size:12px; margin:6px 0 4px; display:none; }
+        .login-info-box { background:#dbeafe; border:1px solid #93c5fd; border-radius:8px;
+            padding:10px 14px; font-size:12px; color:#1e40af; margin-bottom:14px; text-align:left; }
+        .login-footer-note { font-size:11px; color:#94a3b8; margin-top:20px; }
+
+        /* User display + logout in header */
+        #header-user-display { display:none; align-items:center; gap:6px; padding:4px 12px;
+            background:rgba(255,255,255,.15); border-radius:20px; font-size:12px; color:white; font-weight:600; }
     </style>
 </head>
 <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 <body>
+
+<!-- ══════════════════════════════ Login Screen ══════════════════════════════ -->
+<div id="login-screen" class="show">
+    <div class="login-card">
+
+        <!-- Logo / Brand -->
+        <div id="login-logo-area">
+            <div class="login-logo-text">MECORDS</div>
+            <div class="login-subtitle">Textile ERP</div>
+        </div>
+        <hr class="login-divider">
+
+        <!-- Loading state (shown while Firebase loads) -->
+        <div id="login-loading">
+            <div style="font-size:28px;margin-bottom:10px;">⏳</div>
+            <div style="font-size:13px;color:#64748b;">Loading ERP data, please wait…</div>
+        </div>
+
+        <!-- Regular login form -->
+        <div id="login-form" style="display:none;">
+            <div class="login-heading">Sign in to your account</div>
+            <input type="text" id="login-username" class="login-inp" placeholder="Username"
+                autocomplete="username"
+                onkeydown="if(event.key==='Enter')document.getElementById('login-password').focus()">
+            <input type="password" id="login-password" class="login-inp" placeholder="Password"
+                autocomplete="current-password"
+                onkeydown="if(event.key==='Enter')loginSubmit()">
+            <div id="login-error" class="login-err">❌ Invalid username or password.</div>
+            <button class="login-btn" onclick="loginSubmit()">Sign In →</button>
+        </div>
+
+        <!-- First-run setup form -->
+        <div id="setup-form" style="display:none;">
+            <div class="login-info-box">👋 Welcome! Set up your admin account to get started.</div>
+            <input type="text"     id="setup-name"      class="login-inp" placeholder="Your full name (e.g. Aditya Mehta)" autocomplete="off">
+            <input type="text"     id="setup-username"  class="login-inp" placeholder="Choose a username" autocomplete="off">
+            <input type="password" id="setup-password"  class="login-inp" placeholder="Choose a password" autocomplete="new-password">
+            <input type="password" id="setup-password2" class="login-inp" placeholder="Confirm password"
+                autocomplete="new-password" onkeydown="if(event.key==='Enter')setupAdminAccount()">
+            <div id="setup-error" class="login-err"></div>
+            <button class="login-btn" onclick="setupAdminAccount()">Create Admin Account →</button>
+        </div>
+
+        <div class="login-footer-note">🔒 Secure Login &nbsp;·&nbsp; Mecords Textile ERP</div>
+    </div>
+</div>
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
 
 <div class="header">
     <div>
@@ -869,6 +947,8 @@
             &#11014; Import Data
             <input type="file" accept=".json" style="display:none;" onchange="importData(this)">
         </label>
+        <div id="header-user-display"></div>
+        <button class="btn-header" onclick="logoutUser()" title="Sign out" style="background:rgba(220,38,38,.7);">&#9211; Sign Out</button>
         <button class="btn-header" onclick="openSettings()">&#9881; Settings</button>
     </div>
 </div>
@@ -966,7 +1046,13 @@
                 ⚠️ <strong>After saving a password, all users must reload the page for it to take effect.</strong> You will stay unlocked for the current session.
             </div>
             <div class="settings-tab-row" id="settings-tab-row"></div>
-            <div style="margin-top:20px;padding-top:16px;border-top:1px solid #e2e8f0;">
+
+            <!-- User Management -->
+            <div style="margin-top:16px;padding-top:16px;border-top:1px solid #e2e8f0;">
+                <div id="settings-users-section"></div>
+            </div>
+
+            <div style="margin-top:16px;padding-top:16px;border-top:1px solid #e2e8f0;">
                 <div style="font-size:12px;font-weight:700;color:#475569;margin-bottom:10px;">&#128196; Print / Company Settings</div>
                 <div class="form-row" style="gap:10px;flex-wrap:wrap;">
                     <div class="form-group" style="flex:1;min-width:180px;">
@@ -4189,6 +4275,7 @@ function _ensureDBStructure() {
     if (!Array.isArray(db.competitorPrices))   db.competitorPrices    = [];
     if (!db.tabPasswords)                    db.tabPasswords      = { rawmaterials: '', batchprocessing: '', factorycosting: '', internalcosting: '', custcosting: '', machinerycosting: '', dashboard: '', salesdispatch: '', rminventory: '' };
     if (!('adminPassword' in db))            db.adminPassword     = '';
+    if (!Array.isArray(db.erpUsers))         db.erpUsers          = [];
     if (!('dashboard' in db.tabPasswords))   db.tabPasswords.dashboard = '';
     if (!('salesdispatch' in db.tabPasswords)) db.tabPasswords.salesdispatch = '';
     if (!('rminventory' in db.tabPasswords))      db.tabPasswords.rminventory      = '';
@@ -4281,6 +4368,178 @@ const _tabLabels = {
 const _unlockedTabs = new Set(); // session-level unlocks
 let _pendingTab = null;          // tab waiting for password entry
 let _adminUnlocked = false;      // admin unlocked settings this session
+let _currentUser  = null;        // { id, username, name, role }
+
+// ─────────────────────────────────────────────── Login / User Management
+
+function _initLoginScreen() {
+    // Update logo area from saved settings
+    const logoArea = document.getElementById('login-logo-area');
+    const logo     = (db.printSettings || {}).companyLogo;
+    const cname    = (db.printSettings || {}).companyName || 'MECORDS';
+    if (logo) {
+        logoArea.innerHTML = `<img src="${logo}" class="login-logo-img"><div class="login-subtitle">Textile ERP</div>`;
+    } else {
+        logoArea.innerHTML = `<div class="login-logo-text">${cname}</div><div class="login-subtitle">Textile ERP</div>`;
+    }
+
+    document.getElementById('login-loading').style.display = 'none';
+
+    const users = db.erpUsers || [];
+    if (users.length === 0) {
+        // First-run: no users yet — show admin setup
+        document.getElementById('setup-form').style.display = 'block';
+        document.getElementById('login-form').style.display = 'none';
+    } else {
+        // Normal login
+        document.getElementById('login-form').style.display  = 'block';
+        document.getElementById('setup-form').style.display  = 'none';
+        document.getElementById('login-error').style.display = 'none';
+        document.getElementById('login-username').value = '';
+        document.getElementById('login-password').value = '';
+        setTimeout(() => document.getElementById('login-username').focus(), 120);
+    }
+}
+
+function loginSubmit() {
+    const uname = (document.getElementById('login-username')?.value || '').trim().toLowerCase();
+    const pw    = (document.getElementById('login-password')?.value  || '').trim();
+    const users = db.erpUsers || [];
+    const match = users.find(u => u.username.toLowerCase() === uname && u.password === pw);
+    if (match) {
+        _currentUser = match;
+        document.getElementById('login-screen').classList.remove('show');
+        _updateUserDisplay();
+    } else {
+        document.getElementById('login-error').style.display = 'block';
+        document.getElementById('login-password').value = '';
+        document.getElementById('login-password').focus();
+    }
+}
+
+function setupAdminAccount() {
+    const name  = (document.getElementById('setup-name')?.value      || '').trim();
+    const uname = (document.getElementById('setup-username')?.value  || '').trim();
+    const pw    = (document.getElementById('setup-password')?.value  || '').trim();
+    const pw2   = (document.getElementById('setup-password2')?.value || '').trim();
+    const errEl = document.getElementById('setup-error');
+    errEl.style.display = 'none';
+    if (!name)        { errEl.textContent = 'Please enter your name.';            errEl.style.display='block'; return; }
+    if (uname.length < 3) { errEl.textContent = 'Username must be at least 3 characters.'; errEl.style.display='block'; return; }
+    if (pw.length < 4)    { errEl.textContent = 'Password must be at least 4 characters.'; errEl.style.display='block'; return; }
+    if (pw !== pw2)       { errEl.textContent = 'Passwords do not match.';        errEl.style.display='block'; return; }
+    const adminUser = { id: nid(), username: uname.toLowerCase(), password: pw, name, role: 'admin' };
+    if (!db.erpUsers) db.erpUsers = [];
+    db.erpUsers.push(adminUser);
+    persist();
+    _currentUser = adminUser;
+    document.getElementById('login-screen').classList.remove('show');
+    _updateUserDisplay();
+    flash('✅ Admin account created! Add more users via Settings → User Management.');
+}
+
+function logoutUser() {
+    if (!confirm('Sign out of Mecords Textile ERP?')) return;
+    _currentUser  = null;
+    _adminUnlocked = false;
+    _unlockedTabs.clear();
+    // Reset login form
+    document.getElementById('login-error').style.display = 'none';
+    if (document.getElementById('login-username')) document.getElementById('login-username').value = '';
+    if (document.getElementById('login-password')) document.getElementById('login-password').value = '';
+    _initLoginScreen();
+    document.getElementById('login-screen').classList.add('show');
+    _updateUserDisplay();
+}
+
+function _updateUserDisplay() {
+    const el = document.getElementById('header-user-display');
+    if (!el) return;
+    if (_currentUser) {
+        el.innerHTML = `&#128100; ${_currentUser.name || _currentUser.username}`;
+        el.style.display = 'flex';
+    } else {
+        el.style.display = 'none';
+    }
+}
+
+// ── User Management (called from Settings) ──────────────────────────────────
+
+function renderUserManagement() {
+    const container = document.getElementById('settings-users-section');
+    if (!container) return;
+    const users = db.erpUsers || [];
+
+    const rows = users.map(u => `
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:#f8fafc;
+             border:1px solid #e2e8f0;border-radius:8px;margin-bottom:8px;">
+            <div style="flex:1;">
+                <div style="font-size:13px;font-weight:700;color:#1e293b;">${u.name}</div>
+                <div style="font-size:11px;color:#64748b;">@${u.username} &nbsp;·&nbsp;
+                    <span style="color:${u.role==='admin'?'#7c3aed':'#0369a1'};font-weight:600;">
+                        ${u.role === 'admin' ? '👑 Admin' : '👤 User'}
+                    </span>
+                </div>
+            </div>
+            ${u.id !== (_currentUser||{}).id
+                ? `<button class="btn btn-outline btn-sm" style="color:#dc2626;border-color:#fca5a5;"
+                        onclick="deleteErpUser('${u.id}')">&#128465; Remove</button>`
+                : `<span style="font-size:11px;color:#94a3b8;">(you)</span>`}
+        </div>`).join('');
+
+    container.innerHTML = `
+        <div style="font-size:12px;font-weight:700;color:#475569;margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;">
+            &#128101; User Management
+        </div>
+        ${rows || '<div style="font-size:12px;color:#94a3b8;margin-bottom:10px;">No users yet.</div>'}
+        <div style="margin-top:10px;padding:14px;background:#f0fdf4;border:1px solid #86efac;border-radius:10px;">
+            <div style="font-size:12px;font-weight:700;color:#166534;margin-bottom:10px;">&#43; Add New User</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+                <input type="text"     id="nu-name"  class="login-inp" style="margin:0;font-size:12px;padding:8px 12px;"
+                    placeholder="Full name">
+                <input type="text"     id="nu-uname" class="login-inp" style="margin:0;font-size:12px;padding:8px 12px;"
+                    placeholder="Username">
+                <input type="password" id="nu-pw"    class="login-inp" style="margin:0;font-size:12px;padding:8px 12px;"
+                    placeholder="Password">
+                <select id="nu-role" style="padding:8px 12px;border:2px solid #e2e8f0;border-radius:10px;font-size:12px;font-family:inherit;">
+                    <option value="user">👤 User</option>
+                    <option value="admin">👑 Admin</option>
+                </select>
+            </div>
+            <div id="nu-error" style="color:#dc2626;font-size:11px;display:none;margin-bottom:6px;"></div>
+            <button class="btn btn-primary btn-sm" onclick="addErpUser()">&#128190; Add User</button>
+        </div>`;
+}
+
+function addErpUser() {
+    const name  = (document.getElementById('nu-name')?.value  || '').trim();
+    const uname = (document.getElementById('nu-uname')?.value || '').trim().toLowerCase();
+    const pw    = (document.getElementById('nu-pw')?.value    || '').trim();
+    const role  = document.getElementById('nu-role')?.value   || 'user';
+    const errEl = document.getElementById('nu-error');
+    errEl.style.display = 'none';
+    if (!name)        { errEl.textContent = 'Name required.';              errEl.style.display='block'; return; }
+    if (uname.length < 3) { errEl.textContent = 'Username ≥ 3 chars.';    errEl.style.display='block'; return; }
+    if (pw.length < 4)    { errEl.textContent = 'Password ≥ 4 chars.';    errEl.style.display='block'; return; }
+    if ((db.erpUsers||[]).some(u => u.username === uname)) {
+        errEl.textContent = 'Username already exists.'; errEl.style.display='block'; return;
+    }
+    if (!db.erpUsers) db.erpUsers = [];
+    db.erpUsers.push({ id: nid(), username: uname, password: pw, name, role });
+    persist();
+    renderUserManagement();
+    flash(`User "${name}" added.`);
+}
+
+function deleteErpUser(uid) {
+    const u = (db.erpUsers||[]).find(x => x.id === uid);
+    if (!u) return;
+    if (!confirm(`Remove user "${u.name}" (@${u.username})? They will no longer be able to sign in.`)) return;
+    db.erpUsers = (db.erpUsers||[]).filter(x => x.id !== uid);
+    persist();
+    renderUserManagement();
+    flash(`User "${u.name}" removed.`);
+}
 
 function isTabLocked(tab) {
     const pw = (db.tabPasswords || {})[tab];
@@ -11123,23 +11382,24 @@ function openSettings() {
         document.getElementById('admin-gate-error').style.display = 'none';
     } else {
         // No admin password or already unlocked — show settings directly
-        document.getElementById('settings-admin-gate').style.display = 'none';
-        document.getElementById('settings-main-content').style.display = 'block';
-        renderSettingsRows();
-        const nameEl = document.getElementById('ps-company-name');
-        if (nameEl) nameEl.value = (db.printSettings || {}).companyName || '';
+        _openSettingsContent();
     }
+}
+
+function _openSettingsContent() {
+    document.getElementById('settings-admin-gate').style.display = 'none';
+    document.getElementById('settings-main-content').style.display = 'block';
+    renderSettingsRows();
+    renderUserManagement();
+    const nameEl = document.getElementById('ps-company-name');
+    if (nameEl) nameEl.value = (db.printSettings || {}).companyName || '';
 }
 
 function submitAdminPW() {
     const entered = (document.getElementById('admin-gate-pw')?.value || '').trim();
     if (entered === (db.adminPassword || '')) {
         _adminUnlocked = true;
-        document.getElementById('settings-admin-gate').style.display = 'none';
-        document.getElementById('settings-main-content').style.display = 'block';
-        renderSettingsRows();
-        const nameEl = document.getElementById('ps-company-name');
-        if (nameEl) nameEl.value = (db.printSettings || {}).companyName || '';
+        _openSettingsContent();
     } else {
         const err = document.getElementById('admin-gate-error');
         if (err) err.style.display = 'block';
@@ -15309,6 +15569,7 @@ function renderChemSheet() {
     renderRawMaterials();
     renderRecipes();
     updateTabLockIcons();
+    _initLoginScreen(); // show login / setup after data is ready
 })();
 </script>
 
