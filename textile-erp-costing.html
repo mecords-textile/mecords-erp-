@@ -9244,65 +9244,117 @@ const _FU_MAP_FIELDS = [
 ];
 
 function _fuOpenMapper() {
-    const rows = _fuImportRows;
+    const rows    = _fuImportRows;
+    const rawRows = _fuImportRawRows;
     if (!rows.length) { alert('No data found in file.'); return; }
 
-    // Build column labels: scan first 15 rows, show header text + first data value
-    const maxCols = Math.max(...rows.slice(0,15).map(r=>(r||[]).length));
-    const colLabels = [];
-    for (let c = 0; c < maxCols; c++) {
-        // Header text: first non-empty text from formatted rows
-        const hdrVals = rows.slice(0,10).map(r=>(r||[])[c]).filter(v=>v!=null&&String(v).trim()!==''&&isNaN(parseFloat(String(v).replace(/,/g,''))));
-        // Data value: first numeric value from raw rows
-        const dataVals = _fuImportRawRows.slice(0,20).map(r=>(r||[])[c]).filter(v=>typeof v==='number'&&!isNaN(v));
-        const hdr  = hdrVals.length ? String(hdrVals[0]).substring(0,20) : '';
-        const data = dataVals.length ? dataVals[0].toLocaleString('en-IN',{maximumFractionDigits:0}) : '';
-        colLabels.push([hdr, data].filter(Boolean).join(' → ') || `Col ${c+1}`);
+    // ── Find first actual data row (month row) ───────────────────────
+    let firstDataRowIdx = -1;
+    let monthCol = 0;
+    outer: for (let c = 0; c <= 5; c++) {
+        for (let r = 0; r < Math.min(40, rows.length); r++) {
+            if (_fuParseYM((rows[r]||[])[c]) || _fuParseYM((rawRows[r]||[])[c])) {
+                monthCol = c; firstDataRowIdx = r; break outer;
+            }
+        }
+    }
+    if (firstDataRowIdx < 0) {
+        alert('Could not find any month rows (Apr 25, May 25 etc.) in the first 5 columns.\nPlease check the Excel file and sheet name.');
+        return;
     }
 
-    // Auto-guess mappings
-    const guess = _fuAutoGuess(rows, colLabels);
+    // ── Build column reference table from header rows + first data row ─
+    const dataRow    = rows[firstDataRowIdx]    || [];
+    const rawDataRow = rawRows[firstDataRowIdx] || [];
+    const maxCols    = Math.max(dataRow.length, ...rows.slice(0,firstDataRowIdx).map(r=>(r||[]).length));
 
-    // Build dropdown options
-    const opts = (sel) => ['— Skip —', ...colLabels.map((l,i)=>`Col ${i+1}: ${l}`)].map((l,i)=>`<option value="${i-1}" ${sel===i-1?'selected':''}>${l}</option>`).join('');
+    // For each column: find best header label from rows above data row
+    const colInfo = [];
+    for (let c = 0; c < maxCols; c++) {
+        const hdrTexts = rows.slice(0, firstDataRowIdx)
+            .map(r => String((r||[])[c]||'').trim())
+            .filter(v => v && v.length > 1 && isNaN(Number(v)));
+        const hdr   = hdrTexts.length ? hdrTexts[hdrTexts.length-1].substring(0,25) : '';
+        const rawV  = rawDataRow[c];
+        const fmtV  = dataRow[c];
+        const displayVal = rawV != null ? String(rawV).substring(0,18) : (fmtV != null ? String(fmtV).substring(0,18) : '');
+        colInfo.push({ c, hdr, val: displayVal });
+    }
+
+    // ── Build options for selects ─────────────────────────────────────
+    const opts = (sel) => {
+        const skip = `<option value="-1" ${sel===-1?'selected':''}>— Skip —</option>`;
+        const cols = colInfo.map(({c,hdr,val}) => {
+            const lbl = `Col ${c+1}${hdr?' | '+hdr:''}${val?' = '+val:''}`;
+            return `<option value="${c}" ${sel===c?'selected':''}>${lbl}</option>`;
+        }).join('');
+        return skip + cols;
+    };
+
+    // Auto-guess
+    const guess = _fuAutoGuess(rows, colInfo.map(x=>x.hdr+' '+x.val));
+    guess.month = monthCol;
 
     const modal = document.getElementById('fu-import-modal');
     document.getElementById('fu-import-info').innerHTML =
-        `<strong>Step 1 of 2 — Map your Excel columns</strong><br>
-        Sheet: <em>${_fuImportSheetName}</em> &nbsp;|&nbsp; ${maxCols} columns detected.<br>
-        Auto-detection has pre-filled the dropdowns. Check each one and correct if needed, then click <strong>Preview →</strong>.`;
+        `<strong>Step 1 — Confirm Column Mapping</strong> &nbsp;|&nbsp; Sheet: <em>${_fuImportSheetName}</em><br>
+        The table below shows every column with its header and the value from the <strong>first month row</strong> (${_fuFmtMonth(_fuParseYM(dataRow[monthCol])||_fuParseYM(rawDataRow[monthCol]))}).
+        Use this to identify the correct column for each field.`;
 
+    document.getElementById('fu-import-warn').innerHTML = '';
+    modal.querySelector('.btn-success').textContent = '▶ Preview →';
+    modal.querySelector('.btn-success').onclick = _fuRunFromMapper;
+
+    // ── Column reference table ────────────────────────────────────────
+    const refTable = `
+        <div style="margin-bottom:14px;">
+            <div style="font-size:11px;font-weight:700;color:#475569;margin-bottom:6px;text-transform:uppercase;">Your Excel columns — first data row values</div>
+            <div style="overflow-x:auto;max-height:180px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:8px;">
+            <table style="width:100%;border-collapse:collapse;font-size:11px;">
+                <thead><tr style="background:#1e293b;color:white;position:sticky;top:0;">
+                    <th style="padding:5px 8px;white-space:nowrap;">Col #</th>
+                    <th style="padding:5px 8px;">Header from Excel</th>
+                    <th style="padding:5px 8px;">Value in first month row</th>
+                </tr></thead>
+                <tbody>${colInfo.map(({c,hdr,val},i)=>`
+                    <tr style="background:${i%2===0?'#fff':'#f8fafc'};border-bottom:1px solid #f1f5f9;">
+                        <td style="padding:4px 8px;font-weight:700;color:#2563eb;">Col ${c+1}</td>
+                        <td style="padding:4px 8px;color:#475569;">${esc(hdr)||'—'}</td>
+                        <td style="padding:4px 8px;font-weight:600;color:#0f172a;">${esc(val)||'<span style="color:#cbd5e1;">empty</span>'}</td>
+                    </tr>`).join('')}
+                </tbody>
+            </table></div>
+        </div>`;
+
+    // ── Mapper selects ────────────────────────────────────────────────
+    const mapForm = `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        ${_FU_MAP_FIELDS.map(f=>`
+            <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:9px 12px;">
+                <div style="font-size:11px;font-weight:700;color:#0f172a;margin-bottom:1px;">${f.label}</div>
+                <div style="font-size:10px;color:#94a3b8;margin-bottom:5px;">${f.hint}</div>
+                <select id="fu-map-${f.key}" style="width:100%;font-size:11px;border:1px solid #cbd5e1;border-radius:6px;padding:4px 6px;">
+                    ${opts(guess[f.key]!=null?guess[f.key]:-1)}
+                </select>
+            </div>`).join('')}
+        </div>`;
+
+    // Hide preview table, show mapper
+    const tbl = document.getElementById('fu-import-tbody')?.closest('table');
+    if (tbl) tbl.style.display = 'none';
     document.getElementById('fu-import-tbody').innerHTML = '';
-    document.getElementById('fu-import-warn').innerHTML  = '';
-    modal.querySelector('.btn-success').textContent      = '▶ Preview →';
-    modal.querySelector('.btn-success').onclick          = _fuRunFromMapper;
 
-    // Build mapper form inside tbody placeholder
-    const wrap = document.getElementById('fu-import-tbody');
-    const tbl  = wrap.closest('table');
-    // Replace the whole table with the mapper form
-    tbl.style.display = 'none';
     let mapperEl = document.getElementById('fu-mapper-form');
     if (!mapperEl) {
         mapperEl = document.createElement('div');
         mapperEl.id = 'fu-mapper-form';
-        tbl.parentNode.insertBefore(mapperEl, tbl);
+        if (tbl) tbl.parentNode.insertBefore(mapperEl, tbl);
+        else document.getElementById('fu-import-info').insertAdjacentElement('afterend', mapperEl);
     }
     mapperEl.style.display = '';
-    mapperEl.innerHTML = `
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-        ${_FU_MAP_FIELDS.map(f=>`
-            <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px;">
-                <div style="font-size:12px;font-weight:700;color:#0f172a;margin-bottom:2px;">${f.label}</div>
-                <div style="font-size:10px;color:#94a3b8;margin-bottom:6px;">${f.hint}</div>
-                <select id="fu-map-${f.key}" style="width:100%;font-size:12px;border:1px solid #cbd5e1;border-radius:6px;padding:5px 8px;">
-                    ${opts(guess[f.key])}
-                </select>
-            </div>`).join('')}
-        </div>
-        <div style="margin-top:12px;font-size:11px;color:#64748b;">
-            ℹ️ "— Skip —" means that field won't be imported. Month column is required.
-        </div>`;
+    mapperEl.innerHTML = refTable + mapForm;
+
+    modal.style.display = 'flex';
 
     document.getElementById('fu-import-modal').style.display = 'flex';
 }
