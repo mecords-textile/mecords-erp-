@@ -1100,6 +1100,7 @@
     <button class="tab-btn" data-tab="alertsauto">&#128276; Alerts</button>
     <button class="tab-btn" data-tab="documents">&#128196; Documents</button>
     <button class="tab-btn" data-tab="factoryutilities">&#9889; Factory Monthly Costing</button>
+    <button class="tab-btn" data-tab="purchase">&#128230; Purchase</button>
     <button class="tab-btn" data-tab="manual">&#128214; Manual</button>
     <button class="tab-btn" data-tab="dashboard">&#128202; Cost Dashboard</button>
     <button class="tab-btn" data-tab="batchprocessing">&#128203; Chemical Batch Processing</button>
@@ -4043,6 +4044,239 @@
 
     </div><!-- /tab-factoryutilities -->
 
+    <!-- ══════════════════════════════════════════ PURCHASE -->
+    <div id="tab-purchase" class="tab-panel">
+        <div class="sub-tabs">
+            <button class="sub-tab-btn active" data-sub="pur-suppliers" onclick="switchSubTab('pur-suppliers')">&#127970; Suppliers</button>
+            <button class="sub-tab-btn" data-sub="pur-po"        onclick="switchSubTab('pur-po')">&#128203; Purchase Orders</button>
+            <button class="sub-tab-btn" data-sub="pur-grn"       onclick="switchSubTab('pur-grn')">&#128230; Goods Receipt (GRN)</button>
+            <button class="sub-tab-btn" data-sub="pur-invoices"  onclick="switchSubTab('pur-invoices')">&#129534; Invoices &amp; Payments</button>
+            <button class="sub-tab-btn" data-sub="pur-summary"   onclick="switchSubTab('pur-summary')">&#128202; Purchase Summary</button>
+        </div>
+
+        <!-- ── SUB 1: SUPPLIERS ── -->
+        <div id="sub-pur-suppliers" class="sub-panel active">
+            <div class="form-row" style="margin-bottom:16px;">
+                <select id="pur-sup-sel" onchange="onPURSupSelect()" style="min-width:280px;font-size:14px;">
+                    <option value="">-- Select Supplier --</option>
+                </select>
+                <button class="btn btn-primary" onclick="newPURSup()">+ New Supplier</button>
+                <button class="btn btn-danger btn-sm" onclick="deletePURSup()">Delete</button>
+            </div>
+            <div id="pur-sup-form" style="display:none;">
+                <div class="card">
+                    <div class="card-title">Supplier Details</div>
+                    <div class="form-row" style="flex-wrap:wrap;gap:16px;">
+                        <div class="form-group"><label>Supplier Name *</label><input type="text" id="sup-name" placeholder="e.g. Reliance Yarns Ltd" style="min-width:220px;"></div>
+                        <div class="form-group"><label>Contact Person</label><input type="text" id="sup-contact" placeholder="e.g. Rahul Sharma" style="min-width:180px;"></div>
+                        <div class="form-group"><label>Phone</label><input type="text" id="sup-phone" placeholder="+91 98765 43210" style="min-width:160px;"></div>
+                        <div class="form-group"><label>Email</label><input type="email" id="sup-email" placeholder="email@supplier.com" style="min-width:200px;"></div>
+                        <div class="form-group"><label>GST Number</label><input type="text" id="sup-gst" placeholder="27AABCU9603R1ZX" style="min-width:180px;" maxlength="15"></div>
+                        <div class="form-group"><label>Category</label>
+                            <select id="sup-category" style="min-width:160px;font-size:13px;border:1px solid #cbd5e1;border-radius:6px;padding:6px 10px;">
+                                <option>Yarn Supplier</option><option>Chemical Supplier</option><option>Packaging Supplier</option><option>Spares Supplier</option><option>Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group"><label>Payment Terms (days)</label><input type="number" id="sup-payterms" value="30" min="0" style="width:100px;"></div>
+                        <div class="form-group"><label>Lead Time (days)</label><input type="number" id="sup-leaddays" value="7" min="0" style="width:100px;"></div>
+                    </div>
+                    <div class="form-group" style="margin-top:8px;"><label>Address</label>
+                        <textarea id="sup-address" rows="2" placeholder="Full address..." style="width:100%;box-sizing:border-box;padding:8px 10px;font-size:13px;border:1.5px solid #e2e8f0;border-radius:8px;resize:vertical;"></textarea>
+                    </div>
+                    <div class="form-row" style="margin-top:12px;">
+                        <button class="btn btn-primary" onclick="savePURSup()">&#128190; Save Supplier</button>
+                        <button class="btn btn-outline" onclick="clearPURSupForm()">&#10005; Cancel</button>
+                    </div>
+                </div>
+            </div>
+            <div id="pur-sup-list"></div>
+        </div>
+
+        <!-- ── SUB 2: PURCHASE ORDERS ── -->
+        <div id="sub-pur-po" class="sub-panel">
+            <div class="form-row" style="margin-bottom:16px;">
+                <select id="pur-po-sel" onchange="onPOSelect()" style="min-width:320px;font-size:14px;">
+                    <option value="">-- Select Purchase Order --</option>
+                </select>
+                <button class="btn btn-primary" onclick="newPO()">+ New PO</button>
+                <button class="btn btn-danger btn-sm" onclick="deletePO()">Delete</button>
+            </div>
+            <div id="pur-po-form" style="display:none;">
+                <div class="card">
+                    <div class="card-title">Purchase Order</div>
+                    <div class="form-row" style="flex-wrap:wrap;gap:16px;margin-bottom:12px;">
+                        <div class="form-group"><label>PO Number</label><input type="text" id="po-number" readonly style="background:#f1f5f9;font-weight:700;min-width:160px;"></div>
+                        <div class="form-group"><label>Date *</label><input type="date" id="po-date"></div>
+                        <div class="form-group"><label>Supplier *</label>
+                            <select id="po-supplier-sel" onchange="onPOSupplierChange()" style="min-width:220px;font-size:13px;border:1px solid #cbd5e1;border-radius:6px;padding:6px 10px;">
+                                <option value="">-- Select Supplier --</option>
+                            </select>
+                        </div>
+                        <div class="form-group"><label>Expected Delivery</label><input type="date" id="po-delivery-date"></div>
+                        <div class="form-group"><label>Status</label>
+                            <select id="po-status" style="min-width:160px;font-size:13px;border:1px solid #cbd5e1;border-radius:6px;padding:6px 10px;">
+                                <option value="Draft">Draft</option>
+                                <option value="Sent">Sent to Supplier</option>
+                                <option value="Confirmed">Confirmed</option>
+                                <option value="Partial">Partially Received</option>
+                                <option value="Received">Fully Received</option>
+                                <option value="Cancelled">Cancelled</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Notes / Terms</label>
+                        <textarea id="po-notes" rows="2" placeholder="Delivery instructions, quality specs, payment terms..." style="width:100%;box-sizing:border-box;padding:8px 10px;font-size:13px;border:1.5px solid #e2e8f0;border-radius:8px;resize:vertical;"></textarea>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+                        <span>Line Items</span>
+                        <button class="btn btn-outline btn-sm" onclick="addPOLine()">+ Add Item</button>
+                    </div>
+                    <div style="overflow-x:auto;">
+                        <table style="width:100%;border-collapse:collapse;font-size:13px;" id="po-lines-table">
+                            <thead>
+                                <tr style="background:#f1f5f9;">
+                                    <th style="padding:8px;text-align:left;border:1px solid #e2e8f0;color:#475569;min-width:180px;">Item / Material</th>
+                                    <th style="padding:8px;text-align:left;border:1px solid #e2e8f0;color:#475569;">Category</th>
+                                    <th style="padding:8px;text-align:right;border:1px solid #e2e8f0;color:#475569;">Qty</th>
+                                    <th style="padding:8px;text-align:left;border:1px solid #e2e8f0;color:#475569;">Unit</th>
+                                    <th style="padding:8px;text-align:right;border:1px solid #e2e8f0;color:#475569;">Rate (&#8377;)</th>
+                                    <th style="padding:8px;text-align:center;border:1px solid #e2e8f0;color:#475569;">GST %</th>
+                                    <th style="padding:8px;text-align:right;border:1px solid #e2e8f0;color:#475569;">Amount (&#8377;)</th>
+                                    <th style="padding:8px;border:1px solid #e2e8f0;"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="po-lines-body"></tbody>
+                            <tfoot>
+                                <tr style="background:#fef9c3;"><td colspan="6" style="padding:8px;border:1px solid #e2e8f0;text-align:right;font-weight:700;">Subtotal</td><td style="padding:8px;border:1px solid #e2e8f0;text-align:right;font-weight:700;" id="po-subtotal">&#8377; 0.00</td><td style="border:1px solid #e2e8f0;"></td></tr>
+                                <tr style="background:#fef9c3;"><td colspan="6" style="padding:8px;border:1px solid #e2e8f0;text-align:right;font-weight:700;">GST Amount</td><td style="padding:8px;border:1px solid #e2e8f0;text-align:right;font-weight:700;" id="po-gstamt">&#8377; 0.00</td><td style="border:1px solid #e2e8f0;"></td></tr>
+                                <tr style="background:#1e293b;color:white;"><td colspan="6" style="padding:10px 8px;border:1px solid #334155;text-align:right;font-weight:800;font-size:14px;">Total Order Value</td><td style="padding:10px 8px;border:1px solid #334155;text-align:right;font-weight:800;font-size:14px;color:#86efac;" id="po-total">&#8377; 0.00</td><td style="border:1px solid #334155;"></td></tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    <div class="form-row" style="margin-top:14px;">
+                        <button class="btn btn-primary" onclick="savePO()">&#128190; Save Purchase Order</button>
+                        <button class="btn btn-outline" onclick="clearPOForm()">&#10005; Cancel</button>
+                    </div>
+                </div>
+            </div>
+            <div id="pur-po-list"></div>
+        </div>
+
+        <!-- ── SUB 3: GRN ── -->
+        <div id="sub-pur-grn" class="sub-panel">
+            <div class="form-row" style="margin-bottom:16px;">
+                <select id="pur-grn-sel" onchange="onGRNSelect()" style="min-width:320px;font-size:14px;">
+                    <option value="">-- Select GRN --</option>
+                </select>
+                <button class="btn btn-primary" onclick="newGRN()">+ New GRN</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteGRN()">Delete</button>
+            </div>
+            <div id="pur-grn-form" style="display:none;">
+                <div class="card">
+                    <div class="card-title">Goods Receipt Note (GRN)</div>
+                    <div class="form-row" style="flex-wrap:wrap;gap:16px;margin-bottom:12px;">
+                        <div class="form-group"><label>GRN Number</label><input type="text" id="grn-number" readonly style="background:#f1f5f9;font-weight:700;min-width:160px;"></div>
+                        <div class="form-group"><label>Date *</label><input type="date" id="grn-date"></div>
+                        <div class="form-group"><label>Against Purchase Order</label>
+                            <select id="grn-po-sel" onchange="onGRNPOSelect()" style="min-width:240px;font-size:13px;border:1px solid #cbd5e1;border-radius:6px;padding:6px 10px;">
+                                <option value="">-- None / Direct Purchase --</option>
+                            </select>
+                        </div>
+                        <div class="form-group"><label>Supplier</label><input type="text" id="grn-supplier-name" readonly style="background:#f1f5f9;min-width:180px;"></div>
+                        <div class="form-group"><label>Supplier Challan No.</label><input type="text" id="grn-challan" placeholder="Supplier delivery note no." style="min-width:180px;"></div>
+                        <div class="form-group"><label>Vehicle / Transport</label><input type="text" id="grn-vehicle" placeholder="e.g. MH 04 AB 1234" style="min-width:160px;"></div>
+                    </div>
+                    <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                        <span>Items Received</span>
+                        <button class="btn btn-outline btn-sm" onclick="addGRNLine()">+ Add Item</button>
+                    </div>
+                    <div style="overflow-x:auto;">
+                        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                            <thead>
+                                <tr style="background:#f1f5f9;">
+                                    <th style="padding:8px;text-align:left;border:1px solid #e2e8f0;color:#475569;min-width:160px;">Item</th>
+                                    <th style="padding:8px;text-align:left;border:1px solid #e2e8f0;color:#475569;">Unit</th>
+                                    <th style="padding:8px;text-align:right;border:1px solid #e2e8f0;color:#475569;">PO Qty</th>
+                                    <th style="padding:8px;text-align:right;border:1px solid #e2e8f0;color:#475569;">Received Qty</th>
+                                    <th style="padding:8px;text-align:right;border:1px solid #e2e8f0;color:#475569;color:#dc2626;">Rejected Qty</th>
+                                    <th style="padding:8px;text-align:right;border:1px solid #e2e8f0;color:#475569;">Rate (&#8377;)</th>
+                                    <th style="padding:8px;text-align:left;border:1px solid #e2e8f0;color:#475569;">Remarks</th>
+                                    <th style="border:1px solid #e2e8f0;"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="grn-items-body"></tbody>
+                        </table>
+                    </div>
+                    <div class="form-group" style="margin-top:10px;"><label>Notes</label>
+                        <textarea id="grn-notes" rows="2" placeholder="Quality observations, storage instructions..." style="width:100%;box-sizing:border-box;padding:8px 10px;font-size:13px;border:1.5px solid #e2e8f0;border-radius:8px;resize:vertical;"></textarea>
+                    </div>
+                    <div class="form-row" style="margin-top:12px;">
+                        <button class="btn btn-primary" onclick="saveGRN()">&#128190; Save GRN</button>
+                        <button class="btn btn-outline" onclick="clearGRNForm()">&#10005; Cancel</button>
+                    </div>
+                </div>
+            </div>
+            <div id="pur-grn-list"></div>
+        </div>
+
+        <!-- ── SUB 4: INVOICES & PAYMENTS ── -->
+        <div id="sub-pur-invoices" class="sub-panel">
+            <div class="form-row" style="margin-bottom:16px;">
+                <select id="pur-si-sel" onchange="onSISelect()" style="min-width:320px;font-size:14px;">
+                    <option value="">-- Select Invoice --</option>
+                </select>
+                <button class="btn btn-primary" onclick="newSI()">+ New Invoice</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteSI()">Delete</button>
+            </div>
+            <div id="pur-si-form" style="display:none;">
+                <div class="card">
+                    <div class="card-title">Supplier Invoice</div>
+                    <div class="form-row" style="flex-wrap:wrap;gap:16px;margin-bottom:12px;">
+                        <div class="form-group"><label>Our Ref #</label><input type="text" id="si-ref" readonly style="background:#f1f5f9;font-weight:700;min-width:160px;"></div>
+                        <div class="form-group"><label>Supplier Invoice No. *</label><input type="text" id="si-inv-no" placeholder="As per supplier bill" style="min-width:180px;"></div>
+                        <div class="form-group"><label>Invoice Date *</label><input type="date" id="si-date"></div>
+                        <div class="form-group"><label>Supplier *</label>
+                            <select id="si-supplier-sel" onchange="onSISupplierChange()" style="min-width:220px;font-size:13px;border:1px solid #cbd5e1;border-radius:6px;padding:6px 10px;">
+                                <option value="">-- Select Supplier --</option>
+                            </select>
+                        </div>
+                        <div class="form-group"><label>Against PO</label>
+                            <select id="si-po-sel" onchange="onSIPOChange()" style="min-width:200px;font-size:13px;border:1px solid #cbd5e1;border-radius:6px;padding:6px 10px;">
+                                <option value="">-- None / Direct --</option>
+                            </select>
+                        </div>
+                        <div class="form-group"><label>Due Date</label><input type="date" id="si-due-date"></div>
+                    </div>
+                    <div class="form-row" style="flex-wrap:wrap;gap:16px;margin-bottom:12px;">
+                        <div class="form-group"><label>Subtotal (&#8377;)</label><input type="number" id="si-subtotal" min="0" step="0.01" placeholder="0.00" oninput="calcSITotals()" style="min-width:140px;"></div>
+                        <div class="form-group"><label>GST Amount (&#8377;)</label><input type="number" id="si-gst-amt" min="0" step="0.01" placeholder="0.00" oninput="calcSITotals()" style="min-width:140px;"></div>
+                        <div class="form-group"><label>Total Amount (&#8377;)</label><input type="number" id="si-total" readonly style="background:#f1f5f9;font-weight:700;min-width:140px;" placeholder="0.00"></div>
+                        <div class="form-group"><label>Amount Paid (&#8377;)</label><input type="number" id="si-paid" min="0" step="0.01" placeholder="0.00" oninput="calcSIStatus()" style="min-width:140px;"></div>
+                        <div class="form-group"><label>Balance Due (&#8377;)</label><input type="number" id="si-balance" readonly style="background:#fef2f2;font-weight:700;color:#dc2626;min-width:140px;" placeholder="0.00"></div>
+                        <div class="form-group"><label>Payment Status</label><input type="text" id="si-pay-status" readonly style="background:#f1f5f9;font-weight:700;min-width:120px;" placeholder="—"></div>
+                    </div>
+                    <div class="form-group"><label>Notes</label>
+                        <textarea id="si-notes" rows="2" placeholder="Payment remarks, bank details..." style="width:100%;box-sizing:border-box;padding:8px 10px;font-size:13px;border:1.5px solid #e2e8f0;border-radius:8px;resize:vertical;"></textarea>
+                    </div>
+                    <div class="form-row" style="margin-top:12px;">
+                        <button class="btn btn-primary" onclick="saveSI()">&#128190; Save Invoice</button>
+                        <button class="btn btn-outline" onclick="clearSIForm()">&#10005; Cancel</button>
+                    </div>
+                </div>
+            </div>
+            <div id="pur-si-list"></div>
+        </div>
+
+        <!-- ── SUB 5: PURCHASE SUMMARY ── -->
+        <div id="sub-pur-summary" class="sub-panel">
+            <div id="pur-summary-content" style="padding:8px 0;"></div>
+        </div>
+
+    </div><!-- /tab-purchase -->
+
     <!-- ══════════════════════════════════════════ MANUAL -->
     <div id="tab-manual" class="tab-panel">
         <div style="display:flex;gap:0;min-height:80vh;">
@@ -4276,6 +4510,10 @@ function _ensureDBStructure() {
     if (!db.tabPasswords)                    db.tabPasswords      = { rawmaterials: '', batchprocessing: '', factorycosting: '', internalcosting: '', custcosting: '', machinerycosting: '', dashboard: '', salesdispatch: '', rminventory: '' };
     if (!('adminPassword' in db))            db.adminPassword     = '';
     if (!Array.isArray(db.erpUsers))         db.erpUsers          = [];
+    if (!Array.isArray(db.suppliers))        db.suppliers         = [];
+    if (!Array.isArray(db.purchaseOrders))   db.purchaseOrders    = [];
+    if (!Array.isArray(db.grns))             db.grns              = [];
+    if (!Array.isArray(db.supplierInvoices)) db.supplierInvoices  = [];
     if (!('dashboard' in db.tabPasswords))   db.tabPasswords.dashboard = '';
     if (!('salesdispatch' in db.tabPasswords)) db.tabPasswords.salesdispatch = '';
     if (!('rminventory' in db.tabPasswords))      db.tabPasswords.rminventory      = '';
@@ -4364,6 +4602,7 @@ const _tabLabels = {
     alertsauto:       '🔔 Alerts',
     documents:        '📄 Documents',
     factoryutilities: '⚡ Factory Monthly Costing',
+    purchase:         '📦 Purchase',
 };
 const _unlockedTabs = new Set(); // session-level unlocks
 let _pendingTab = null;          // tab waiting for password entry
@@ -4583,6 +4822,7 @@ function activateTab(tab) {
     if (tab === 'documents')        { clearDocForm(); renderDocList(); }
     if (tab === 'manual')           { _manActive='man-welcome'; renderManual(); }
     if (tab === 'factoryutilities') { _populateFUFY(); renderFUMonthList(); }
+    if (tab === 'purchase')         { switchSubTab('pur-suppliers'); }
     updateTabLockIcons();
 }
 
@@ -4701,6 +4941,11 @@ function switchSubTab(sub) {
     if (sub === 'cph-our')   { _cphRefreshDataLists(); renderCPHList(); }
     if (sub === 'cph-comp')  { _refreshCPDataLists(); renderCPList(); }
     if (sub === 'cph-vs')    renderCPVS();
+    if (sub === 'pur-suppliers') renderPURSupList();
+    if (sub === 'pur-po')        renderPOList();
+    if (sub === 'pur-grn')       renderGRNList();
+    if (sub === 'pur-invoices')  renderSIList();
+    if (sub === 'pur-summary')   renderPURSummary();
 }
 
 function gotoTab(name) {
@@ -11464,6 +11709,7 @@ function renderSettingsRows() {
         { key: 'alertsauto',       label: '🔔 Alerts' },
         { key: 'documents',        label: '📄 Documents' },
         { key: 'factoryutilities', label: '⚡ Factory Monthly Costing' },
+        { key: 'purchase',         label: '📦 Purchase' },
         { key: 'rawmaterials',     label: '🧵 Raw Materials & Chemicals' },
         { key: 'batchprocessing',  label: '📋 Chemical Batch Processing' },
         { key: 'factorycosting',   label: '🏭 Factory Qualitywise Costing' },
@@ -15560,6 +15806,668 @@ function renderChemSheet() {
     </table>`;
 
     sups.forEach(s => calcChemSupplier(s.id));
+}
+
+// ═══════════════════════════════════════════════════════ PURCHASE MODULE
+
+// ── Utilities ─────────────────────────────────────────────────────────────
+function _purFmt(n) {
+    return '₹ ' + (+n || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function _purSeqNum(arr, prefix) {
+    const yr = new Date().getFullYear();
+    const nums = (arr || []).map(r => parseInt((r.poNumber || r.grnNumber || r.ref || '').split('-').pop()) || 0);
+    return `${prefix}${yr}-${String((nums.length ? Math.max(...nums) : 0) + 1).padStart(3, '0')}`;
+}
+
+// ── Session state ─────────────────────────────────────────────────────────
+let _purSupId = null;
+let _purPOId  = null;
+let _purGRNId = null;
+let _purSIId  = null;
+let _poPOLines = [];
+let _grnLines  = [];
+
+// ══════════════════════════════════════════ SUPPLIERS ══════════════════════
+
+function renderPURSupList() {
+    const sups = db.suppliers || [];
+    const sel  = document.getElementById('pur-sup-sel');
+    if (sel) {
+        sel.innerHTML = '<option value="">-- Select Supplier --</option>' +
+            sups.map(s => `<option value="${s.id}">${s.name} (${s.category})</option>`).join('');
+        sel.value = _purSupId || '';
+    }
+    const list = document.getElementById('pur-sup-list');
+    if (!list) return;
+    if (!sups.length) { list.innerHTML = '<div style="color:#94a3b8;font-size:13px;padding:20px 0;">No suppliers yet. Click + New Supplier to add one.</div>'; return; }
+    list.innerHTML = `<div style="overflow-x:auto;margin-top:8px;"><table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead><tr style="background:#f1f5f9;">
+            <th style="padding:10px;text-align:left;border:1px solid #e2e8f0;color:#475569;">Supplier Name</th>
+            <th style="padding:10px;text-align:left;border:1px solid #e2e8f0;color:#475569;">Category</th>
+            <th style="padding:10px;text-align:left;border:1px solid #e2e8f0;color:#475569;">Contact Person</th>
+            <th style="padding:10px;text-align:left;border:1px solid #e2e8f0;color:#475569;">Phone</th>
+            <th style="padding:10px;text-align:left;border:1px solid #e2e8f0;color:#475569;">GST No.</th>
+            <th style="padding:10px;text-align:center;border:1px solid #e2e8f0;color:#475569;">Pay Terms</th>
+            <th style="padding:10px;text-align:center;border:1px solid #e2e8f0;color:#475569;">Lead Days</th>
+            <th style="border:1px solid #e2e8f0;"></th>
+        </tr></thead>
+        <tbody>${sups.map(s => `
+        <tr onclick="openPURSup('${s.id}')" style="cursor:pointer;" class="hover-row">
+            <td style="padding:9px 10px;border:1px solid #e2e8f0;font-weight:600;">${s.name}</td>
+            <td style="padding:9px 10px;border:1px solid #e2e8f0;"><span style="background:#dbeafe;color:#1e40af;border-radius:12px;padding:2px 10px;font-size:11px;font-weight:600;">${s.category}</span></td>
+            <td style="padding:9px 10px;border:1px solid #e2e8f0;">${s.contactPerson || '—'}</td>
+            <td style="padding:9px 10px;border:1px solid #e2e8f0;">${s.phone || '—'}</td>
+            <td style="padding:9px 10px;border:1px solid #e2e8f0;font-family:monospace;font-size:11px;">${s.gst || '—'}</td>
+            <td style="padding:9px 10px;border:1px solid #e2e8f0;text-align:center;">${s.paymentTerms || 30} days</td>
+            <td style="padding:9px 10px;border:1px solid #e2e8f0;text-align:center;">${s.leadDays || 7} days</td>
+            <td style="padding:9px 10px;border:1px solid #e2e8f0;text-align:center;"><button class="btn btn-outline btn-sm" onclick="event.stopPropagation();openPURSup('${s.id}')">✏ Edit</button></td>
+        </tr>`).join('')}
+        </tbody></table></div>`;
+}
+function newPURSup()  { _purSupId = null; clearPURSupForm(); document.getElementById('pur-sup-form').style.display = 'block'; document.getElementById('sup-name').focus(); }
+function onPURSupSelect() { const id = document.getElementById('pur-sup-sel').value; if (id) openPURSup(id); }
+function openPURSup(id) {
+    const s = (db.suppliers || []).find(x => x.id === id); if (!s) return;
+    _purSupId = id;
+    document.getElementById('sup-name').value     = s.name || '';
+    document.getElementById('sup-contact').value  = s.contactPerson || '';
+    document.getElementById('sup-phone').value    = s.phone || '';
+    document.getElementById('sup-email').value    = s.email || '';
+    document.getElementById('sup-gst').value      = s.gst || '';
+    document.getElementById('sup-category').value = s.category || 'Yarn Supplier';
+    document.getElementById('sup-payterms').value = s.paymentTerms || 30;
+    document.getElementById('sup-leaddays').value = s.leadDays || 7;
+    document.getElementById('sup-address').value  = s.address || '';
+    document.getElementById('pur-sup-form').style.display = 'block';
+    document.getElementById('pur-sup-sel').value  = id;
+}
+function savePURSup() {
+    const name = document.getElementById('sup-name').value.trim();
+    if (!name) { flash('Supplier name is required.'); return; }
+    if (!db.suppliers) db.suppliers = [];
+    const rec = {
+        id: _purSupId || nid(), name,
+        contactPerson: document.getElementById('sup-contact').value.trim(),
+        phone:         document.getElementById('sup-phone').value.trim(),
+        email:         document.getElementById('sup-email').value.trim(),
+        gst:           document.getElementById('sup-gst').value.trim().toUpperCase(),
+        category:      document.getElementById('sup-category').value,
+        paymentTerms:  parseInt(document.getElementById('sup-payterms').value) || 30,
+        leadDays:      parseInt(document.getElementById('sup-leaddays').value) || 7,
+        address:       document.getElementById('sup-address').value.trim(),
+    };
+    if (_purSupId) { const i = db.suppliers.findIndex(x => x.id === _purSupId); if (i >= 0) db.suppliers[i] = rec; }
+    else db.suppliers.push(rec);
+    _purSupId = rec.id;
+    persist(); clearPURSupForm(); renderPURSupList(); flash('Supplier saved.');
+}
+function deletePURSup() {
+    if (!_purSupId) { flash('Select a supplier first.'); return; }
+    const s = (db.suppliers || []).find(x => x.id === _purSupId);
+    if (!s || !confirm(`Delete supplier "${s.name}"?`)) return;
+    db.suppliers = (db.suppliers || []).filter(x => x.id !== _purSupId);
+    _purSupId = null; persist(); clearPURSupForm(); renderPURSupList(); flash('Supplier deleted.');
+}
+function clearPURSupForm() {
+    document.getElementById('pur-sup-form').style.display = 'none';
+    ['sup-name','sup-contact','sup-phone','sup-email','sup-gst','sup-address'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+    document.getElementById('sup-category').value  = 'Yarn Supplier';
+    document.getElementById('sup-payterms').value  = '30';
+    document.getElementById('sup-leaddays').value  = '7';
+    _purSupId = null;
+    document.getElementById('pur-sup-sel').value = '';
+}
+
+// ══════════════════════════════════════════ PURCHASE ORDERS ════════════════
+
+function _getNextPONumber() { return _purSeqNum(db.purchaseOrders, 'PO-'); }
+function _populatePOSupDDL() {
+    const sel = document.getElementById('po-supplier-sel'); if (!sel) return;
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">-- Select Supplier --</option>' + (db.suppliers || []).map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+    if (cur) sel.value = cur;
+}
+function renderPOList() {
+    const pos = db.purchaseOrders || [];
+    const sel = document.getElementById('pur-po-sel');
+    if (sel) {
+        sel.innerHTML = '<option value="">-- Select Purchase Order --</option>' +
+            pos.slice().reverse().map(po => `<option value="${po.id}">${po.poNumber} | ${po.supplierName} | ${_purFmt(po.total)} | ${po.status}</option>`).join('');
+        sel.value = _purPOId || '';
+    }
+    const list = document.getElementById('pur-po-list'); if (!list) return;
+    if (!pos.length) { list.innerHTML = '<div style="color:#94a3b8;font-size:13px;padding:20px 0;">No purchase orders yet. Click + New PO to create one.</div>'; return; }
+    const sC = s => ({'Draft':'#64748b','Sent':'#0369a1','Confirmed':'#7c3aed','Partial':'#d97706','Received':'#16a34a','Cancelled':'#dc2626'})[s]||'#64748b';
+    const sB = s => ({'Draft':'#f1f5f9','Sent':'#dbeafe','Confirmed':'#ede9fe','Partial':'#fef3c7','Received':'#dcfce7','Cancelled':'#fee2e2'})[s]||'#f1f5f9';
+    list.innerHTML = `<div style="overflow-x:auto;margin-top:8px;"><table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead><tr style="background:#f1f5f9;">
+            <th style="padding:10px;text-align:left;border:1px solid #e2e8f0;color:#475569;">PO Number</th>
+            <th style="padding:10px;text-align:left;border:1px solid #e2e8f0;color:#475569;">Date</th>
+            <th style="padding:10px;text-align:left;border:1px solid #e2e8f0;color:#475569;">Supplier</th>
+            <th style="padding:10px;text-align:center;border:1px solid #e2e8f0;color:#475569;">Items</th>
+            <th style="padding:10px;text-align:right;border:1px solid #e2e8f0;color:#475569;">Total (₹)</th>
+            <th style="padding:10px;text-align:left;border:1px solid #e2e8f0;color:#475569;">Delivery Date</th>
+            <th style="padding:10px;text-align:center;border:1px solid #e2e8f0;color:#475569;">Status</th>
+            <th style="border:1px solid #e2e8f0;"></th>
+        </tr></thead>
+        <tbody>${pos.slice().reverse().map(po => `
+        <tr onclick="openPO('${po.id}')" style="cursor:pointer;" class="hover-row">
+            <td style="padding:9px 10px;border:1px solid #e2e8f0;font-weight:700;font-family:monospace;">${po.poNumber}</td>
+            <td style="padding:9px 10px;border:1px solid #e2e8f0;">${po.date || '—'}</td>
+            <td style="padding:9px 10px;border:1px solid #e2e8f0;font-weight:600;">${po.supplierName || '—'}</td>
+            <td style="padding:9px 10px;border:1px solid #e2e8f0;text-align:center;">${(po.items || []).length}</td>
+            <td style="padding:9px 10px;border:1px solid #e2e8f0;text-align:right;font-weight:700;">${_purFmt(po.total)}</td>
+            <td style="padding:9px 10px;border:1px solid #e2e8f0;">${po.deliveryDate || '—'}</td>
+            <td style="padding:9px 10px;border:1px solid #e2e8f0;text-align:center;"><span style="background:${sB(po.status)};color:${sC(po.status)};border-radius:12px;padding:3px 10px;font-size:11px;font-weight:700;">${po.status}</span></td>
+            <td style="padding:9px 10px;border:1px solid #e2e8f0;text-align:center;"><button class="btn btn-outline btn-sm" onclick="event.stopPropagation();openPO('${po.id}')">✏ Edit</button></td>
+        </tr>`).join('')}
+        </tbody></table></div>`;
+}
+function newPO() {
+    _purPOId = null;
+    _poPOLines = [{ item:'', category:'Yarn', qty:0, unit:'kg', rate:0, gstPct:18, amount:0 }];
+    document.getElementById('po-number').value        = _getNextPONumber();
+    document.getElementById('po-date').value          = new Date().toISOString().slice(0,10);
+    document.getElementById('po-delivery-date').value = '';
+    document.getElementById('po-status').value        = 'Draft';
+    document.getElementById('po-notes').value         = '';
+    _populatePOSupDDL();
+    document.getElementById('po-supplier-sel').value  = '';
+    _renderPOLines(); calcPOTotals();
+    document.getElementById('pur-po-form').style.display = 'block';
+}
+function onPOSelect()  { const id = document.getElementById('pur-po-sel').value; if (id) openPO(id); }
+function openPO(id) {
+    const po = (db.purchaseOrders || []).find(x => x.id === id); if (!po) return;
+    _purPOId = id;
+    _poPOLines = (po.items || []).map(i => ({...i}));
+    if (!_poPOLines.length) _poPOLines.push({ item:'', category:'Yarn', qty:0, unit:'kg', rate:0, gstPct:18, amount:0 });
+    document.getElementById('po-number').value        = po.poNumber || '';
+    document.getElementById('po-date').value          = po.date || '';
+    document.getElementById('po-delivery-date').value = po.deliveryDate || '';
+    document.getElementById('po-status').value        = po.status || 'Draft';
+    document.getElementById('po-notes').value         = po.notes || '';
+    _populatePOSupDDL();
+    document.getElementById('po-supplier-sel').value  = po.supplierId || '';
+    _renderPOLines(); calcPOTotals();
+    document.getElementById('pur-po-form').style.display = 'block';
+    document.getElementById('pur-po-sel').value = id;
+}
+function _renderPOLines() {
+    const tbody = document.getElementById('po-lines-body'); if (!tbody) return;
+    tbody.innerHTML = _poPOLines.map((ln, i) => `
+    <tr>
+        <td style="padding:5px;border:1px solid #e2e8f0;"><input type="text" value="${ln.item||''}" placeholder="Item name…" style="width:100%;border:none;outline:none;font-size:13px;" oninput="_poPOLines[${i}].item=this.value"></td>
+        <td style="padding:3px;border:1px solid #e2e8f0;"><select style="width:100%;border:none;font-size:12px;outline:none;" onchange="_poPOLines[${i}].category=this.value">${['Yarn','Chemical','Packaging','Spares','Other'].map(c=>`<option${ln.category===c?' selected':''}>${c}</option>`).join('')}</select></td>
+        <td style="padding:3px;border:1px solid #e2e8f0;"><input type="number" value="${ln.qty||''}" min="0" step="0.001" style="width:80px;border:none;outline:none;font-size:13px;text-align:right;" oninput="_poPOLines[${i}].qty=parseFloat(this.value)||0;calcPOTotals()"></td>
+        <td style="padding:3px;border:1px solid #e2e8f0;"><select style="width:80px;border:none;font-size:12px;outline:none;" onchange="_poPOLines[${i}].unit=this.value">${['kg','meters','liters','nos','pieces','rolls'].map(u=>`<option${ln.unit===u?' selected':''}>${u}</option>`).join('')}</select></td>
+        <td style="padding:3px;border:1px solid #e2e8f0;"><input type="number" value="${ln.rate||''}" min="0" step="0.01" style="width:90px;border:none;outline:none;font-size:13px;text-align:right;" oninput="_poPOLines[${i}].rate=parseFloat(this.value)||0;calcPOTotals()"></td>
+        <td style="padding:3px;border:1px solid #e2e8f0;text-align:center;"><select style="width:55px;border:none;font-size:12px;outline:none;" onchange="_poPOLines[${i}].gstPct=parseInt(this.value);calcPOTotals()">${[0,5,12,18,28].map(g=>`<option value="${g}"${ln.gstPct===g?' selected':''}>${g}%</option>`).join('')}</select></td>
+        <td style="padding:8px 10px;border:1px solid #e2e8f0;text-align:right;font-weight:600;" id="po-ln-amt-${i}">${_purFmt(ln.amount||0)}</td>
+        <td style="padding:3px;border:1px solid #e2e8f0;text-align:center;"><button onclick="removePOLine(${i})" style="background:#fee2e2;border:none;border-radius:4px;color:#dc2626;cursor:pointer;padding:3px 8px;font-size:12px;">✕</button></td>
+    </tr>`).join('');
+}
+function addPOLine()      { _poPOLines.push({ item:'', category:'Yarn', qty:0, unit:'kg', rate:0, gstPct:18, amount:0 }); _renderPOLines(); calcPOTotals(); }
+function removePOLine(i)  { _poPOLines.splice(i,1); if (!_poPOLines.length) _poPOLines.push({ item:'', category:'Yarn', qty:0, unit:'kg', rate:0, gstPct:18, amount:0 }); _renderPOLines(); calcPOTotals(); }
+function calcPOTotals() {
+    let sub=0, gstT=0;
+    _poPOLines.forEach((ln,i) => {
+        const base = (parseFloat(ln.qty)||0)*(parseFloat(ln.rate)||0);
+        const gst  = base*((parseFloat(ln.gstPct)||0)/100);
+        ln.amount  = base+gst; sub+=base; gstT+=gst;
+        const el = document.getElementById(`po-ln-amt-${i}`); if (el) el.textContent = _purFmt(ln.amount);
+    });
+    const t = sub+gstT;
+    const s=document.getElementById('po-subtotal'); if(s) s.textContent=_purFmt(sub);
+    const g=document.getElementById('po-gstamt');   if(g) g.textContent=_purFmt(gstT);
+    const tot=document.getElementById('po-total');  if(tot) tot.textContent=_purFmt(t);
+    return { subtotal:sub, gstTotal:gstT, total:t };
+}
+function onPOSupplierChange() {
+    const sup = (db.suppliers||[]).find(s => s.id === document.getElementById('po-supplier-sel').value);
+    if (sup && sup.leadDays && !document.getElementById('po-delivery-date').value) {
+        const d = new Date(); d.setDate(d.getDate()+(sup.leadDays||7));
+        document.getElementById('po-delivery-date').value = d.toISOString().slice(0,10);
+    }
+}
+function savePO() {
+    const supId = document.getElementById('po-supplier-sel').value;
+    const date  = document.getElementById('po-date').value;
+    if (!supId) { flash('Please select a supplier.'); return; }
+    if (!date)  { flash('Please select a date.'); return; }
+    const valid = _poPOLines.filter(l => l.item && (parseFloat(l.qty)||0) > 0);
+    if (!valid.length) { flash('Add at least one item with qty > 0.'); return; }
+    const sup = (db.suppliers||[]).find(s => s.id === supId);
+    const { subtotal, gstTotal, total } = calcPOTotals();
+    if (!db.purchaseOrders) db.purchaseOrders = [];
+    const rec = {
+        id: _purPOId || nid(),
+        poNumber:     document.getElementById('po-number').value,
+        date, supplierId: supId, supplierName: sup ? sup.name : '',
+        deliveryDate: document.getElementById('po-delivery-date').value,
+        status:       document.getElementById('po-status').value,
+        notes:        document.getElementById('po-notes').value.trim(),
+        items:        _poPOLines.filter(l => l.item),
+        subtotal, gstTotal, total,
+    };
+    if (_purPOId) { const i=db.purchaseOrders.findIndex(x=>x.id===_purPOId); if(i>=0) db.purchaseOrders[i]=rec; }
+    else db.purchaseOrders.push(rec);
+    _purPOId = rec.id;
+    persist(); clearPOForm(); renderPOList(); flash('Purchase Order saved.');
+}
+function deletePO() {
+    if (!_purPOId) { flash('Select a PO to delete.'); return; }
+    const po = (db.purchaseOrders||[]).find(x=>x.id===_purPOId);
+    if (!po || !confirm(`Delete PO ${po.poNumber}? This cannot be undone.`)) return;
+    db.purchaseOrders = (db.purchaseOrders||[]).filter(x=>x.id!==_purPOId);
+    _purPOId = null; persist(); clearPOForm(); renderPOList(); flash('PO deleted.');
+}
+function clearPOForm() { document.getElementById('pur-po-form').style.display='none'; _purPOId=null; _poPOLines=[]; document.getElementById('pur-po-sel').value=''; }
+
+// ══════════════════════════════════════════ GRN ════════════════════════════
+
+function _getNextGRNNumber() { return _purSeqNum(db.grns, 'GRN-'); }
+function _populateGRNPODDL() {
+    const pos = (db.purchaseOrders||[]).filter(po => po.status!=='Received'&&po.status!=='Cancelled');
+    const sel = document.getElementById('grn-po-sel'); if (!sel) return;
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">-- None / Direct Purchase --</option>' + pos.map(po=>`<option value="${po.id}">${po.poNumber} — ${po.supplierName}</option>`).join('');
+    if (cur) sel.value = cur;
+}
+function renderGRNList() {
+    const grns = db.grns || [];
+    const sel  = document.getElementById('pur-grn-sel');
+    if (sel) {
+        sel.innerHTML = '<option value="">-- Select GRN --</option>' +
+            grns.slice().reverse().map(g=>`<option value="${g.id}">${g.grnNumber} | ${g.supplierName||'Direct'} | ${g.date}</option>`).join('');
+        sel.value = _purGRNId || '';
+    }
+    const list = document.getElementById('pur-grn-list'); if (!list) return;
+    if (!grns.length) { list.innerHTML='<div style="color:#94a3b8;font-size:13px;padding:20px 0;">No GRNs recorded yet.</div>'; return; }
+    list.innerHTML = `<div style="overflow-x:auto;margin-top:8px;"><table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead><tr style="background:#f1f5f9;">
+            <th style="padding:10px;text-align:left;border:1px solid #e2e8f0;color:#475569;">GRN No.</th>
+            <th style="padding:10px;text-align:left;border:1px solid #e2e8f0;color:#475569;">Date</th>
+            <th style="padding:10px;text-align:left;border:1px solid #e2e8f0;color:#475569;">Supplier</th>
+            <th style="padding:10px;text-align:left;border:1px solid #e2e8f0;color:#475569;">Against PO</th>
+            <th style="padding:10px;text-align:center;border:1px solid #e2e8f0;color:#475569;">Items</th>
+            <th style="padding:10px;text-align:left;border:1px solid #e2e8f0;color:#475569;">Challan No.</th>
+            <th style="border:1px solid #e2e8f0;"></th>
+        </tr></thead>
+        <tbody>${grns.slice().reverse().map(g=>`
+        <tr onclick="openGRN('${g.id}')" style="cursor:pointer;" class="hover-row">
+            <td style="padding:9px 10px;border:1px solid #e2e8f0;font-weight:700;font-family:monospace;">${g.grnNumber}</td>
+            <td style="padding:9px 10px;border:1px solid #e2e8f0;">${g.date||'—'}</td>
+            <td style="padding:9px 10px;border:1px solid #e2e8f0;font-weight:600;">${g.supplierName||'—'}</td>
+            <td style="padding:9px 10px;border:1px solid #e2e8f0;font-family:monospace;font-size:11px;">${g.poNumber||'Direct'}</td>
+            <td style="padding:9px 10px;border:1px solid #e2e8f0;text-align:center;">${(g.items||[]).length}</td>
+            <td style="padding:9px 10px;border:1px solid #e2e8f0;">${g.challan||'—'}</td>
+            <td style="padding:9px 10px;border:1px solid #e2e8f0;text-align:center;"><button class="btn btn-outline btn-sm" onclick="event.stopPropagation();openGRN('${g.id}')">✏ Edit</button></td>
+        </tr>`).join('')}
+        </tbody></table></div>`;
+}
+function newGRN() {
+    _purGRNId = null;
+    _grnLines = [{ item:'', unit:'kg', poQty:0, receivedQty:0, rejectedQty:0, rate:0, remarks:'' }];
+    document.getElementById('grn-number').value        = _getNextGRNNumber();
+    document.getElementById('grn-date').value          = new Date().toISOString().slice(0,10);
+    document.getElementById('grn-supplier-name').value = '';
+    document.getElementById('grn-challan').value       = '';
+    document.getElementById('grn-vehicle').value       = '';
+    document.getElementById('grn-notes').value         = '';
+    _populateGRNPODDL();
+    document.getElementById('grn-po-sel').value = '';
+    _renderGRNLines();
+    document.getElementById('pur-grn-form').style.display = 'block';
+}
+function onGRNSelect() { const id=document.getElementById('pur-grn-sel').value; if(id) openGRN(id); }
+function openGRN(id) {
+    const g = (db.grns||[]).find(x=>x.id===id); if (!g) return;
+    _purGRNId = id;
+    _grnLines = (g.items||[]).map(i=>({...i}));
+    if (!_grnLines.length) _grnLines.push({ item:'', unit:'kg', poQty:0, receivedQty:0, rejectedQty:0, rate:0, remarks:'' });
+    document.getElementById('grn-number').value        = g.grnNumber||'';
+    document.getElementById('grn-date').value          = g.date||'';
+    document.getElementById('grn-supplier-name').value = g.supplierName||'';
+    document.getElementById('grn-challan').value       = g.challan||'';
+    document.getElementById('grn-vehicle').value       = g.vehicle||'';
+    document.getElementById('grn-notes').value         = g.notes||'';
+    _populateGRNPODDL();
+    document.getElementById('grn-po-sel').value = g.poId||'';
+    _renderGRNLines();
+    document.getElementById('pur-grn-form').style.display = 'block';
+    document.getElementById('pur-grn-sel').value = id;
+}
+function onGRNPOSelect() {
+    const poId = document.getElementById('grn-po-sel').value;
+    if (!poId) { document.getElementById('grn-supplier-name').value=''; _grnLines=[{ item:'', unit:'kg', poQty:0, receivedQty:0, rejectedQty:0, rate:0, remarks:'' }]; _renderGRNLines(); return; }
+    const po = (db.purchaseOrders||[]).find(x=>x.id===poId); if (!po) return;
+    document.getElementById('grn-supplier-name').value = po.supplierName||'';
+    _grnLines = (po.items||[]).map(i=>({ item:i.item, unit:i.unit||'kg', poQty:parseFloat(i.qty)||0, receivedQty:parseFloat(i.qty)||0, rejectedQty:0, rate:parseFloat(i.rate)||0, remarks:'' }));
+    if (!_grnLines.length) _grnLines.push({ item:'', unit:'kg', poQty:0, receivedQty:0, rejectedQty:0, rate:0, remarks:'' });
+    _renderGRNLines();
+}
+function _renderGRNLines() {
+    const tbody = document.getElementById('grn-items-body'); if (!tbody) return;
+    tbody.innerHTML = _grnLines.map((ln,i)=>`
+    <tr>
+        <td style="padding:5px;border:1px solid #e2e8f0;"><input type="text" value="${ln.item||''}" placeholder="Item…" style="width:100%;border:none;outline:none;font-size:13px;" oninput="_grnLines[${i}].item=this.value"></td>
+        <td style="padding:3px;border:1px solid #e2e8f0;"><select style="width:80px;border:none;font-size:12px;outline:none;" onchange="_grnLines[${i}].unit=this.value">${['kg','meters','liters','nos','pieces','rolls'].map(u=>`<option${ln.unit===u?' selected':''}>${u}</option>`).join('')}</select></td>
+        <td style="padding:8px;border:1px solid #e2e8f0;text-align:right;color:#64748b;">${ln.poQty||0}</td>
+        <td style="padding:3px;border:1px solid #e2e8f0;"><input type="number" value="${ln.receivedQty||0}" min="0" step="0.001" style="width:80px;border:none;outline:none;font-size:13px;text-align:right;" oninput="_grnLines[${i}].receivedQty=parseFloat(this.value)||0"></td>
+        <td style="padding:3px;border:1px solid #e2e8f0;"><input type="number" value="${ln.rejectedQty||0}" min="0" step="0.001" style="width:80px;border:none;outline:none;font-size:13px;text-align:right;color:#dc2626;" oninput="_grnLines[${i}].rejectedQty=parseFloat(this.value)||0"></td>
+        <td style="padding:3px;border:1px solid #e2e8f0;"><input type="number" value="${ln.rate||0}" min="0" step="0.01" style="width:80px;border:none;outline:none;font-size:13px;text-align:right;" oninput="_grnLines[${i}].rate=parseFloat(this.value)||0"></td>
+        <td style="padding:3px;border:1px solid #e2e8f0;"><input type="text" value="${ln.remarks||''}" placeholder="Remarks…" style="width:100%;border:none;outline:none;font-size:12px;" oninput="_grnLines[${i}].remarks=this.value"></td>
+        <td style="padding:3px;border:1px solid #e2e8f0;text-align:center;"><button onclick="removeGRNLine(${i})" style="background:#fee2e2;border:none;border-radius:4px;color:#dc2626;cursor:pointer;padding:3px 8px;font-size:12px;">✕</button></td>
+    </tr>`).join('');
+}
+function addGRNLine()     { _grnLines.push({ item:'', unit:'kg', poQty:0, receivedQty:0, rejectedQty:0, rate:0, remarks:'' }); _renderGRNLines(); }
+function removeGRNLine(i) { _grnLines.splice(i,1); if(!_grnLines.length) _grnLines.push({ item:'', unit:'kg', poQty:0, receivedQty:0, rejectedQty:0, rate:0, remarks:'' }); _renderGRNLines(); }
+function saveGRN() {
+    const date = document.getElementById('grn-date').value;
+    if (!date) { flash('Please enter a date.'); return; }
+    const valid = _grnLines.filter(l => l.item && (parseFloat(l.receivedQty)||0) > 0);
+    if (!valid.length) { flash('Add at least one item with received qty > 0.'); return; }
+    if (!db.grns) db.grns = [];
+    const poId = document.getElementById('grn-po-sel').value;
+    const po   = poId ? (db.purchaseOrders||[]).find(x=>x.id===poId) : null;
+    const rec  = {
+        id: _purGRNId || nid(),
+        grnNumber:    document.getElementById('grn-number').value,
+        date, poId: poId||'', poNumber: po ? po.poNumber : '',
+        supplierId:   po ? po.supplierId : '',
+        supplierName: document.getElementById('grn-supplier-name').value.trim() || (po ? po.supplierName : ''),
+        challan:      document.getElementById('grn-challan').value.trim(),
+        vehicle:      document.getElementById('grn-vehicle').value.trim(),
+        notes:        document.getElementById('grn-notes').value.trim(),
+        items:        _grnLines.filter(l => l.item),
+    };
+    if (_purGRNId) { const i=db.grns.findIndex(x=>x.id===_purGRNId); if(i>=0) db.grns[i]=rec; }
+    else db.grns.push(rec);
+    // Update PO status
+    if (poId && db.purchaseOrders) {
+        const pi = db.purchaseOrders.findIndex(x=>x.id===poId);
+        if (pi>=0 && (db.purchaseOrders[pi].status==='Confirmed'||db.purchaseOrders[pi].status==='Sent'))
+            db.purchaseOrders[pi].status = 'Partial';
+    }
+    _purGRNId = rec.id;
+    persist(); clearGRNForm(); renderGRNList(); flash('GRN saved.');
+}
+function deleteGRN() {
+    if (!_purGRNId) { flash('Select a GRN first.'); return; }
+    const g=(db.grns||[]).find(x=>x.id===_purGRNId);
+    if (!g||!confirm(`Delete GRN ${g.grnNumber}?`)) return;
+    db.grns=(db.grns||[]).filter(x=>x.id!==_purGRNId);
+    _purGRNId=null; persist(); clearGRNForm(); renderGRNList(); flash('GRN deleted.');
+}
+function clearGRNForm() { document.getElementById('pur-grn-form').style.display='none'; _purGRNId=null; _grnLines=[]; document.getElementById('pur-grn-sel').value=''; }
+
+// ══════════════════════════════════════════ SUPPLIER INVOICES ══════════════
+
+function _getNextSINumber()  { return _purSeqNum(db.supplierInvoices, 'SINV-'); }
+function _populateSISupDDL() {
+    const sel=document.getElementById('si-supplier-sel'); if(!sel) return;
+    const cur=sel.value;
+    sel.innerHTML='<option value="">-- Select Supplier --</option>'+(db.suppliers||[]).map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+    if(cur) sel.value=cur;
+}
+function _populateSIPODDL(supId) {
+    const pos=(db.purchaseOrders||[]).filter(po=>!supId||po.supplierId===supId);
+    const sel=document.getElementById('si-po-sel'); if(!sel) return;
+    sel.innerHTML='<option value="">-- None / Direct --</option>'+pos.map(po=>`<option value="${po.id}">${po.poNumber} — ${_purFmt(po.total)}</option>`).join('');
+}
+function renderSIList() {
+    const sis=db.supplierInvoices||[];
+    const sel=document.getElementById('pur-si-sel');
+    if(sel) {
+        sel.innerHTML='<option value="">-- Select Invoice --</option>'+sis.slice().reverse().map(si=>`<option value="${si.id}">${si.ref} | ${si.supplierName} | ${_purFmt(si.total)} | ${si.payStatus}</option>`).join('');
+        sel.value=_purSIId||'';
+    }
+    const list=document.getElementById('pur-si-list'); if(!list) return;
+    if(!sis.length){list.innerHTML='<div style="color:#94a3b8;font-size:13px;padding:20px 0;">No supplier invoices recorded yet.</div>';return;}
+    const psC=s=>s==='Paid'?'#16a34a':s==='Partial'?'#d97706':'#dc2626';
+    const psB=s=>s==='Paid'?'#dcfce7':s==='Partial'?'#fef3c7':'#fee2e2';
+    const today=new Date().toISOString().slice(0,10);
+    const totalOwed=sis.filter(si=>si.payStatus!=='Paid').reduce((s,si)=>s+(parseFloat(si.total)||0)-(parseFloat(si.paidAmt)||0),0);
+    list.innerHTML=`<div style="overflow-x:auto;margin-top:8px;"><table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead><tr style="background:#f1f5f9;">
+            <th style="padding:10px;text-align:left;border:1px solid #e2e8f0;color:#475569;">Ref #</th>
+            <th style="padding:10px;text-align:left;border:1px solid #e2e8f0;color:#475569;">Supplier Inv No.</th>
+            <th style="padding:10px;text-align:left;border:1px solid #e2e8f0;color:#475569;">Supplier</th>
+            <th style="padding:10px;text-align:left;border:1px solid #e2e8f0;color:#475569;">Date</th>
+            <th style="padding:10px;text-align:right;border:1px solid #e2e8f0;color:#475569;">Total (₹)</th>
+            <th style="padding:10px;text-align:right;border:1px solid #e2e8f0;color:#475569;">Paid (₹)</th>
+            <th style="padding:10px;text-align:right;border:1px solid #e2e8f0;color:#475569;">Balance (₹)</th>
+            <th style="padding:10px;text-align:left;border:1px solid #e2e8f0;color:#475569;">Due Date</th>
+            <th style="padding:10px;text-align:center;border:1px solid #e2e8f0;color:#475569;">Status</th>
+            <th style="border:1px solid #e2e8f0;"></th>
+        </tr></thead>
+        <tbody>${sis.slice().reverse().map(si=>{
+            const bal=(parseFloat(si.total)||0)-(parseFloat(si.paidAmt)||0);
+            const overdue=si.payStatus!=='Paid'&&si.dueDate&&si.dueDate<today;
+            return`<tr onclick="openSI('${si.id}')" style="cursor:pointer;${overdue?'background:#fff5f5;':''}" class="hover-row">
+                <td style="padding:9px 10px;border:1px solid #e2e8f0;font-weight:700;font-family:monospace;">${si.ref}</td>
+                <td style="padding:9px 10px;border:1px solid #e2e8f0;">${si.invNo||'—'}</td>
+                <td style="padding:9px 10px;border:1px solid #e2e8f0;font-weight:600;">${si.supplierName||'—'}</td>
+                <td style="padding:9px 10px;border:1px solid #e2e8f0;">${si.date||'—'}</td>
+                <td style="padding:9px 10px;border:1px solid #e2e8f0;text-align:right;font-weight:700;">${_purFmt(si.total)}</td>
+                <td style="padding:9px 10px;border:1px solid #e2e8f0;text-align:right;color:#16a34a;">${_purFmt(si.paidAmt||0)}</td>
+                <td style="padding:9px 10px;border:1px solid #e2e8f0;text-align:right;color:${bal>0.01?'#dc2626':'#16a34a'};font-weight:700;">${_purFmt(bal)}</td>
+                <td style="padding:9px 10px;border:1px solid #e2e8f0;${overdue?'color:#dc2626;font-weight:700;':''}">${si.dueDate||'—'}${overdue?' ⚠️':''}</td>
+                <td style="padding:9px 10px;border:1px solid #e2e8f0;text-align:center;"><span style="background:${psB(si.payStatus)};color:${psC(si.payStatus)};border-radius:12px;padding:3px 10px;font-size:11px;font-weight:700;">${si.payStatus}</span></td>
+                <td style="padding:9px 10px;border:1px solid #e2e8f0;text-align:center;"><button class="btn btn-outline btn-sm" onclick="event.stopPropagation();openSI('${si.id}')">✏ Edit</button></td>
+            </tr>`;
+        }).join('')}
+        </tbody>
+        <tfoot><tr style="background:#fef9c3;font-weight:700;">
+            <td colspan="4" style="padding:10px;border:1px solid #e2e8f0;text-align:right;">Totals</td>
+            <td style="padding:10px;border:1px solid #e2e8f0;text-align:right;">${_purFmt(sis.reduce((s,si)=>s+(parseFloat(si.total)||0),0))}</td>
+            <td style="padding:10px;border:1px solid #e2e8f0;text-align:right;color:#16a34a;">${_purFmt(sis.reduce((s,si)=>s+(parseFloat(si.paidAmt)||0),0))}</td>
+            <td style="padding:10px;border:1px solid #e2e8f0;text-align:right;color:#dc2626;">${_purFmt(totalOwed)}</td>
+            <td colspan="3" style="border:1px solid #e2e8f0;"></td>
+        </tr></tfoot>
+    </table></div>`;
+}
+function newSI() {
+    _purSIId=null;
+    document.getElementById('si-ref').value       = _getNextSINumber();
+    document.getElementById('si-inv-no').value    = '';
+    document.getElementById('si-date').value      = new Date().toISOString().slice(0,10);
+    document.getElementById('si-due-date').value  = '';
+    document.getElementById('si-subtotal').value  = '';
+    document.getElementById('si-gst-amt').value   = '';
+    document.getElementById('si-total').value     = '';
+    document.getElementById('si-paid').value      = '';
+    document.getElementById('si-balance').value   = '';
+    document.getElementById('si-pay-status').value= 'Unpaid';
+    document.getElementById('si-notes').value     = '';
+    _populateSISupDDL();
+    document.getElementById('si-supplier-sel').value='';
+    _populateSIPODDL('');
+    document.getElementById('pur-si-form').style.display='block';
+}
+function onSISelect() { const id=document.getElementById('pur-si-sel').value; if(id) openSI(id); }
+function openSI(id) {
+    const si=(db.supplierInvoices||[]).find(x=>x.id===id); if(!si) return;
+    _purSIId=id;
+    document.getElementById('si-ref').value        = si.ref||'';
+    document.getElementById('si-inv-no').value     = si.invNo||'';
+    document.getElementById('si-date').value       = si.date||'';
+    document.getElementById('si-due-date').value   = si.dueDate||'';
+    document.getElementById('si-subtotal').value   = si.subtotal||'';
+    document.getElementById('si-gst-amt').value    = si.gstAmt||'';
+    document.getElementById('si-total').value      = si.total||'';
+    document.getElementById('si-paid').value       = si.paidAmt||'';
+    document.getElementById('si-pay-status').value = si.payStatus||'Unpaid';
+    document.getElementById('si-notes').value      = si.notes||'';
+    _populateSISupDDL();
+    document.getElementById('si-supplier-sel').value=si.supplierId||'';
+    _populateSIPODDL(si.supplierId||'');
+    document.getElementById('si-po-sel').value=si.poId||'';
+    calcSITotals(); calcSIStatus();
+    document.getElementById('pur-si-form').style.display='block';
+    document.getElementById('pur-si-sel').value=id;
+}
+function onSISupplierChange() {
+    const supId=document.getElementById('si-supplier-sel').value;
+    _populateSIPODDL(supId);
+    const sup=(db.suppliers||[]).find(s=>s.id===supId);
+    if(sup&&sup.paymentTerms&&!document.getElementById('si-due-date').value){
+        const d=new Date(); d.setDate(d.getDate()+(sup.paymentTerms||30));
+        document.getElementById('si-due-date').value=d.toISOString().slice(0,10);
+    }
+}
+function onSIPOChange() {
+    const poId=document.getElementById('si-po-sel').value; if(!poId) return;
+    const po=(db.purchaseOrders||[]).find(x=>x.id===poId); if(!po) return;
+    document.getElementById('si-subtotal').value=po.subtotal||0;
+    document.getElementById('si-gst-amt').value=po.gstTotal||0;
+    calcSITotals();
+}
+function calcSITotals() {
+    const sub=parseFloat(document.getElementById('si-subtotal').value)||0;
+    const gst=parseFloat(document.getElementById('si-gst-amt').value)||0;
+    document.getElementById('si-total').value=(sub+gst).toFixed(2);
+    calcSIStatus();
+}
+function calcSIStatus() {
+    const total=parseFloat(document.getElementById('si-total').value)||0;
+    const paid =parseFloat(document.getElementById('si-paid').value)||0;
+    const bal  =total-paid;
+    document.getElementById('si-balance').value=bal.toFixed(2);
+    document.getElementById('si-pay-status').value=paid<=0?'Unpaid':bal<=0.01?'Paid':'Partial';
+}
+function saveSI() {
+    const supId=document.getElementById('si-supplier-sel').value;
+    const date =document.getElementById('si-date').value;
+    const total=parseFloat(document.getElementById('si-total').value)||0;
+    if(!supId){flash('Please select a supplier.');return;}
+    if(!date) {flash('Please enter invoice date.'); return;}
+    if(!total){flash('Please enter invoice total amount.');return;}
+    if(!db.supplierInvoices) db.supplierInvoices=[];
+    const sup=(db.suppliers||[]).find(s=>s.id===supId);
+    const rec={
+        id:_purSIId||nid(), ref:document.getElementById('si-ref').value,
+        invNo:document.getElementById('si-inv-no').value.trim(), date,
+        dueDate:document.getElementById('si-due-date').value,
+        supplierId:supId, supplierName:sup?sup.name:'',
+        poId:document.getElementById('si-po-sel').value,
+        subtotal:parseFloat(document.getElementById('si-subtotal').value)||0,
+        gstAmt:parseFloat(document.getElementById('si-gst-amt').value)||0,
+        total, paidAmt:parseFloat(document.getElementById('si-paid').value)||0,
+        payStatus:document.getElementById('si-pay-status').value,
+        notes:document.getElementById('si-notes').value.trim(),
+    };
+    if(_purSIId){const i=db.supplierInvoices.findIndex(x=>x.id===_purSIId);if(i>=0)db.supplierInvoices[i]=rec;}
+    else db.supplierInvoices.push(rec);
+    _purSIId=rec.id; persist(); clearSIForm(); renderSIList(); flash('Invoice saved.');
+}
+function deleteSI() {
+    if(!_purSIId){flash('Select an invoice first.');return;}
+    const si=(db.supplierInvoices||[]).find(x=>x.id===_purSIId);
+    if(!si||!confirm(`Delete invoice ${si.ref}?`)) return;
+    db.supplierInvoices=(db.supplierInvoices||[]).filter(x=>x.id!==_purSIId);
+    _purSIId=null; persist(); clearSIForm(); renderSIList(); flash('Invoice deleted.');
+}
+function clearSIForm() { document.getElementById('pur-si-form').style.display='none'; _purSIId=null; document.getElementById('pur-si-sel').value=''; }
+
+// ══════════════════════════════════════════ PURCHASE SUMMARY ═══════════════
+
+function renderPURSummary() {
+    const pos  = db.purchaseOrders   || [];
+    const grns = db.grns             || [];
+    const sis  = db.supplierInvoices || [];
+    const sups = db.suppliers        || [];
+    const today= new Date().toISOString().slice(0,10);
+    const totalPO      = pos.reduce((s,po)=>s+(parseFloat(po.total)||0),0);
+    const pendingGRN   = pos.filter(po=>po.status==='Sent'||po.status==='Confirmed'||po.status==='Partial').length;
+    const totalPayable = sis.filter(si=>si.payStatus!=='Paid').reduce((s,si)=>s+(parseFloat(si.total)||0)-(parseFloat(si.paidAmt)||0),0);
+    const overdueInv   = sis.filter(si=>si.payStatus!=='Paid'&&si.dueDate&&si.dueDate<today);
+    const container=document.getElementById('pur-summary-content'); if(!container) return;
+    const spend={};
+    pos.forEach(po=>{ spend[po.supplierName]=(spend[po.supplierName]||0)+(parseFloat(po.total)||0); });
+    const spendSorted=Object.entries(spend).sort((a,b)=>b[1]-a[1]).slice(0,8);
+    const spendMax=spendSorted[0]?.[1]||1;
+    container.innerHTML=`
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px;">
+        <div class="card" style="background:linear-gradient(135deg,#1e3a5f,#2563eb);color:white;margin:0;">
+            <div style="font-size:11px;opacity:.8;text-transform:uppercase;letter-spacing:.5px;">Total PO Value</div>
+            <div style="font-size:22px;font-weight:800;margin-top:6px;">${_purFmt(totalPO)}</div>
+            <div style="font-size:11px;opacity:.7;margin-top:4px;">${pos.length} purchase order(s)</div>
+        </div>
+        <div class="card" style="background:linear-gradient(135deg,#92400e,#d97706);color:white;margin:0;">
+            <div style="font-size:11px;opacity:.8;text-transform:uppercase;letter-spacing:.5px;">Awaiting GRN</div>
+            <div style="font-size:22px;font-weight:800;margin-top:6px;">${pendingGRN}</div>
+            <div style="font-size:11px;opacity:.7;margin-top:4px;">POs pending goods receipt</div>
+        </div>
+        <div class="card" style="background:linear-gradient(135deg,#7f1d1d,#dc2626);color:white;margin:0;">
+            <div style="font-size:11px;opacity:.8;text-transform:uppercase;letter-spacing:.5px;">Total Payable</div>
+            <div style="font-size:22px;font-weight:800;margin-top:6px;">${_purFmt(totalPayable)}</div>
+            <div style="font-size:11px;opacity:.7;margin-top:4px;">${sis.filter(si=>si.payStatus!=='Paid').length} unpaid invoice(s)</div>
+        </div>
+        <div class="card" style="background:linear-gradient(135deg,#064e3b,#059669);color:white;margin:0;">
+            <div style="font-size:11px;opacity:.8;text-transform:uppercase;letter-spacing:.5px;">Active Suppliers</div>
+            <div style="font-size:22px;font-weight:800;margin-top:6px;">${sups.length}</div>
+            <div style="font-size:11px;opacity:.7;margin-top:4px;">${grns.length} GRN(s) recorded</div>
+        </div>
+    </div>
+    ${overdueInv.length?`
+    <div class="card" style="border-left:4px solid #dc2626;background:#fff5f5;margin-bottom:16px;">
+        <div style="font-size:13px;font-weight:700;color:#dc2626;margin-bottom:10px;">⚠️ Overdue Invoices (${overdueInv.length})</div>
+        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+            <thead><tr style="background:#fee2e2;">
+                <th style="padding:7px 10px;text-align:left;border:1px solid #fca5a5;">Ref</th>
+                <th style="padding:7px 10px;text-align:left;border:1px solid #fca5a5;">Supplier</th>
+                <th style="padding:7px 10px;text-align:right;border:1px solid #fca5a5;">Balance (₹)</th>
+                <th style="padding:7px 10px;text-align:left;border:1px solid #fca5a5;">Due Date</th>
+                <th style="padding:7px 10px;text-align:center;border:1px solid #fca5a5;">Days Overdue</th>
+            </tr></thead>
+            <tbody>${overdueInv.map(si=>{
+                const bal=(parseFloat(si.total)||0)-(parseFloat(si.paidAmt)||0);
+                const days=Math.floor((new Date()-new Date(si.dueDate))/(864e5));
+                return`<tr>
+                    <td style="padding:7px 10px;border:1px solid #fca5a5;font-family:monospace;">${si.ref}</td>
+                    <td style="padding:7px 10px;border:1px solid #fca5a5;font-weight:600;">${si.supplierName}</td>
+                    <td style="padding:7px 10px;border:1px solid #fca5a5;text-align:right;color:#dc2626;font-weight:700;">${_purFmt(bal)}</td>
+                    <td style="padding:7px 10px;border:1px solid #fca5a5;">${si.dueDate}</td>
+                    <td style="padding:7px 10px;border:1px solid #fca5a5;text-align:center;color:#dc2626;font-weight:700;">${days} day${days!==1?'s':''}</td>
+                </tr>`;
+            }).join('')}</tbody>
+        </table>
+    </div>`:''}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="card">
+            <div class="card-title">Recent Purchase Orders</div>
+            ${pos.length?`<table style="width:100%;border-collapse:collapse;font-size:12px;">
+                <thead><tr style="background:#f1f5f9;">
+                    <th style="padding:7px;text-align:left;border:1px solid #e2e8f0;">PO #</th>
+                    <th style="padding:7px;text-align:left;border:1px solid #e2e8f0;">Supplier</th>
+                    <th style="padding:7px;text-align:right;border:1px solid #e2e8f0;">Value</th>
+                    <th style="padding:7px;text-align:center;border:1px solid #e2e8f0;">Status</th>
+                </tr></thead>
+                <tbody>${pos.slice(-8).reverse().map(po=>`
+                <tr>
+                    <td style="padding:6px 7px;border:1px solid #e2e8f0;font-family:monospace;font-size:11px;">${po.poNumber}</td>
+                    <td style="padding:6px 7px;border:1px solid #e2e8f0;">${po.supplierName}</td>
+                    <td style="padding:6px 7px;border:1px solid #e2e8f0;text-align:right;">${_purFmt(po.total)}</td>
+                    <td style="padding:6px 7px;border:1px solid #e2e8f0;text-align:center;font-size:11px;font-weight:600;">${po.status}</td>
+                </tr>`).join('')}</tbody>
+            </table>`:'<div style="color:#94a3b8;font-size:13px;">No POs yet.</div>'}
+        </div>
+        <div class="card">
+            <div class="card-title">Supplier-wise Spend</div>
+            ${spendSorted.length?spendSorted.map(([name,val])=>`
+            <div style="margin-bottom:10px;">
+                <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;">
+                    <span style="font-weight:600;">${name}</span><span>${_purFmt(val)}</span>
+                </div>
+                <div style="height:7px;background:#e2e8f0;border-radius:4px;">
+                    <div style="height:7px;background:#2563eb;border-radius:4px;width:${Math.round(val/spendMax*100)}%;"></div>
+                </div>
+            </div>`).join(''):'<div style="color:#94a3b8;font-size:13px;">No data yet.</div>'}
+        </div>
+    </div>`;
 }
 
 // ─────────────────────────────────────────────────────── Boot
