@@ -902,6 +902,7 @@
         </div>
 
         <!-- Regular login form -->
+        <!-- Sign In form -->
         <div id="login-form" style="display:none;">
             <div class="login-heading">Sign in to your account</div>
             <input type="text" id="login-username" class="login-inp" placeholder="Username"
@@ -912,6 +913,10 @@
                 onkeydown="if(event.key==='Enter')loginSubmit()">
             <div id="login-error" class="login-err">❌ Invalid username or password.</div>
             <button class="login-btn" onclick="loginSubmit()">Sign In →</button>
+            <div style="margin-top:16px;padding-top:14px;border-top:1px solid #f1f5f9;text-align:center;">
+                <span style="font-size:12px;color:#94a3b8;">New user?</span>
+                <button onclick="showSignUp()" style="background:none;border:none;color:#2563eb;font-size:12px;font-weight:600;cursor:pointer;margin-left:6px;">Create an account →</button>
+            </div>
         </div>
 
         <!-- First-run setup form -->
@@ -924,6 +929,22 @@
                 autocomplete="new-password" onkeydown="if(event.key==='Enter')setupAdminAccount()">
             <div id="setup-error" class="login-err"></div>
             <button class="login-btn" onclick="setupAdminAccount()">Create Admin Account →</button>
+        </div>
+
+        <!-- Sign Up form -->
+        <div id="signup-form" style="display:none;">
+            <div class="login-heading">Create your account</div>
+            <input type="text"     id="su-name"  class="login-inp" placeholder="Your full name" autocomplete="off">
+            <input type="text"     id="su-uname" class="login-inp" placeholder="Choose a username" autocomplete="off">
+            <input type="password" id="su-pw"    class="login-inp" placeholder="Choose a password" autocomplete="new-password">
+            <input type="password" id="su-pw2"   class="login-inp" placeholder="Confirm password"
+                autocomplete="new-password" onkeydown="if(event.key==='Enter')signUpSubmit()">
+            <div id="su-error" class="login-err"></div>
+            <button class="login-btn" onclick="signUpSubmit()">Create Account →</button>
+            <div style="margin-top:16px;padding-top:14px;border-top:1px solid #f1f5f9;text-align:center;">
+                <span style="font-size:12px;color:#94a3b8;">Already have an account?</span>
+                <button onclick="showSignIn()" style="background:none;border:none;color:#2563eb;font-size:12px;font-weight:600;cursor:pointer;margin-left:6px;">Sign in →</button>
+            </div>
         </div>
 
         <div class="login-footer-note">🔒 Secure Login &nbsp;·&nbsp; Mecords Textile ERP</div>
@@ -4638,6 +4659,51 @@ function _initLoginScreen() {
         document.getElementById('login-password').value = '';
         setTimeout(() => document.getElementById('login-username').focus(), 120);
     }
+}
+
+function showSignUp() {
+    document.getElementById('login-form').style.display  = 'none';
+    document.getElementById('signup-form').style.display = 'block';
+    document.getElementById('su-name').value  = '';
+    document.getElementById('su-uname').value = '';
+    document.getElementById('su-pw').value    = '';
+    document.getElementById('su-pw2').value   = '';
+    document.getElementById('su-error').style.display = 'none';
+    setTimeout(() => document.getElementById('su-name').focus(), 80);
+}
+
+function showSignIn() {
+    document.getElementById('signup-form').style.display = 'none';
+    document.getElementById('login-form').style.display  = 'block';
+    document.getElementById('login-error').style.display = 'none';
+    document.getElementById('login-username').value = '';
+    document.getElementById('login-password').value = '';
+    setTimeout(() => document.getElementById('login-username').focus(), 80);
+}
+
+function signUpSubmit() {
+    const name  = (document.getElementById('su-name')?.value  || '').trim();
+    const uname = (document.getElementById('su-uname')?.value || '').trim().toLowerCase();
+    const pw    = (document.getElementById('su-pw')?.value    || '').trim();
+    const pw2   = (document.getElementById('su-pw2')?.value   || '').trim();
+    const errEl = document.getElementById('su-error');
+    errEl.style.display = 'none';
+    if (!name)            { errEl.textContent = 'Please enter your full name.';          errEl.style.display='block'; return; }
+    if (uname.length < 3) { errEl.textContent = 'Username must be at least 3 characters.'; errEl.style.display='block'; return; }
+    if (pw.length < 4)    { errEl.textContent = 'Password must be at least 4 characters.'; errEl.style.display='block'; return; }
+    if (pw !== pw2)       { errEl.textContent = 'Passwords do not match.';               errEl.style.display='block'; return; }
+    if ((db.erpUsers||[]).some(u => u.username === uname)) {
+        errEl.textContent = 'That username is already taken. Please choose another.';
+        errEl.style.display = 'block'; return;
+    }
+    if (!db.erpUsers) db.erpUsers = [];
+    const newUser = { id: nid(), username: uname, password: pw, name, role: 'user' };
+    db.erpUsers.push(newUser);
+    persist();
+    _currentUser = newUser;
+    document.getElementById('login-screen').classList.remove('show');
+    _updateUserDisplay();
+    flash(`Welcome, ${name}! Your account has been created.`);
 }
 
 function loginSubmit() {
