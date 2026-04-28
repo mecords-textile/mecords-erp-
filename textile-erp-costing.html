@@ -4723,17 +4723,26 @@ function showSignIn() {
     setTimeout(() => document.getElementById('login-username').focus(), 80);
 }
 
-function signUpSubmit() {
+async function signUpSubmit() {
     const name  = (document.getElementById('su-name')?.value  || '').trim();
     const uname = (document.getElementById('su-uname')?.value || '').trim().toLowerCase();
     const pw    = (document.getElementById('su-pw')?.value    || '').trim();
     const pw2   = (document.getElementById('su-pw2')?.value   || '').trim();
     const errEl = document.getElementById('su-error');
     errEl.style.display = 'none';
-    if (!name)            { errEl.textContent = 'Please enter your full name.';          errEl.style.display='block'; return; }
+    if (!name)            { errEl.textContent = 'Please enter your full name.';             errEl.style.display='block'; return; }
     if (uname.length < 3) { errEl.textContent = 'Username must be at least 3 characters.'; errEl.style.display='block'; return; }
     if (pw.length < 4)    { errEl.textContent = 'Password must be at least 4 characters.'; errEl.style.display='block'; return; }
-    if (pw !== pw2)       { errEl.textContent = 'Passwords do not match.';               errEl.style.display='block'; return; }
+    if (pw !== pw2)       { errEl.textContent = 'Passwords do not match.';                  errEl.style.display='block'; return; }
+
+    // ── SAFETY: Reload latest data from cloud BEFORE writing ─────────────
+    // Prevents overwriting existing users/data with a stale in-memory db.
+    const suBtn = document.querySelector('#signup-form .login-btn');
+    if (suBtn) { suBtn.disabled = true; suBtn.textContent = 'Please wait…'; }
+    try { await _fbLoad(); _ensureDBStructure(); } catch(e) { console.warn('Pre-signup reload failed:', e); }
+    if (suBtn) { suBtn.disabled = false; suBtn.textContent = 'Create Account →'; }
+    // ─────────────────────────────────────────────────────────────────────
+
     if ((db.erpUsers||[]).some(u => u.username === uname)) {
         errEl.textContent = 'That username is already taken. Please choose another.';
         errEl.style.display = 'block'; return;
@@ -4748,11 +4757,24 @@ function signUpSubmit() {
     flash(`Welcome, ${name}! Your account has been created.`);
 }
 
-function loginSubmit() {
-    const uname = (document.getElementById('login-username')?.value || '').trim().toLowerCase();
-    const pw    = (document.getElementById('login-password')?.value  || '').trim();
-    const users = db.erpUsers || [];
-    const match = users.find(u => u.username.toLowerCase() === uname && u.password === pw);
+async function loginSubmit() {
+    const uname  = (document.getElementById('login-username')?.value || '').trim().toLowerCase();
+    const pw     = (document.getElementById('login-password')?.value  || '').trim();
+    const errEl  = document.getElementById('login-error');
+    errEl.style.display = 'none';
+
+    let match = (db.erpUsers || []).find(u => u.username.toLowerCase() === uname && u.password === pw);
+
+    // If not found locally, do a fresh Firebase load and retry once.
+    // This recovers from the case where db was stale/empty during hydrate.
+    if (!match && _fbDB) {
+        const loginBtn = document.querySelector('#login-form .login-btn');
+        if (loginBtn) { loginBtn.disabled = true; loginBtn.textContent = 'Checking…'; }
+        try { await _fbLoad(); _ensureDBStructure(); } catch(e) {}
+        if (loginBtn) { loginBtn.disabled = false; loginBtn.textContent = 'Sign In →'; }
+        match = (db.erpUsers || []).find(u => u.username.toLowerCase() === uname && u.password === pw);
+    }
+
     if (match) {
         _currentUser = match;
         document.getElementById('login-screen').classList.remove('show');
@@ -4760,23 +4782,45 @@ function loginSubmit() {
         // Pull latest data from Firebase so user sees everyone's current data
         _fbLoad().then(() => { _ensureDBStructure(); _refreshActiveTab(); });
     } else {
-        document.getElementById('login-error').style.display = 'block';
+        errEl.style.display = 'block';
         document.getElementById('login-password').value = '';
         document.getElementById('login-password').focus();
     }
 }
 
-function setupAdminAccount() {
+async function setupAdminAccount() {
     const name  = (document.getElementById('setup-name')?.value      || '').trim();
     const uname = (document.getElementById('setup-username')?.value  || '').trim();
     const pw    = (document.getElementById('setup-password')?.value  || '').trim();
     const pw2   = (document.getElementById('setup-password2')?.value || '').trim();
     const errEl = document.getElementById('setup-error');
     errEl.style.display = 'none';
-    if (!name)        { errEl.textContent = 'Please enter your name.';            errEl.style.display='block'; return; }
+    if (!name)            { errEl.textContent = 'Please enter your name.';               errEl.style.display='block'; return; }
     if (uname.length < 3) { errEl.textContent = 'Username must be at least 3 characters.'; errEl.style.display='block'; return; }
     if (pw.length < 4)    { errEl.textContent = 'Password must be at least 4 characters.'; errEl.style.display='block'; return; }
-    if (pw !== pw2)       { errEl.textContent = 'Passwords do not match.';        errEl.style.display='block'; return; }
+    if (pw !== pw2)       { errEl.textContent = 'Passwords do not match.';               errEl.style.display='block'; return; }
+
+    // ── SAFETY: Reload latest data from cloud BEFORE writing ─────────────
+    // Guards against the setup screen appearing due to a stale/empty db
+    // and then wiping Firebase with an empty db when the admin is created.
+    const setupBtn = document.querySelector('#setup-form .login-btn');
+    if (setupBtn) { setupBtn.disabled = true; setupBtn.textContent = 'Please wait…'; }
+    try { await _fbLoad(); _ensureDBStructure(); } catch(e) { console.warn('Pre-setup reload failed:', e); }
+    if (setupBtn) { setupBtn.disabled = false; setupBtn.textContent = 'Create Admin Account →'; }
+
+    // If Firebase actually had users (stale db was the problem), show login form instead
+    if ((db.erpUsers||[]).length > 0) {
+        errEl.textContent = '⚠️ Accounts already exist in the system. Please sign in instead.';
+        errEl.style.display = 'block';
+        setTimeout(() => {
+            document.getElementById('setup-form').style.display = 'none';
+            document.getElementById('login-form').style.display = 'block';
+            errEl.style.display = 'none';
+        }, 2500);
+        return;
+    }
+    // ─────────────────────────────────────────────────────────────────────
+
     const adminUser = { id: nid(), username: uname.toLowerCase(), password: pw, name, role: 'admin' };
     if (!db.erpUsers) db.erpUsers = [];
     db.erpUsers.push(adminUser);
