@@ -4713,17 +4713,20 @@ function renderUserManagement() {
         <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:#f8fafc;
              border:1px solid #e2e8f0;border-radius:8px;margin-bottom:8px;">
             <div style="flex:1;">
-                <div style="font-size:13px;font-weight:700;color:#1e293b;">${u.name}</div>
+                <div style="font-size:13px;font-weight:700;color:#1e293b;">${u.name}
+                    ${u.id === (_currentUser||{}).id ? '<span style="font-size:10px;color:#94a3b8;font-weight:400;margin-left:6px;">(you)</span>' : ''}
+                </div>
                 <div style="font-size:11px;color:#64748b;">@${u.username} &nbsp;·&nbsp;
                     <span style="color:${u.role==='admin'?'#7c3aed':'#0369a1'};font-weight:600;">
                         ${u.role === 'admin' ? '👑 Admin' : '👤 User'}
                     </span>
                 </div>
             </div>
+            <button class="btn btn-outline btn-sm" onclick="editErpUser('${u.id}')">&#9998; Edit</button>
             ${u.id !== (_currentUser||{}).id
                 ? `<button class="btn btn-outline btn-sm" style="color:#dc2626;border-color:#fca5a5;"
                         onclick="deleteErpUser('${u.id}')">&#128465; Remove</button>`
-                : `<span style="font-size:11px;color:#94a3b8;">(you)</span>`}
+                : ''}
         </div>`).join('');
 
     container.innerHTML = `
@@ -4731,15 +4734,34 @@ function renderUserManagement() {
             &#128101; User Management
         </div>
         ${rows || '<div style="font-size:12px;color:#94a3b8;margin-bottom:10px;">No users yet.</div>'}
+
+        <!-- Edit User Form (hidden by default) -->
+        <div id="eu-form" style="display:none;margin-top:10px;padding:14px;background:#eff6ff;border:1px solid #93c5fd;border-radius:10px;">
+            <div style="font-size:12px;font-weight:700;color:#1e40af;margin-bottom:10px;">&#9998; Edit User</div>
+            <input type="hidden" id="eu-id">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+                <input type="text" id="eu-name"  class="login-inp" style="margin:0;font-size:12px;padding:8px 12px;" placeholder="Full name">
+                <input type="text" id="eu-uname" class="login-inp" style="margin:0;font-size:12px;padding:8px 12px;" placeholder="Username">
+                <input type="password" id="eu-pw" class="login-inp" style="margin:0;font-size:12px;padding:8px 12px;" placeholder="New password (leave blank to keep current)">
+                <select id="eu-role" style="padding:8px 12px;border:2px solid #e2e8f0;border-radius:10px;font-size:12px;font-family:inherit;">
+                    <option value="user">👤 User</option>
+                    <option value="admin">👑 Admin</option>
+                </select>
+            </div>
+            <div id="eu-error" style="color:#dc2626;font-size:11px;display:none;margin-bottom:6px;"></div>
+            <div style="display:flex;gap:8px;">
+                <button class="btn btn-primary btn-sm" onclick="saveErpUserEdit()">&#128190; Save Changes</button>
+                <button class="btn btn-outline btn-sm" onclick="cancelErpUserEdit()">&#10005; Cancel</button>
+            </div>
+        </div>
+
+        <!-- Add New User Form -->
         <div style="margin-top:10px;padding:14px;background:#f0fdf4;border:1px solid #86efac;border-radius:10px;">
             <div style="font-size:12px;font-weight:700;color:#166534;margin-bottom:10px;">&#43; Add New User</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
-                <input type="text"     id="nu-name"  class="login-inp" style="margin:0;font-size:12px;padding:8px 12px;"
-                    placeholder="Full name">
-                <input type="text"     id="nu-uname" class="login-inp" style="margin:0;font-size:12px;padding:8px 12px;"
-                    placeholder="Username">
-                <input type="password" id="nu-pw"    class="login-inp" style="margin:0;font-size:12px;padding:8px 12px;"
-                    placeholder="Password">
+                <input type="text"     id="nu-name"  class="login-inp" style="margin:0;font-size:12px;padding:8px 12px;" placeholder="Full name">
+                <input type="text"     id="nu-uname" class="login-inp" style="margin:0;font-size:12px;padding:8px 12px;" placeholder="Username">
+                <input type="password" id="nu-pw"    class="login-inp" style="margin:0;font-size:12px;padding:8px 12px;" placeholder="Password">
                 <select id="nu-role" style="padding:8px 12px;border:2px solid #e2e8f0;border-radius:10px;font-size:12px;font-family:inherit;">
                     <option value="user">👤 User</option>
                     <option value="admin">👑 Admin</option>
@@ -4768,6 +4790,61 @@ function addErpUser() {
     persist();
     renderUserManagement();
     flash(`User "${name}" added.`);
+}
+
+function editErpUser(uid) {
+    const u = (db.erpUsers||[]).find(x => x.id === uid);
+    if (!u) return;
+    document.getElementById('eu-id').value    = uid;
+    document.getElementById('eu-name').value  = u.name || '';
+    document.getElementById('eu-uname').value = u.username || '';
+    document.getElementById('eu-pw').value    = '';
+    document.getElementById('eu-role').value  = u.role || 'user';
+    document.getElementById('eu-error').style.display = 'none';
+    document.getElementById('eu-form').style.display  = 'block';
+    document.getElementById('eu-name').focus();
+}
+
+function saveErpUserEdit() {
+    const uid   = document.getElementById('eu-id').value;
+    const name  = (document.getElementById('eu-name')?.value  || '').trim();
+    const uname = (document.getElementById('eu-uname')?.value || '').trim().toLowerCase();
+    const pw    = (document.getElementById('eu-pw')?.value    || '').trim();
+    const role  = document.getElementById('eu-role')?.value || 'user';
+    const errEl = document.getElementById('eu-error');
+    errEl.style.display = 'none';
+    if (!name)        { errEl.textContent = 'Name is required.';           errEl.style.display='block'; return; }
+    if (uname.length < 3) { errEl.textContent = 'Username must be ≥ 3 characters.'; errEl.style.display='block'; return; }
+    if (pw && pw.length < 4) { errEl.textContent = 'New password must be ≥ 4 characters.'; errEl.style.display='block'; return; }
+    // Check username not already taken by a different user
+    const duplicate = (db.erpUsers||[]).find(u => u.username === uname && u.id !== uid);
+    if (duplicate) { errEl.textContent = 'Username already taken by another user.'; errEl.style.display='block'; return; }
+    const idx = (db.erpUsers||[]).findIndex(u => u.id === uid);
+    if (idx < 0) return;
+    db.erpUsers[idx].name     = name;
+    db.erpUsers[idx].username = uname;
+    db.erpUsers[idx].role     = role;
+    if (pw) db.erpUsers[idx].password = pw;
+    // Update session user if editing own account
+    if (_currentUser && _currentUser.id === uid) {
+        _currentUser.name     = name;
+        _currentUser.username = uname;
+        _currentUser.role     = role;
+        if (pw) _currentUser.password = pw;
+        _updateUserDisplay();
+    }
+    persist();
+    cancelErpUserEdit();
+    renderUserManagement();
+    flash('User updated successfully.');
+}
+
+function cancelErpUserEdit() {
+    document.getElementById('eu-form').style.display = 'none';
+    document.getElementById('eu-id').value    = '';
+    document.getElementById('eu-name').value  = '';
+    document.getElementById('eu-uname').value = '';
+    document.getElementById('eu-pw').value    = '';
 }
 
 function deleteErpUser(uid) {
