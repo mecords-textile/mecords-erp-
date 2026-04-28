@@ -4417,11 +4417,56 @@ function _fbPush() {
 
 function _fbListen() {
     if (!_fbDB) return;
-    _fbDB.ref(_FB_PATH).on('value', () => {
+    _fbDB.ref(_FB_PATH).on('value', (snap) => {
         if (_ignoreNextFBSnap) { _ignoreNextFBSnap = false; return; }
-        const banner = document.getElementById('fb-sync-banner');
-        if (banner) banner.style.display = 'flex';
+        if (!snap.exists()) return;
+        db = snap.val();
+        _ensureDBStructure();
+        localStorage.setItem('textile-erp-v1', JSON.stringify(db));
+        _fbSetStatus('synced');
+        _refreshActiveTab();
+        flash('📡 Data synced from cloud.');
     });
+}
+
+function _refreshActiveTab() {
+    // Re-render whatever tab is currently open
+    const activeBtn = document.querySelector('.tab-btn.active');
+    if (!activeBtn || !activeBtn.dataset.tab) return;
+    const tab = activeBtn.dataset.tab;
+    // Use a lightweight re-render instead of full activateTab (avoids resetting sub-tab state)
+    if (tab === 'rawmaterials')     { renderRawMaterials(); return; }
+    if (tab === 'factorycosting')   { renderProductTab(); return; }
+    if (tab === 'internalcosting')  { renderInternalTab(); return; }
+    if (tab === 'custcosting')      { renderCustCostingTab(); return; }
+    if (tab === 'machinerycosting') { renderMachineryTab(); return; }
+    if (tab === 'dashboard')        { renderDashboard(); return; }
+    if (tab === 'salesdispatch')    { renderSOList(); return; }
+    if (tab === 'rminventory')      { renderRMMasterList(); return; }
+    if (tab === 'production')       { renderProdList(); return; }
+    if (tab === 'finprofit')        { renderFPRevenue(); return; }
+    if (tab === 'analytics')        { renderAnalytics(); return; }
+    if (tab === 'alertsauto')       { renderAlerts(); return; }
+    if (tab === 'documents')        { renderDocList(); return; }
+    if (tab === 'factoryutilities') { renderFUMonthList(); return; }
+    if (tab === 'purchase') {
+        const activeSub = document.querySelector('#tab-purchase .sub-tab-btn.active');
+        const sub = activeSub ? activeSub.dataset.sub : 'pur-suppliers';
+        if (sub === 'pur-suppliers') renderPURSupList();
+        if (sub === 'pur-po')        renderPOList();
+        if (sub === 'pur-grn')       renderGRNList();
+        if (sub === 'pur-invoices')  renderSIList();
+        if (sub === 'pur-summary')   renderPURSummary();
+        return;
+    }
+    if (tab === 'custpricehistory') {
+        const activeSub = document.querySelector('#tab-custpricehistory .sub-tab-btn.active');
+        const sub = activeSub ? activeSub.dataset.sub : 'cph-our';
+        if (sub === 'cph-our')  renderCPHList();
+        if (sub === 'cph-comp') renderCPList();
+        if (sub === 'cph-vs')   renderCPVS();
+        return;
+    }
 }
 
 function reloadFromFirebase() {
@@ -4435,10 +4480,7 @@ function reloadFromFirebase() {
         _ensureDBStructure();
         localStorage.setItem('textile-erp-v1', JSON.stringify(db));
         _fbSetStatus('synced');
-        // Refresh visible data
-        renderChemicals(); renderRawMaterials(); renderRecipes();
-        if (typeof _icId !== 'undefined' && _icId) { const _ic = (db.internalProductCostings||[]).find(p => p.id === _icId); if (_ic) renderICTable(_ic); }
-        if (typeof _liId !== 'undefined' && _liId) populateLinerForm(_liId);
+        _refreshActiveTab();
         flash('📡 Synced latest data from cloud.');
     }).catch(() => _fbSetStatus('offline'));
 }
@@ -4715,6 +4757,8 @@ function loginSubmit() {
         _currentUser = match;
         document.getElementById('login-screen').classList.remove('show');
         _updateUserDisplay();
+        // Pull latest data from Firebase so user sees everyone's current data
+        _fbLoad().then(() => { _ensureDBStructure(); _refreshActiveTab(); });
     } else {
         document.getElementById('login-error').style.display = 'block';
         document.getElementById('login-password').value = '';
