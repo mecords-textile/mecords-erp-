@@ -4403,7 +4403,6 @@
 
 <!-- Firebase SDKs (compat v9) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-check-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
@@ -4447,16 +4446,6 @@ function _fbInit() {
     if (!FIREBASE_ENABLED || typeof firebase === 'undefined') return false;
     try {
         if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
-
-        // ── App Check: restrict DB access to this domain only ────────────────
-        if (APPCHECK_SITE_KEY !== 'PASTE_YOUR_RECAPTCHA_V3_SITE_KEY') {
-            try {
-                firebase.appCheck().activate(
-                    new firebase.appCheck.ReCaptchaV3Provider(APPCHECK_SITE_KEY),
-                    true  // auto-refresh token in background
-                );
-            } catch(e) { console.warn('App Check init failed:', e); }
-        }
 
         _fbDB = firebase.database();
         // Sign in anonymously so Firebase rules can verify auth != null
