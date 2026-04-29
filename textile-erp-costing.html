@@ -4068,11 +4068,76 @@
     <!-- ══════════════════════════════════════════ PURCHASE -->
     <div id="tab-purchase" class="tab-panel">
         <div class="sub-tabs">
-            <button class="sub-tab-btn active" data-sub="pur-suppliers" onclick="switchSubTab('pur-suppliers')">&#127970; Suppliers</button>
-            <button class="sub-tab-btn" data-sub="pur-po"        onclick="switchSubTab('pur-po')">&#128203; Purchase Orders</button>
-            <button class="sub-tab-btn" data-sub="pur-grn"       onclick="switchSubTab('pur-grn')">&#128230; Goods Receipt (GRN)</button>
+            <button class="sub-tab-btn active" data-sub="pur-req"       onclick="switchSubTab('pur-req')">&#128203; Requisitions</button>
+            <button class="sub-tab-btn" data-sub="pur-suppliers" onclick="switchSubTab('pur-suppliers')">&#127970; Suppliers</button>
+            <button class="sub-tab-btn" data-sub="pur-po"        onclick="switchSubTab('pur-po')">&#128230; Purchase Orders</button>
+            <button class="sub-tab-btn" data-sub="pur-grn"       onclick="switchSubTab('pur-grn')">&#128706; Goods Receipt (GRN)</button>
             <button class="sub-tab-btn" data-sub="pur-invoices"  onclick="switchSubTab('pur-invoices')">&#129534; Invoices &amp; Payments</button>
             <button class="sub-tab-btn" data-sub="pur-summary"   onclick="switchSubTab('pur-summary')">&#128202; Purchase Summary</button>
+        </div>
+
+        <!-- ── SUB 0: PURCHASE REQUISITIONS ── -->
+        <div id="sub-pur-req" class="sub-panel active">
+            <div class="form-row" style="margin-bottom:16px;align-items:center;gap:10px;">
+                <button class="btn btn-primary btn-sm" onclick="newPR()">+ New Requisition</button>
+                <button class="btn btn-danger btn-sm" id="pr-delete-btn" onclick="deletePR()" style="display:none;">&#128465; Delete</button>
+            </div>
+
+            <!-- Requisition Form -->
+            <div id="pr-form" style="display:none;">
+                <div class="card" style="margin-bottom:18px;">
+                    <div class="card-title">&#128203; Purchase Requisition</div>
+                    <input type="hidden" id="pr-id">
+                    <div class="form-row">
+                        <div class="form-group" style="flex:0 0 160px;">
+                            <label>Req. No.</label>
+                            <input type="text" id="pr-num" class="form-control" readonly style="background:#f1f5f9;font-weight:700;color:#2563eb;">
+                        </div>
+                        <div class="form-group" style="flex:0 0 170px;">
+                            <label>Date</label>
+                            <input type="date" id="pr-date" class="form-control">
+                        </div>
+                        <div class="form-group" style="flex:1;">
+                            <label>Requested By</label>
+                            <input type="text" id="pr-reqby" class="form-control" readonly style="background:#f1f5f9;">
+                        </div>
+                        <div class="form-group" style="flex:0 0 180px;">
+                            <label>Status</label>
+                            <select id="pr-status" class="form-control">
+                                <option value="Pending">Pending</option>
+                                <option value="Approved">Approved</option>
+                                <option value="Rejected">Rejected</option>
+                                <option value="Converted to PO">Converted to PO</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group" style="flex:3;">
+                            <label>Description / Item *</label>
+                            <input type="text" id="pr-desc" class="form-control" placeholder="Describe the item to be purchased">
+                        </div>
+                        <div class="form-group" style="flex:0 0 110px;">
+                            <label>Qty. *</label>
+                            <input type="number" id="pr-qty" class="form-control" min="0" step="any" placeholder="0">
+                        </div>
+                        <div class="form-group" style="flex:0 0 110px;">
+                            <label>Unit</label>
+                            <input type="text" id="pr-unit" class="form-control" placeholder="kg / pcs / m">
+                        </div>
+                        <div class="form-group" style="flex:2;">
+                            <label>Remarks</label>
+                            <input type="text" id="pr-remarks" class="form-control" placeholder="Any notes or remarks">
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:10px;margin-top:4px;">
+                        <button class="btn btn-primary" onclick="savePR()">&#128190; Save Requisition</button>
+                        <button class="btn" onclick="cancelPR()">Cancel</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Requisition List -->
+            <div id="pr-list"></div>
         </div>
 
         <!-- ── SUB 1: SUPPLIERS ── -->
@@ -4475,7 +4540,8 @@ function _refreshActiveTab() {
     if (tab === 'factoryutilities') { renderFUMonthList(); return; }
     if (tab === 'purchase') {
         const activeSub = document.querySelector('#tab-purchase .sub-tab-btn.active');
-        const sub = activeSub ? activeSub.dataset.sub : 'pur-suppliers';
+        const sub = activeSub ? activeSub.dataset.sub : 'pur-req';
+        if (sub === 'pur-req')       renderPRList();
         if (sub === 'pur-suppliers') renderPURSupList();
         if (sub === 'pur-po')        renderPOList();
         if (sub === 'pur-grn')       renderGRNList();
@@ -4600,7 +4666,8 @@ function _ensureDBStructure() {
     if (!Array.isArray(db.suppliers))        db.suppliers         = [];
     if (!Array.isArray(db.purchaseOrders))   db.purchaseOrders    = [];
     if (!Array.isArray(db.grns))             db.grns              = [];
-    if (!Array.isArray(db.supplierInvoices)) db.supplierInvoices  = [];
+    if (!Array.isArray(db.supplierInvoices))       db.supplierInvoices       = [];
+    if (!Array.isArray(db.purchaseRequisitions))   db.purchaseRequisitions   = [];
     if (!('dashboard' in db.tabPasswords))   db.tabPasswords.dashboard = '';
     if (!('salesdispatch' in db.tabPasswords)) db.tabPasswords.salesdispatch = '';
     if (!('rminventory' in db.tabPasswords))      db.tabPasswords.rminventory      = '';
@@ -5196,6 +5263,7 @@ function switchSubTab(sub) {
     if (sub === 'cph-our')   { _cphRefreshDataLists(); renderCPHList(); }
     if (sub === 'cph-comp')  { _refreshCPDataLists(); renderCPList(); }
     if (sub === 'cph-vs')    renderCPVS();
+    if (sub === 'pur-req')       renderPRList();
     if (sub === 'pur-suppliers') renderPURSupList();
     if (sub === 'pur-po')        renderPOList();
     if (sub === 'pur-grn')       renderGRNList();
@@ -16064,6 +16132,199 @@ function renderChemSheet() {
 }
 
 // ═══════════════════════════════════════════════════════ PURCHASE MODULE
+
+// ── Purchase Requisitions ──────────────────────────────────────────────────
+let _prId = null;
+
+function newPR() {
+    _prId = null;
+    document.getElementById('pr-id').value       = '';
+    document.getElementById('pr-num').value      = _purReqNum();
+    document.getElementById('pr-date').value     = new Date().toISOString().slice(0, 10);
+    document.getElementById('pr-reqby').value    = _currentUser ? (_currentUser.name || _currentUser.username) : '';
+    document.getElementById('pr-desc').value     = '';
+    document.getElementById('pr-qty').value      = '';
+    document.getElementById('pr-unit').value     = '';
+    document.getElementById('pr-remarks').value  = '';
+    document.getElementById('pr-status').value   = 'Pending';
+    document.getElementById('pr-delete-btn').style.display = 'none';
+    document.getElementById('pr-form').style.display = 'block';
+    setTimeout(() => document.getElementById('pr-desc').focus(), 80);
+}
+
+function _purReqNum() {
+    const yr   = new Date().getFullYear();
+    const nums = (db.purchaseRequisitions || []).map(r => parseInt((r.reqNumber || '').split('-').pop()) || 0);
+    return `REQ-${yr}-${String((nums.length ? Math.max(...nums) : 0) + 1).padStart(3, '0')}`;
+}
+
+function editPR(id) {
+    const pr = (db.purchaseRequisitions || []).find(r => r.id === id);
+    if (!pr) return;
+    _prId = id;
+    document.getElementById('pr-id').value       = id;
+    document.getElementById('pr-num').value      = pr.reqNumber    || '';
+    document.getElementById('pr-date').value     = pr.date         || '';
+    document.getElementById('pr-reqby').value    = pr.requestedBy  || '';
+    document.getElementById('pr-desc').value     = pr.description  || '';
+    document.getElementById('pr-qty').value      = pr.qty          || '';
+    document.getElementById('pr-unit').value     = pr.unit         || '';
+    document.getElementById('pr-remarks').value  = pr.remarks      || '';
+    document.getElementById('pr-status').value   = pr.status       || 'Pending';
+    document.getElementById('pr-delete-btn').style.display = 'inline-block';
+    document.getElementById('pr-form').style.display = 'block';
+    setTimeout(() => document.getElementById('pr-desc').focus(), 80);
+}
+
+function savePR() {
+    const desc = (document.getElementById('pr-desc').value || '').trim();
+    if (!desc) { alert('Please enter a description.'); return; }
+    const qty  = parseFloat(document.getElementById('pr-qty').value) || 0;
+    if (qty <= 0) { alert('Please enter a valid quantity.'); return; }
+
+    if (_prId) {
+        const pr = (db.purchaseRequisitions || []).find(r => r.id === _prId);
+        if (pr) {
+            pr.date        = document.getElementById('pr-date').value;
+            pr.description = desc;
+            pr.qty         = qty;
+            pr.unit        = document.getElementById('pr-unit').value.trim();
+            pr.remarks     = document.getElementById('pr-remarks').value.trim();
+            pr.status      = document.getElementById('pr-status').value;
+        }
+    } else {
+        if (!db.purchaseRequisitions) db.purchaseRequisitions = [];
+        db.purchaseRequisitions.push({
+            id:          nid(),
+            reqNumber:   document.getElementById('pr-num').value,
+            date:        document.getElementById('pr-date').value,
+            requestedBy: document.getElementById('pr-reqby').value,
+            description: desc,
+            qty:         qty,
+            unit:        document.getElementById('pr-unit').value.trim(),
+            remarks:     document.getElementById('pr-remarks').value.trim(),
+            status:      document.getElementById('pr-status').value,
+            approvals:   { 1: null, 2: null, 3: null, 4: null }
+        });
+    }
+    persist();
+    cancelPR();
+    renderPRList();
+    flash('✅ Requisition saved.');
+}
+
+function cancelPR() {
+    _prId = null;
+    document.getElementById('pr-form').style.display = 'none';
+    document.getElementById('pr-delete-btn').style.display = 'none';
+}
+
+function deletePR() {
+    if (!_prId) return;
+    if (!confirm('Delete this requisition? This cannot be undone.')) return;
+    db.purchaseRequisitions = (db.purchaseRequisitions || []).filter(r => r.id !== _prId);
+    persist();
+    cancelPR();
+    renderPRList();
+    flash('Requisition deleted.');
+}
+
+function approvePRStage(id, stage) {
+    const pr = (db.purchaseRequisitions || []).find(r => r.id === id);
+    if (!pr) return;
+    if (!pr.approvals) pr.approvals = {};
+    if (pr.approvals[stage]) {
+        if (!confirm('Remove this approval?')) return;
+        pr.approvals[stage] = null;
+    } else {
+        pr.approvals[stage] = {
+            by:   _currentUser ? (_currentUser.name || _currentUser.username) : 'Unknown',
+            date: new Date().toISOString().slice(0, 10)
+        };
+    }
+    // Auto-derive status from approvals
+    const allApproved = [1, 2, 3, 4].every(s => pr.approvals[s]);
+    if (allApproved && pr.status === 'Pending')   pr.status = 'Approved';
+    if (!allApproved && pr.status === 'Approved') pr.status = 'Pending';
+    persist();
+    renderPRList();
+}
+
+function renderPRList() {
+    const el = document.getElementById('pr-list');
+    if (!el) return;
+    const reqs = (db.purchaseRequisitions || []).slice().reverse();
+    if (!reqs.length) {
+        el.innerHTML = `<div style="text-align:center;color:#94a3b8;padding:50px 20px;font-size:14px;">
+            No requisitions yet.<br>Click <strong>+ New Requisition</strong> to raise your first request.
+        </div>`;
+        return;
+    }
+    const statusColors = {
+        'Pending':        '#f59e0b',
+        'Approved':       '#10b981',
+        'Rejected':       '#ef4444',
+        'Converted to PO':'#6366f1'
+    };
+    el.innerHTML = `
+    <div style="overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;font-size:13px;min-width:900px;">
+        <thead>
+          <tr style="background:#f1f5f9;">
+            <th style="padding:10px 8px;text-align:left;border-bottom:2px solid #cbd5e1;white-space:nowrap;">Req. No.</th>
+            <th style="padding:10px 8px;text-align:left;border-bottom:2px solid #cbd5e1;">Date</th>
+            <th style="padding:10px 8px;text-align:left;border-bottom:2px solid #cbd5e1;">Description</th>
+            <th style="padding:10px 8px;text-align:right;border-bottom:2px solid #cbd5e1;">Qty</th>
+            <th style="padding:10px 8px;text-align:left;border-bottom:2px solid #cbd5e1;">Unit</th>
+            <th style="padding:10px 8px;text-align:left;border-bottom:2px solid #cbd5e1;white-space:nowrap;">Requested By</th>
+            <th style="padding:10px 8px;text-align:center;border-bottom:2px solid #cbd5e1;" title="Approval 1">&#10003;1</th>
+            <th style="padding:10px 8px;text-align:center;border-bottom:2px solid #cbd5e1;" title="Approval 2">&#10003;2</th>
+            <th style="padding:10px 8px;text-align:center;border-bottom:2px solid #cbd5e1;" title="Approval 3">&#10003;3</th>
+            <th style="padding:10px 8px;text-align:center;border-bottom:2px solid #cbd5e1;" title="Approval 4">&#10003;4</th>
+            <th style="padding:10px 8px;text-align:center;border-bottom:2px solid #cbd5e1;">Status</th>
+            <th style="padding:10px 8px;text-align:left;border-bottom:2px solid #cbd5e1;">Remarks</th>
+            <th style="padding:10px 8px;text-align:center;border-bottom:2px solid #cbd5e1;"></th>
+          </tr>
+        </thead>
+        <tbody>
+          ${reqs.map(r => {
+              const approvals = r.approvals || {};
+              const approvalCells = [1, 2, 3, 4].map(s => {
+                  const a = approvals[s];
+                  const tip = a ? `Approved by ${a.by} on ${a.date}` : 'Click to approve';
+                  return `<td style="padding:8px 6px;text-align:center;">
+                      <button onclick="approvePRStage('${r.id}',${s})" title="${tip}"
+                          style="width:30px;height:30px;border-radius:6px;border:2px solid ${a ? '#10b981' : '#cbd5e1'};
+                                 background:${a ? '#10b981' : 'white'};color:${a ? 'white' : '#94a3b8'};
+                                 cursor:pointer;font-size:15px;font-weight:700;line-height:1;">
+                          ${a ? '✓' : ''}
+                      </button>
+                  </td>`;
+              }).join('');
+              const sc = statusColors[r.status] || '#64748b';
+              return `<tr style="border-bottom:1px solid #f1f5f9;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">
+                  <td style="padding:9px 8px;font-weight:700;color:#2563eb;white-space:nowrap;">${r.reqNumber || '-'}</td>
+                  <td style="padding:9px 8px;white-space:nowrap;">${r.date || '-'}</td>
+                  <td style="padding:9px 8px;">${r.description || ''}</td>
+                  <td style="padding:9px 8px;text-align:right;font-weight:600;">${r.qty || ''}</td>
+                  <td style="padding:9px 8px;">${r.unit || ''}</td>
+                  <td style="padding:9px 8px;white-space:nowrap;color:#475569;">${r.requestedBy || ''}</td>
+                  ${approvalCells}
+                  <td style="padding:9px 6px;text-align:center;white-space:nowrap;">
+                      <span style="background:${sc}1a;color:${sc};padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;border:1px solid ${sc}44;">
+                          ${r.status || 'Pending'}
+                      </span>
+                  </td>
+                  <td style="padding:9px 8px;color:#64748b;">${r.remarks || ''}</td>
+                  <td style="padding:9px 8px;text-align:center;">
+                      <button onclick="editPR('${r.id}')" title="Edit" style="background:none;border:none;cursor:pointer;font-size:15px;">&#9998;</button>
+                  </td>
+              </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
 
 // ── Utilities ─────────────────────────────────────────────────────────────
 function _purFmt(n) {
