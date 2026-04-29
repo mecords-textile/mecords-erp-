@@ -4338,6 +4338,7 @@
 
 <!-- Firebase SDKs (compat v9) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-check-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
@@ -4348,8 +4349,10 @@
 //  1. Go to https://console.firebase.google.com → "Add project"
 //  2. Inside the project: "Add app" → Web (</>) → copy the config below
 //  3. Build → Realtime Database → "Create database" → Start in test mode
-//  4. Rules tab → replace with: { "rules": { ".read": true, ".write": true } }
+//  4. Rules tab → replace with:
+//     { "rules": { "erpData": { ".read": "auth != null", ".write": "auth != null" } } }
 //  5. Fill in the values below and push to GitHub — both users pick it up automatically
+//  6. (Recommended) Enable App Check (see APPCHECK_SITE_KEY below) for domain-level security
 // ══════════════════════════════════════════════════════════════════════════════
 const FIREBASE_CONFIG = {
     apiKey:            'AIzaSyB1Y1GJEY5q5XAPpjCFiEEM77k0RvqLQTE',
@@ -4360,6 +4363,16 @@ const FIREBASE_CONFIG = {
     messagingSenderId: '746934045227',
     appId:             '1:746934045227:web:ecf34df1637377ed29786e'
 };
+// ── App Check (reCAPTCHA v3) ──────────────────────────────────────────────────
+//  Restricts database access to requests coming from mecords-textile.github.io only.
+//  Setup (one-time, ~15 min):
+//  1. Go to console.google.com/recaptcha → Create → reCAPTCHA v3
+//     Domain: mecords-textile.github.io (+ localhost for testing) → copy Site Key
+//  2. Firebase Console → App Check → your web app → reCAPTCHA v3 → paste Site Key
+//  3. App Check → APIs tab → Realtime Database → Enforce
+//  4. Paste your Site Key below and push to GitHub
+const APPCHECK_SITE_KEY = 'PASTE_YOUR_RECAPTCHA_V3_SITE_KEY';
+
 // Automatically disabled until the config above is filled in
 const FIREBASE_ENABLED = FIREBASE_CONFIG.apiKey !== 'PASTE_YOUR_API_KEY';
 const _FB_PATH = 'erpData';
@@ -4369,6 +4382,17 @@ function _fbInit() {
     if (!FIREBASE_ENABLED || typeof firebase === 'undefined') return false;
     try {
         if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+
+        // ── App Check: restrict DB access to this domain only ────────────────
+        if (APPCHECK_SITE_KEY !== 'PASTE_YOUR_RECAPTCHA_V3_SITE_KEY') {
+            try {
+                firebase.appCheck().activate(
+                    new firebase.appCheck.ReCaptchaV3Provider(APPCHECK_SITE_KEY),
+                    true  // auto-refresh token in background
+                );
+            } catch(e) { console.warn('App Check init failed:', e); }
+        }
+
         _fbDB = firebase.database();
         // Sign in anonymously so Firebase rules can verify auth != null
         if (firebase.auth().currentUser === null) {
