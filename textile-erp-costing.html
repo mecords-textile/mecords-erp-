@@ -4403,6 +4403,7 @@
 
 <!-- Firebase SDKs (compat v9) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-check-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
@@ -4447,6 +4448,15 @@ function _fbInit() {
     try {
         if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
 
+        // ── App Check (compat SDK): pass site key as plain string ────────────
+        // Note: compat SDK does NOT use ReCaptchaV3Provider class —
+        // just pass the site key string directly to activate().
+        if (APPCHECK_SITE_KEY !== 'PASTE_YOUR_RECAPTCHA_V3_SITE_KEY') {
+            try {
+                firebase.appCheck().activate(APPCHECK_SITE_KEY, true);
+            } catch(e) { console.warn('App Check init failed:', e); }
+        }
+
         _fbDB = firebase.database();
         // Sign in anonymously so Firebase rules can verify auth != null
         if (firebase.auth().currentUser === null) {
@@ -4474,7 +4484,12 @@ function _fbSetStatus(state) {
 async function _fbLoad() {
     if (!_fbDB) return false;
     try {
-        const snap = await _fbDB.ref(_FB_PATH).get();
+        // 10-second timeout guard — prevents infinite hang if Firebase is
+        // unreachable or App Check token fetch blocks the request.
+        const snap = await Promise.race([
+            _fbDB.ref(_FB_PATH).get(),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Firebase load timeout')), 10000))
+        ]);
         if (snap.exists()) {
             db = snap.val();
             localStorage.setItem('textile-erp-v1', JSON.stringify(db));
