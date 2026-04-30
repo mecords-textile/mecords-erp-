@@ -4492,15 +4492,26 @@ async function _fbLoad() {
         ]);
         if (snap.exists()) {
             db = snap.val();
+            _dbLoadedFromFirebase = true;  // mark that db is genuine Firebase data
             localStorage.setItem('textile-erp-v1', JSON.stringify(db));
             return true;
         }
-        return false;  // nothing in Firebase yet
+        return 'empty';  // Firebase reachable but path has no data — genuine first run
     } catch(e) { console.warn('Firebase load failed:', e); return false; }
+    // Returns: true = loaded OK | 'empty' = genuine first run | false = load failed
 }
 
 function _fbPush() {
     if (!_fbDB) return;
+    // ── Safety guard ─────────────────────────────────────────────────────────
+    // Never push to Firebase if we haven't successfully loaded from it this
+    // session AND erpUsers is empty. This prevents a stale/empty local db from
+    // overwriting real data in Firebase (the #1 cause of users losing accounts).
+    if (!_dbLoadedFromFirebase && (db.erpUsers || []).length === 0) {
+        console.warn('_fbPush() blocked — Firebase not yet confirmed loaded and erpUsers is empty. Refusing to push to prevent data overwrite.');
+        return;
+    }
+    // ─────────────────────────────────────────────────────────────────────────
     _ignoreNextFBSnap = true;
     _fbSetStatus('syncing');
     _fbDB.ref(_FB_PATH).set(db)
@@ -4704,13 +4715,21 @@ async function hydrate() {
             });
         } catch(e) { console.warn('Auth state wait failed:', e); }
 
-        const loadedFromCloud = await _fbLoad();
-        if (loadedFromCloud) {
+        const loadResult = await _fbLoad();
+        if (loadResult === true) {
+            // ✅ Loaded from Firebase successfully — nothing else to do
             _fbSetStatus('synced');
-        } else {
-            // Firebase is empty — load from localStorage and migrate up
+        } else if (loadResult === 'empty') {
+            // ✅ Firebase is genuinely empty (brand new project) — migrate localStorage up
             try { const raw = localStorage.getItem('textile-erp-v1'); if (raw) db = JSON.parse(raw); } catch(e) {}
-            _fbPush();   // first-time migration: push local data to Firebase
+            _fbPush();   // safe: Firebase was confirmed empty, we're seeding it
+        } else {
+            // ⚠️  Firebase load FAILED (network issue, timeout, permissions).
+            // Load from localStorage as a fallback BUT do NOT push back to Firebase —
+            // doing so would overwrite real Firebase data with a stale local cache.
+            _fbSetStatus('offline');
+            try { const raw = localStorage.getItem('textile-erp-v1'); if (raw) db = JSON.parse(raw); } catch(e) {}
+            console.warn('Firebase load failed — running on localStorage cache. Data will sync when connection restores.');
         }
         _fbListen();     // watch for changes from other users
     } else {
@@ -4766,6 +4785,7 @@ const _unlockedTabs = new Set(); // session-level unlocks
 let _pendingTab = null;          // tab waiting for password entry
 let _adminUnlocked = false;      // admin unlocked settings this session
 let _currentUser  = null;        // { id, username, name, role }
+let _dbLoadedFromFirebase = false; // true only after _fbLoad() returns genuine Firebase data
 
 // ─────────────────────────────────────────────── Login / User Management
 
@@ -4834,8 +4854,13 @@ async function signUpSubmit() {
     // Prevents overwriting existing users/data with a stale in-memory db.
     const suBtn = document.querySelector('#signup-form .login-btn');
     if (suBtn) { suBtn.disabled = true; suBtn.textContent = 'Please wait…'; }
-    try { await _fbLoad(); _ensureDBStructure(); } catch(e) { console.warn('Pre-signup reload failed:', e); }
+    const suLoad = await _fbLoad();
     if (suBtn) { suBtn.disabled = false; suBtn.textContent = 'Create Account →'; }
+    if (suLoad === false) {
+        errEl.textContent = '⚠️ Cannot connect to server. Please check your connection and try again.';
+        errEl.style.display = 'block'; return;
+    }
+    _ensureDBStructure();
     // ─────────────────────────────────────────────────────────────────────
 
     if ((db.erpUsers||[]).some(u => u.username === uname)) {
@@ -4900,8 +4925,13 @@ async function setupAdminAccount() {
     // and then wiping Firebase with an empty db when the admin is created.
     const setupBtn = document.querySelector('#setup-form .login-btn');
     if (setupBtn) { setupBtn.disabled = true; setupBtn.textContent = 'Please wait…'; }
-    try { await _fbLoad(); _ensureDBStructure(); } catch(e) { console.warn('Pre-setup reload failed:', e); }
+    const setupLoad = await _fbLoad();
     if (setupBtn) { setupBtn.disabled = false; setupBtn.textContent = 'Create Admin Account →'; }
+    if (setupLoad === false) {
+        errEl.textContent = '⚠️ Cannot connect to server. Please check your connection and try again.';
+        errEl.style.display = 'block'; return;
+    }
+    _ensureDBStructure();
 
     // If Firebase actually had users (stale db was the problem), show login form instead
     if ((db.erpUsers||[]).length > 0) {
