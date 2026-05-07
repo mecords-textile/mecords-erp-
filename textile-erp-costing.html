@@ -7498,10 +7498,14 @@ function populateMCForm(id) {
 function clearMCForm() { if (_mcId) populateMCForm(_mcId); }
 
 function onMCCurrencyChange() {
-    // Re-render the table so the currency label in each column header updates instantly
     const s = (db.machineryCostings || []).find(x => x.id === _mcId);
     if (!s) return;
     collectMCMachinesFromDOM(s);
+    // When switching to INR, set exchange rate to 1 (already in ₹, no conversion)
+    const isINR = document.getElementById('mc-currency')?.value === 'INR';
+    if (isINR) {
+        (s.machines || []).forEach(m => { m.exchangeRate = 1; });
+    }
     renderMCTable(s);
 }
 
@@ -7600,6 +7604,10 @@ function renderMCTable(s) {
         row(label, unitText, () => ml.map(m => calc(m.id, field)).join(''), rowStyle);
 
     const sheetCurrency = document.getElementById('mc-currency')?.value || 'USD';
+    const isINR = sheetCurrency === 'INR';  // domestic purchase — no customs duty
+
+    // Helper to conditionally hide a row for INR
+    const hideINR = isINR ? 'display:none;' : '';
 
     let html = `<table style="border-collapse:collapse;width:100%;min-width:${320+ml.length*160}px;">
     <colgroup><col style="width:260px;"><col style="width:60px;">${ml.map(()=>`<col style="width:160px;">`).join('')}</colgroup>
@@ -7631,43 +7639,49 @@ function renderMCTable(s) {
             placeholder="e.g. Japan" style="${inpS}" oninput="calcMCSheet()"></td>`).join(''), 'background:#f8fafc;')}
 
     <!-- Separator -->
-    <tr style="${HDR}"><td colspan="${2+ml.length}" style="padding:7px 12px;font-size:12px;letter-spacing:.5px;">&#9654; IMPORT COST BASICS</td></tr>
+    <tr style="${HDR}"><td colspan="${2+ml.length}" style="padding:7px 12px;font-size:12px;letter-spacing:.5px;">&#9654; ${isINR ? 'DOMESTIC PURCHASE COST' : 'IMPORT COST BASICS'}</td></tr>
 
-    ${row('1. &nbsp;Exchange Rate', '&#8377;/Unit', () => ml.map(m=>inp(m.id,'exchangeRate',m.exchangeRate||1)).join(''))}
-    <tr class="mc-currency-row" style="background:#f8fafc;">${lbl('Currency','background:#f8fafc;')}${unit('')}${ml.map(()=>`<td style="${tdS}text-align:center;"><span style="display:inline-block;padding:3px 14px;background:#eff6ff;border:1.5px solid #2563eb;border-radius:20px;font-weight:700;font-size:13px;color:#1d4ed8;letter-spacing:.5px;">${sheetCurrency}</span></td>`).join('')}</tr>
-    ${row('2. &nbsp;Quantity', 'Nos.', () => ml.map(m=>`<td style="${tdS}text-align:right;"><input type="number" class="mc-inp" data-pid="${m.id}" data-field="qty" value="${esc(String(m.qty??1))}" min="1" step="1" style="${inpS}" oninput="onMCQtyInput('${m.id}')"></td>`).join(''))}
-    ${row('3. &nbsp;Basic Price (CFR / FOB)', 'Per unit', () => ml.map(m=>inp(m.id,'basicCFR',m.basicCFR)).join(''))}
-    ${row('4. &nbsp;Accessories', 'Per unit', () => ml.map(m=>inp(m.id,'accessoriesPerUnit',m.accessoriesPerUnit||0)).join(''))}
-    ${row('5. &nbsp;Optional Accessories', 'Per unit', () => ml.map(m=>inp(m.id,'optAccessoriesPerUnit',m.optAccessoriesPerUnit||0)).join(''))}
-    ${row('6. &nbsp;Freight', sheetCurrency, () => ml.map(m=>inp(m.id,'freightAmt',m.freightAmt)).join(''))}
-    ${row('7. &nbsp;Packing', sheetCurrency, () => ml.map(m=>inp(m.id,'packingCharges',m.packingCharges||0)).join(''))}
-    ${row('8. &nbsp;Insurance', '%', () => ml.map(m=>inp(m.id,'insurancePct',m.insurancePct)).join(''))}
-    ${calcRow('9. &nbsp;Basic Value', sheetCurrency, 'basicValCurr', SUB)}
-    ${calcRow('10. &nbsp;Basic Value in &#8377; &nbsp;<small>(9 &times; Exchange Rate)</small>', '&#8377;', 'basicINR', SUB)}
+    <tr style="${hideINR}">${lbl('1. &nbsp;Exchange Rate')}${unit('&#8377;/Unit')}${ml.map(m=>inp(m.id,'exchangeRate',m.exchangeRate||1)).join('')}</tr>
+    <tr class="mc-currency-row" style="background:#f8fafc;${hideINR}">${lbl('Currency','background:#f8fafc;')}${unit('')}${ml.map(()=>`<td style="${tdS}text-align:center;"><span style="display:inline-block;padding:3px 14px;background:#eff6ff;border:1.5px solid #2563eb;border-radius:20px;font-weight:700;font-size:13px;color:#1d4ed8;letter-spacing:.5px;">${sheetCurrency}</span></td>`).join('')}</tr>
+    ${row('${isINR ? "1." : "2."} &nbsp;Quantity', 'Nos.', () => ml.map(m=>`<td style="${tdS}text-align:right;"><input type="number" class="mc-inp" data-pid="${m.id}" data-field="qty" value="${esc(String(m.qty??1))}" min="1" step="1" style="${inpS}" oninput="onMCQtyInput('${m.id}')"></td>`).join(''))}
+    ${row(`${isINR ? '2.' : '3.'} &nbsp;Basic Price ${isINR ? '(Ex-works / FOR)' : '(CFR / FOB)'}`, 'Per unit', () => ml.map(m=>inp(m.id,'basicCFR',m.basicCFR)).join(''))}
+    ${row(`${isINR ? '3.' : '4.'} &nbsp;Accessories`, 'Per unit', () => ml.map(m=>inp(m.id,'accessoriesPerUnit',m.accessoriesPerUnit||0)).join(''))}
+    ${row(`${isINR ? '4.' : '5.'} &nbsp;Optional Accessories`, 'Per unit', () => ml.map(m=>inp(m.id,'optAccessoriesPerUnit',m.optAccessoriesPerUnit||0)).join(''))}
+    ${row(`${isINR ? '5.' : '6.'} &nbsp;Freight`, '&#8377;', () => ml.map(m=>inp(m.id,'freightAmt',m.freightAmt)).join(''))}
+    ${row(`${isINR ? '6.' : '7.'} &nbsp;Packing`, '&#8377;', () => ml.map(m=>inp(m.id,'packingCharges',m.packingCharges||0)).join(''))}
+    ${row(`${isINR ? '7.' : '8.'} &nbsp;Insurance`, '%', () => ml.map(m=>inp(m.id,'insurancePct',m.insurancePct)).join(''))}
+    ${calcRow(`${isINR ? '8.' : '9.'} &nbsp;Basic Value ${isINR ? '(&#8377;)' : ''}`, isINR ? '&#8377;' : sheetCurrency, 'basicValCurr', SUB)}
+    <tr style="${hideINR}">${lbl('10. &nbsp;Basic Value in &#8377; &nbsp;<small>(9 &times; Exchange Rate)</small>', SUB)}${unit('&#8377;')}${ml.map(m=>calc(m.id,'basicINR')).join('')}</tr>
 
-    <!-- Customs Duties -->
-    <tr style="${HDR}"><td colspan="${2+ml.length}" style="padding:7px 12px;font-size:12px;letter-spacing:.5px;">&#9654; CUSTOMS DUTIES &amp; TAXES</td></tr>
+    <!-- Customs Duties — hidden for INR -->
+    <tr style="${hideINR}${HDR}"><td colspan="${2+ml.length}" style="padding:7px 12px;font-size:12px;letter-spacing:.5px;">&#9654; CUSTOMS DUTIES &amp; TAXES</td></tr>
 
-    ${calcRow('11. Basic Customs Duty (BCD) &nbsp;<small style="color:#64748b;">@ 7.5% of Sr. 10</small>', '&#8377;', 'bcdAmt')}
-    ${calcRow('12. Social Welfare Surcharge &nbsp;<small style="color:#64748b;">@ 10% of BCD</small>', '&#8377;', 'swsAmt')}
-    ${calcRow('13. Total Customs Duty &nbsp;<small>(11 + 12)</small>', '&#8377;', 'totalDuty', SUB)}
-    ${calcRow('14. GST &nbsp;<small style="color:#64748b;">@ 18% on (10 + 13)</small>', '&#8377;', 'igstAmt')}
-    ${calcRow('15. &nbsp;<strong>Total Tax &nbsp;<small>(11 + 12 + 14)</small></strong>', '&#8377;', 'totalTax', SUB)}
-    ${row('Import Duty Scheme', '', () => ml.map(m=>`<td style="${tdS}text-align:center;">
+    <tr style="${hideINR}">${lbl('11. Basic Customs Duty (BCD) &nbsp;<small style="color:#64748b;">@ 7.5% of Sr. 10</small>')}${unit('&#8377;')}${ml.map(m=>calc(m.id,'bcdAmt')).join('')}</tr>
+    <tr style="${hideINR}">${lbl('12. Social Welfare Surcharge &nbsp;<small style="color:#64748b;">@ 10% of BCD</small>')}${unit('&#8377;')}${ml.map(m=>calc(m.id,'swsAmt')).join('')}</tr>
+    <tr style="${hideINR}">${lbl('13. Total Customs Duty &nbsp;<small>(11 + 12)</small>', SUB)}${unit('&#8377;')}${ml.map(m=>calc(m.id,'totalDuty')).join('')}</tr>
+    <tr style="${hideINR}">${lbl('14. GST &nbsp;<small style="color:#64748b;">@ 18% on (10 + 13)</small>')}${unit('&#8377;')}${ml.map(m=>calc(m.id,'igstAmt')).join('')}</tr>
+    <tr style="${hideINR}">${lbl('15. &nbsp;<strong>Total Tax &nbsp;<small>(11 + 12 + 14)</small></strong>', SUB)}${unit('&#8377;')}${ml.map(m=>calc(m.id,'totalTax')).join('')}</tr>
+    <tr style="${hideINR}background:#eff6ff;border-top:2px solid #3b82f6;">${lbl('Import Duty Scheme', 'background:#eff6ff;')}${unit('')}${ml.map(m=>`<td style="${tdS}text-align:center;">
         <select class="mc-inp" data-pid="${m.id}" data-field="importScheme"
             style="width:145px;font-size:12px;padding:4px 7px;border:2px solid #3b82f6;border-radius:6px;font-weight:600;background:#eff6ff;color:#1d4ed8;cursor:pointer;" onchange="calcMCSheet()">
             <option value="standard"     ${(m.importScheme||'standard')==='standard'    ?'selected':''}>Standard Duty</option>
             <option value="loomDutyFree" ${(m.importScheme||'')==='loomDutyFree'        ?'selected':''}>Loom Duty Free</option>
             <option value="epcg"         ${(m.importScheme||'')==='epcg'               ?'selected':''}>EPCG Scheme</option>
-        </select></td>`).join(''), 'background:#eff6ff;border-top:2px solid #3b82f6;')}
-    ${row('16. Customs Clearance Charges', '%', () => ml.map(m=>inp(m.id,'clgCharges',m.clgCharges)).join(''))}
-    ${calcRow('&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CLC Amount &nbsp;<small>(% of Basic Value in &#8377;)</small>', '&#8377;', 'clgAmt')}
-    ${row('17. Transport / Freight In', '&#8377;', () => ml.map(m=>inp(m.id,'transport',m.transport)).join(''))}
-    ${row('18. Installation / Erection', '&#8377;', () => ml.map(m=>inp(m.id,'installation',m.installation)).join(''))}
-    ${calcRow('19. Total Landed Cost', '&#8377;', 'totalLanded', GRAND)}
-    ${calcRow('&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Less: GST ITC (Recoverable)', '&#8377;', 'lessIGST')}
-    ${calcRow('20. Net Landed Cost (Excl. GST)', '&#8377;', 'netLanded', NET)}
+        </select></td>`).join('')}</tr>
+    <tr style="${hideINR}">${lbl('16. Customs Clearance Charges')}${unit('%')}${ml.map(m=>inp(m.id,'clgCharges',m.clgCharges)).join('')}</tr>
+    <tr style="${hideINR}">${lbl('&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CLC Amount &nbsp;<small>(% of Basic Value in &#8377;)</small>')}${unit('&#8377;')}${ml.map(m=>calc(m.id,'clgAmt')).join('')}</tr>
 
+    <!-- GST for INR domestic -->
+    ${isINR ? `
+    ${calcRow('9. &nbsp;GST &nbsp;<small style="color:#64748b;">@ 18% on Basic Value</small>', '&#8377;', 'igstAmt')}
+    ${calcRow('10. &nbsp;<strong>Total Tax (GST)</strong>', '&#8377;', 'totalTax', SUB)}
+    ` : ''}
+
+    ${row(`${isINR ? '11.' : '17.'} &nbsp;Transport / Freight In`, '&#8377;', () => ml.map(m=>inp(m.id,'transport',m.transport)).join(''))}
+    ${row(`${isINR ? '12.' : '18.'} &nbsp;Installation / Erection`, '&#8377;', () => ml.map(m=>inp(m.id,'installation',m.installation)).join(''))}
+    ${calcRow(`${isINR ? '13.' : '19.'} &nbsp;Total Landed Cost`, '&#8377;', 'totalLanded', GRAND)}
+    ${calcRow('&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Less: GST ITC (Recoverable)', '&#8377;', 'lessIGST')}
+    ${calcRow(`${isINR ? '14.' : '20.'} &nbsp;Net Landed Cost (Excl. GST)`, '&#8377;', 'netLanded', NET)}
 
     </tbody></table>`;
     wrap.innerHTML = html;
@@ -7690,39 +7704,44 @@ function calcMCSheet() {
         const isLoomDF = scheme === 'loomDutyFree';
         const isEPCG   = scheme === 'epcg';
 
+        const sheetCurr = document.getElementById('mc-currency')?.value || 'USD';
+        const isINR     = sheetCurr === 'INR';  // domestic — no customs duty
+
         const qty            = gn('qty') || 1;
         // Col 1: qty scales the formula directly.
         // Col 2+: inputs are already pre-multiplied (col1 × qty), so formula uses 1 to avoid double-counting.
         const formulaQty     = colIdx === 0 ? qty : 1;
-        const exRate         = gn('exchangeRate') || 1;
+        const exRate         = isINR ? 1 : (gn('exchangeRate') || 1);
         const basicCFR       = gn('basicCFR');
         const accessories    = gn('accessoriesPerUnit');
         const optAccessories = gn('optAccessoriesPerUnit');
-        // Row 9: Basic Value in selected currency (no exchange rate yet)
+        // Basic Value in selected currency (row 9 for imports, row 8 for INR)
         const priceComp      = (basicCFR + accessories + optAccessories) * formulaQty;
         const freight        = gn('freightAmt')     * formulaQty;
         const packing        = gn('packingCharges') * formulaQty;
         const insAmt         = priceComp * (gn('insurancePct') / 100);
         const basicValCurr   = priceComp + freight + packing + insAmt;
-        // Row 10: Convert to INR using exchange rate
+        // Convert to INR (for INR currency, exchange rate = 1 so basicINR = basicValCurr)
         const basicINR       = basicValCurr * exRate;
-        const assessable     = basicINR;   // no landing charges
-        // Fixed rates: BCD 7.5% on Sr.10 Basic Value in ₹, SWS 10% of BCD, GST 18%
-        // Loom Duty Free: BCD & SWS are SHOWN but waived from landed cost; GST base includes them
-        const bcdAmt    = isEPCG ? 0 : basicINR * 7.5 / 100;
-        const swsAmt    = isEPCG ? 0 : bcdAmt * 10 / 100;
+        const assessable     = basicINR;
+
+        // ── Customs Duty: ZERO for INR (domestic purchase) ───────────────────
+        const bcdAmt    = isINR ? 0 : (isEPCG ? 0 : basicINR * 7.5 / 100);
+        const swsAmt    = isINR ? 0 : (isEPCG ? 0 : bcdAmt * 10 / 100);
         const totalDuty = bcdAmt + swsAmt;
-        // GST base always includes Basic Value + BCD + SWS (for Loom DF, duties shown but not in landed)
-        const igstBase  = assessable + totalDuty;
-        // GST zeroed for EPCG only
-        const igstAmt        = isEPCG ? 0 : igstBase * 18 / 100;
-        const clg            = basicINR * gn('clgCharges') / 100;
-        // Sr 17 Total Landed Cost: sum of all above rows incl. Transport & Installation
+        // GST base: for INR domestic, only on Basic Value (no customs duty base)
+        const igstBase  = isINR ? basicINR : (assessable + totalDuty);
+        const igstAmt   = (isINR || !isEPCG) ? igstBase * 18 / 100 : 0;
+        const clg       = isINR ? 0 : basicINR * gn('clgCharges') / 100;
+        // ─────────────────────────────────────────────────────────────────────
+
         const transport      = gn('transport')    * formulaQty;
         const installation   = gn('installation') * formulaQty;
-        const totalLanded    = isLoomDF
-            ? basicINR + igstAmt + clg + transport + installation
-            : assessable + totalDuty + igstAmt + clg + transport + installation;
+        const totalLanded    = isINR
+            ? basicINR + igstAmt + transport + installation
+            : isLoomDF
+                ? basicINR + igstAmt + clg + transport + installation
+                : assessable + totalDuty + igstAmt + clg + transport + installation;
         const netLanded      = totalLanded - igstAmt;
 
         set('basicValCurr', basicValCurr);
