@@ -6892,13 +6892,37 @@ function saveInternalCosting() {
 
 // ── Yarn Master Linking Helpers ───────────────────────────────────────────────
 
+// Returns the average price (₹/kg) for a yarn name across all supplier entries.
+function _yarnAvgPrice(name) {
+    const entries = (db.rawMaterials || []).filter(r => r.name === name);
+    if (!entries.length) return 0;
+    const total = entries.reduce((sum, r) => sum + (parseFloat(r.pricePerKg) || 0), 0);
+    return total / entries.length;
+}
+
 function yarnMasterOptions(selectedName) {
     const entries = db.rawMaterials || [];
-    let html = '<option value="">— Select from Yarn Master —</option>';
+
+    // Group by yarn name → calculate average price across all suppliers
+    const grouped = {};
     entries.forEach(r => {
-        const label = r.name + (r.supplier ? ' (' + r.supplier + ')' : '') + (r.month ? ' [' + r.month + ']' : '');
-        const sel = (selectedName && selectedName === r.name) ? ' selected' : '';
-        html += `<option value="${esc(r.name)}" data-price="${r.pricePerKg||0}"${sel}>${esc(label)}</option>`;
+        if (!r.name) return;
+        if (!grouped[r.name]) grouped[r.name] = { prices: [], suppliers: [] };
+        grouped[r.name].prices.push(parseFloat(r.pricePerKg) || 0);
+        if (r.supplier) grouped[r.name].suppliers.push(r.supplier);
+    });
+
+    let html = '<option value="">— Select from Yarn Master —</option>';
+    Object.keys(grouped).forEach(name => {
+        const g        = grouped[name];
+        const avgPrice = g.prices.reduce((a, b) => a + b, 0) / g.prices.length;
+        const count    = g.prices.length;
+        const sel      = (selectedName && selectedName === name) ? ' selected' : '';
+        // Show supplier count and average price in label when multiple suppliers exist
+        const suffix   = count > 1
+            ? ` — avg ₹${avgPrice.toFixed(2)}/kg (${count} suppliers)`
+            : (g.suppliers[0] ? ` (${g.suppliers[0]})` : '');
+        html += `<option value="${esc(name)}" data-price="${avgPrice.toFixed(4)}" data-count="${count}"${sel}>${esc(name)}${suffix}</option>`;
     });
     return html;
 }
@@ -6925,11 +6949,19 @@ function onLinerYarnDescChange(prefix, side) {
 }
 
 function fillICYarnRate(sel) {
-    const pid = sel.dataset.pid;
-    const opt = sel.options[sel.selectedIndex];
+    const pid   = sel.dataset.pid;
+    const opt   = sel.options[sel.selectedIndex];
     const price = parseFloat(opt?.dataset?.price) || 0;
-    const inp = document.querySelector(`.ic-inp[data-pid="${pid}"][data-field="flatYarnCost"]`);
-    if (inp) { inp.value = price; calcICSheet(); }
+    const count = parseInt(opt?.dataset?.count) || 1;
+    const inp   = document.querySelector(`.ic-inp[data-pid="${pid}"][data-field="flatYarnCost"]`);
+    if (inp) {
+        inp.value = price.toFixed(2);
+        // Show tooltip on the price field when average of multiple suppliers is used
+        inp.title = count > 1
+            ? `Average of ${count} supplier prices for "${opt?.value || ''}"`
+            : '';
+        calcICSheet();
+    }
     const ic = (db.internalProductCostings || []).find(p => p.id === _icId);
     if (ic) {
         const plant = (ic.plants || []).find(p => p.id === pid);
