@@ -2366,10 +2366,6 @@
                         <input type="number" id="li-proc-hs" value="4.75" min="0" step="0.01" oninput="renderLinerTable()">
                     </div>
                     <div class="form-group">
-                        <label>Twisting (&#8377;/L.Mtr) <small style="color:#94a3b8;">÷ width multiple</small></label>
-                        <input type="number" id="li-twisting" value="0.00" min="0" step="0.01" oninput="renderLinerTable()">
-                    </div>
-                    <div class="form-group">
                         <label>Packing (&#8377;/L.Mtr)</label>
                         <input type="number" id="li-packing" value="3.50" min="0" step="0.01" oninput="renderLinerTable()">
                     </div>
@@ -7052,7 +7048,6 @@ function populateLinerForm(id) {
     populateLinerYarnSelects('li', s);
     sv('li-weaving',        s.weaving       ?? '');
     sv('li-proc-hs',        s.processingHS  ?? 4.75);
-    sv('li-twisting',       s.twisting      ?? 0);
     sv('li-packing',        s.packing       ?? 3.50);
     sv('li-fabric-waste',   s.fabricWastePct ?? 3);
     sv('li-fin-cost',       s.finCostPct    ?? 5);
@@ -7205,7 +7200,6 @@ function renderLinerTable(s) {
     const waste  = parseFloat(document.getElementById('li-yarn-wastage')?.value)    || 8;
     const weaving  = parseFloat(document.getElementById('li-weaving')?.value)   || 0;
     const procHS   = parseFloat(document.getElementById('li-proc-hs')?.value)   || 0;
-    const twisting = parseFloat(document.getElementById('li-twisting')?.value)  || 0;
     const packing  = parseFloat(document.getElementById('li-packing')?.value)   || 0;
     const fabWaste = parseFloat(document.getElementById('li-fabric-waste')?.value)  || 0;
     const finCostPct = parseFloat(document.getElementById('li-fin-cost')?.value)    || 0;
@@ -7217,7 +7211,11 @@ function renderLinerTable(s) {
         const val = parseFloat(row.querySelector('.li-op-cost')?.value) || 0;
         optProcs.push({ name: nm, cost: val });
     });
-    const optTotal = optProcs.reduce((t, p) => t + p.cost, 0);
+    // Twisting (as optional process) is divided by width multiple per config — separate it out
+    const optTwistingCost = optProcs.filter(p => (p.name || '').toLowerCase().trim() === 'twisting')
+                                     .reduce((t, p) => t + p.cost, 0);
+    const optNonTwistingTotal = optProcs.filter(p => (p.name || '').toLowerCase().trim() !== 'twisting')
+                                         .reduce((t, p) => t + p.cost, 0);
 
     // Extra custom costs
     const extras = [];
@@ -7246,13 +7244,13 @@ function renderLinerTable(s) {
         const netYarn    = (yarnRateWarp + yarnRateWeft) * (1 + waste / 100);
         // ── Loom costs ÷ width multiple ──────────────────────────────────────
         // When multiple strips are cut from the same loom pass, the loom-related
-        // costs (weaving, processing, twisting) are shared across all strips.
+        // costs (weaving, processing, and optional-process Twisting) are shared.
         const effWeaving  = weaving  / multiples;
         const effProcHS   = procHS   / multiples;
-        const effTwisting = twisting / multiples;
+        const effTwisting = optTwistingCost / multiples;   // from Optional Process "Twisting"
         // ─────────────────────────────────────────────────────────────────────
-        const packingSubTotal = netYarn + effWeaving + effProcHS + effTwisting + packing;
-        const subTotal   = packingSubTotal + optTotal + extraTotal;
+        const packingSubTotal = netYarn + effWeaving + effProcHS + packing;
+        const subTotal   = packingSubTotal + optNonTwistingTotal + effTwisting + extraTotal;
         const fabricWasteCost = subTotal * fabWaste / 100;
         const finCostAmt = (subTotal + fabricWasteCost) * finCostPct / 100;
         const totalCost  = subTotal + fabricWasteCost + finCostAmt;
@@ -7348,10 +7346,16 @@ function renderLinerTable(s) {
         ${calcs.map(x => `<td style="${CALS}${YELL}">${x.effWeaving.toFixed(2)}</td>`).join('')}</tr>
     <tr style="${PINK}"><td style="${LBGS}${PINK}">Processing (H/S)</td><td style="${UNS}">&#8377;/Lmt</td>
         ${calcs.map(x => `<td style="${CALS}${PINK}">${x.effProcHS.toFixed(2)}</td>`).join('')}</tr>
-    <tr style="background:#ede9fe;"><td style="${LBGS}background:#ede9fe;">Twisting</td><td style="${UNS}">&#8377;/Lmt</td>
-        ${calcs.map(x => `<td style="${CALS}background:#ede9fe;">${x.effTwisting.toFixed(2)}</td>`).join('')}</tr>
     ${row('Packing', '&#8377;/Lmt', () => cl.map(() => `<td style="${CALS}">${packing.toFixed(2)}</td>`).join(''))}
-    ${optProcs.map(op => row(esc(op.name || '—'), '&#8377;/Lmt', () => cl.map(() => `<td style="${CALS}">${(op.cost||0).toFixed(2)}</td>`).join(''))).join('')}
+    ${optProcs.map(op => {
+        const isTwisting = (op.name || '').toLowerCase().trim() === 'twisting';
+        if (isTwisting) {
+            // Twisting is divided by width multiple per config
+            return `<tr style="background:#ede9fe;"><td style="${LBGS}background:#ede9fe;">${esc(op.name)} <small style="color:#7c3aed;">÷ width multiple</small></td><td style="${UNS}">&#8377;/Lmt</td>
+                ${calcs.map(x => `<td style="${CALS}background:#ede9fe;">${x.effTwisting.toFixed(2)}</td>`).join('')}</tr>`;
+        }
+        return row(esc(op.name || '—'), '&#8377;/Lmt', () => cl.map(() => `<td style="${CALS}">${(op.cost||0).toFixed(2)}</td>`).join(''));
+    }).join('')}
     ${extras.map(ec => row(esc(ec.label || '—'), '&#8377;/Lmt', () => cl.map(() => `<td style="${CALS}">${(ec.value||0).toFixed(2)}</td>`).join(''))).join('')}
     <tr style="${SUB}"><td style="${LBGS}${SUB}"><strong>Sub-Total</strong></td><td style="${UNS}">&#8377;/Lmt</td>
         ${calcs.map(x => fixedCell(x.subTotal, SUB)).join('')}</tr>
@@ -7395,7 +7399,6 @@ function saveLinerSheet() {
     s.yarnWastagePct= gn('li-yarn-wastage');
     s.weaving          = gn('li-weaving');
     s.processingHS     = gn('li-proc-hs');
-    s.twisting         = gn('li-twisting');
     s.packing          = gn('li-packing');
     s.fabricWastePct   = gn('li-fabric-waste') || 3;
     s.finCostPct       = gn('li-fin-cost')     || 5;
