@@ -2358,12 +2358,16 @@
                 <div class="divider"></div>
                 <div class="form-row" style="margin-bottom:12px;">
                     <div class="form-group">
-                        <label>Weaving (&#8377;/L.Mtr) <small style="color:#94a3b8;">manual</small></label>
+                        <label>Weaving (&#8377;/L.Mtr) <small style="color:#94a3b8;">÷ width multiple</small></label>
                         <input type="number" id="li-weaving" placeholder="0.00" min="0" step="0.01" oninput="renderLinerTable()">
                     </div>
                     <div class="form-group">
-                        <label>Processing H/S (&#8377;/L.Mtr)</label>
+                        <label>Processing H/S (&#8377;/L.Mtr) <small style="color:#94a3b8;">÷ width multiple</small></label>
                         <input type="number" id="li-proc-hs" value="4.75" min="0" step="0.01" oninput="renderLinerTable()">
+                    </div>
+                    <div class="form-group">
+                        <label>Twisting (&#8377;/L.Mtr) <small style="color:#94a3b8;">÷ width multiple</small></label>
+                        <input type="number" id="li-twisting" value="0.00" min="0" step="0.01" oninput="renderLinerTable()">
                     </div>
                     <div class="form-group">
                         <label>Packing (&#8377;/L.Mtr)</label>
@@ -7048,6 +7052,7 @@ function populateLinerForm(id) {
     populateLinerYarnSelects('li', s);
     sv('li-weaving',        s.weaving       ?? '');
     sv('li-proc-hs',        s.processingHS  ?? 4.75);
+    sv('li-twisting',       s.twisting      ?? 0);
     sv('li-packing',        s.packing       ?? 3.50);
     sv('li-fabric-waste',   s.fabricWastePct ?? 3);
     sv('li-fin-cost',       s.finCostPct    ?? 5);
@@ -7198,9 +7203,10 @@ function renderLinerTable(s) {
     const ypWarp = parseFloat(document.getElementById('li-yarn-price-warp')?.value) || 0;
     const ypWeft = parseFloat(document.getElementById('li-yarn-price-weft')?.value) || 0;
     const waste  = parseFloat(document.getElementById('li-yarn-wastage')?.value)    || 8;
-    const weaving= parseFloat(document.getElementById('li-weaving')?.value)         || 0;
-    const procHS = parseFloat(document.getElementById('li-proc-hs')?.value)         || 0;
-    const packing= parseFloat(document.getElementById('li-packing')?.value)         || 0;
+    const weaving  = parseFloat(document.getElementById('li-weaving')?.value)   || 0;
+    const procHS   = parseFloat(document.getElementById('li-proc-hs')?.value)   || 0;
+    const twisting = parseFloat(document.getElementById('li-twisting')?.value)  || 0;
+    const packing  = parseFloat(document.getElementById('li-packing')?.value)   || 0;
     const fabWaste = parseFloat(document.getElementById('li-fabric-waste')?.value)  || 0;
     const finCostPct = parseFloat(document.getElementById('li-fin-cost')?.value)    || 0;
 
@@ -7238,12 +7244,19 @@ function renderLinerTable(s) {
         const yarnRateWarp = (glmW / 1000) * ypWarp;
         const yarnRateWeft = (glmF / 1000) * ypWeft;
         const netYarn    = (yarnRateWarp + yarnRateWeft) * (1 + waste / 100);
-        const packingSubTotal = netYarn + weaving + procHS + packing;
+        // ── Loom costs ÷ width multiple ──────────────────────────────────────
+        // When multiple strips are cut from the same loom pass, the loom-related
+        // costs (weaving, processing, twisting) are shared across all strips.
+        const effWeaving  = weaving  / multiples;
+        const effProcHS   = procHS   / multiples;
+        const effTwisting = twisting / multiples;
+        // ─────────────────────────────────────────────────────────────────────
+        const packingSubTotal = netYarn + effWeaving + effProcHS + effTwisting + packing;
         const subTotal   = packingSubTotal + optTotal + extraTotal;
         const fabricWasteCost = subTotal * fabWaste / 100;
         const finCostAmt = (subTotal + fabricWasteCost) * finCostPct / 100;
         const totalCost  = subTotal + fabricWasteCost + finCostAmt;
-        return { cfg, multiples, glmW, glmF, glmT, orderQty, yarnRateWarp, yarnRateWeft, netYarn, subTotal, fabricWasteCost, finCostAmt, totalCost };
+        return { cfg, multiples, glmW, glmF, glmT, orderQty, yarnRateWarp, yarnRateWeft, netYarn, effWeaving, effProcHS, effTwisting, subTotal, fabricWasteCost, finCostAmt, totalCost };
     });
 
     // Style helpers
@@ -7332,9 +7345,11 @@ function renderLinerTable(s) {
     <tr style="${SUB}"><td style="${LBGS}${SUB}"><strong>Net Yarn Price</strong></td><td style="${UNS}">&#8377;/Lmt</td>
         ${calcs.map(x => fixedCell(x.netYarn, SUB)).join('')}</tr>
     <tr style="${YELL}"><td style="${LBGS}${YELL}">Weaving</td><td style="${UNS}">&#8377;/Lmt</td>
-        ${cl.map(() => `<td style="${CALS}${YELL}">${weaving.toFixed(2)}</td>`).join('')}</tr>
+        ${calcs.map(x => `<td style="${CALS}${YELL}">${x.effWeaving.toFixed(2)}</td>`).join('')}</tr>
     <tr style="${PINK}"><td style="${LBGS}${PINK}">Processing (H/S)</td><td style="${UNS}">&#8377;/Lmt</td>
-        ${cl.map(() => `<td style="${CALS}${PINK}">${procHS.toFixed(2)}</td>`).join('')}</tr>
+        ${calcs.map(x => `<td style="${CALS}${PINK}">${x.effProcHS.toFixed(2)}</td>`).join('')}</tr>
+    <tr style="background:#ede9fe;"><td style="${LBGS}background:#ede9fe;">Twisting</td><td style="${UNS}">&#8377;/Lmt</td>
+        ${calcs.map(x => `<td style="${CALS}background:#ede9fe;">${x.effTwisting.toFixed(2)}</td>`).join('')}</tr>
     ${row('Packing', '&#8377;/Lmt', () => cl.map(() => `<td style="${CALS}">${packing.toFixed(2)}</td>`).join(''))}
     ${optProcs.map(op => row(esc(op.name || '—'), '&#8377;/Lmt', () => cl.map(() => `<td style="${CALS}">${(op.cost||0).toFixed(2)}</td>`).join(''))).join('')}
     ${extras.map(ec => row(esc(ec.label || '—'), '&#8377;/Lmt', () => cl.map(() => `<td style="${CALS}">${(ec.value||0).toFixed(2)}</td>`).join(''))).join('')}
@@ -7380,6 +7395,7 @@ function saveLinerSheet() {
     s.yarnWastagePct= gn('li-yarn-wastage');
     s.weaving          = gn('li-weaving');
     s.processingHS     = gn('li-proc-hs');
+    s.twisting         = gn('li-twisting');
     s.packing          = gn('li-packing');
     s.fabricWastePct   = gn('li-fabric-waste') || 3;
     s.finCostPct       = gn('li-fin-cost')     || 5;
